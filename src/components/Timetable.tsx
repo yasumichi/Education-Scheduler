@@ -140,10 +140,14 @@ export function Timetable({ periods, resources, lessons, viewMode, viewType, bas
       </div>
     );
   });
+return (
+  <div className="timetable-wrapper">
+    <div className="timetable-container" style={gridStyle}>
+      {/* 左上の角を隠す固定エリア */}
+      <div className="grid-corner" style={{ gridColumn: 1, gridRow: "1 / span 2" }} />
 
-  return (
-    <div className="timetable-wrapper">
-      <div className="timetable-container" style={gridStyle}>
+      {/* 背景グリッド */}
+
         {resources.map((_, rIdx) => 
           displayDates.map((date, dIdx) => {
             const isSun = date.getDay() === 0;

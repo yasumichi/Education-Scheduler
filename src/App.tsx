@@ -9,6 +9,7 @@ export function App() {
   const viewType = useSignal<ViewType>('day');
   const currentDate = useSignal<Date>(new Date('2026-03-26'));
   const holidays = useSignal<Holiday[]>([]);
+  const isHolidayMode = useSignal<boolean>(false); // 祝日テーマのトグル
 
   // リソースの表示名設定 (ここで自由に変更可能)
   const resourceLabels = useSignal<ResourceLabels>({
@@ -42,40 +43,53 @@ export function App() {
   };
 
   return (
-    <main>
-      <h1>学校スケジューラー</h1>
-      
-      <div className="controls">
-        <div className="control-group">
-          <button onClick={() => viewMode.value = 'room'}>{resourceLabels.value.room}</button>
-          <button onClick={() => viewMode.value = 'teacher'}>{resourceLabels.value.teacher}</button>
-          <button onClick={() => viewMode.value = 'course'}>{resourceLabels.value.course}</button>
-        </div>
+    <div className="app-container">
+      <header className="app-header">
+        <h1>学校スケジューラー</h1>
 
-        <div className="control-group">
-          <button onClick={() => handleViewTypeChange('day')}>1日</button>
-          <button onClick={() => handleViewTypeChange('week')}>1週間</button>
-          <button onClick={() => handleViewTypeChange('month')}>1ヶ月</button>
-          <button onClick={() => handleViewTypeChange('year')}>1年</button>
-        </div>
+        <div className="controls">
+          <div className="control-group">
+            <button onClick={() => viewMode.value = 'room'}>{resourceLabels.value.room}</button>
+            <button onClick={() => viewMode.value = 'teacher'}>{resourceLabels.value.teacher}</button>
+            <button onClick={() => viewMode.value = 'course'}>{resourceLabels.value.course}</button>
+          </div>
 
-        <div className="control-group date-nav">
-          <button onClick={() => moveDate(-1)}>前へ</button>
-          <span className="current-date">{format(currentDate.value, 'yyyy/MM/dd')}〜</span>
-          <button onClick={() => moveDate(1)}>次へ</button>
+          <div className="control-group">
+            <button onClick={() => handleViewTypeChange('day')}>1日</button>
+            <button onClick={() => handleViewTypeChange('week')}>1週間</button>
+            <button onClick={() => handleViewTypeChange('month')}>1ヶ月</button>
+            <button onClick={() => handleViewTypeChange('year')}>1年</button>
+          </div>
+
+          <div className="control-group date-nav">
+            <button onClick={() => moveDate(-1)}>前へ</button>
+            <span className="current-date">{format(currentDate.value, 'yyyy/MM/dd')}〜</span>
+            <button onClick={() => moveDate(1)}>次へ</button>
+          </div>
+
+          <label className="holiday-toggle">
+            <input 
+              type="checkbox" 
+              checked={isHolidayMode.value} 
+              onChange={(e) => isHolidayMode.value = e.currentTarget.checked} 
+            />
+            祝日テーマ
+          </label>
         </div>
+      </header>
+
+      <div className={`timetable-view ${isHolidayMode.value ? 'holiday-theme' : ''}`}>
+        <Timetable 
+          periods={DEFAULT_PERIODS}
+          resources={filteredResources}
+          lessons={MOCK_LESSONS}
+          viewMode={viewMode.value}
+          viewType={viewType.value}
+          baseDate={currentDate.value}
+          holidays={holidays.value}
+          labels={resourceLabels.value}
+        />
       </div>
-
-      <Timetable 
-        periods={DEFAULT_PERIODS}
-        resources={filteredResources}
-        lessons={MOCK_LESSONS}
-        viewMode={viewMode.value}
-        viewType={viewType.value}
-        baseDate={currentDate.value}
-        holidays={holidays.value}
-        labels={resourceLabels.value}
-      />
-    </main>
+    </div>
   );
 }

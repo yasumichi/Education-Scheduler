@@ -9,44 +9,25 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
 
 #app {
-  width: 100%;
-  max-width: 1280px;
+  width: calc(100% - 20px);
   margin: 0 auto;
-  padding: 0.5rem 1rem;
-  text-align: center;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
 }
 
 h1 {
-  margin: 0.5rem 0;
-  font-size: 1.5rem;
-}
-
-.holiday-theme .timetable-container {
-  background-color: #4a2a2a;
-  border-color: #833;
-}
-
-.holiday-theme .grid-header,
-.holiday-theme .grid-label {
-  background-color: #5d3a3a;
-}
-
-@media (prefers-color-scheme: light) {
-  .holiday-theme .timetable-container {
-    background-color: #fff0f0;
-    border-color: #fcc;
-  }
-  .holiday-theme .grid-header,
-  .holiday-theme .grid-label {
-    background-color: #ffe0e0;
-  }
+  margin: 0;
+  padding: 5px 0;
+  font-size: 1.2rem;
+  text-align: left;
 }
 
 @media (prefers-color-scheme: light) {
