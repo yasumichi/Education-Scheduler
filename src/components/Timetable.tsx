@@ -1,4 +1,4 @@
-import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday } from '../types';
+import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday, ResourceLabels } from '../types';
 import { format, addDays, isSameDay, parseISO, getYear, differenceInDays, isWithinInterval } from 'date-fns';
 import './Timetable.css';
 
@@ -10,14 +10,13 @@ interface Props {
   viewType: ViewType;
   baseDate: Date;
   holidays: Holiday[];
+  labels: ResourceLabels;
 }
 
-export function Timetable({ periods, resources, lessons, viewMode, viewType, baseDate, holidays }: Props) {
+export function Timetable({ periods, resources, lessons, viewMode, viewType, baseDate, holidays, labels }: Props) {
   const locale = navigator.language;
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
-  const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'short' });
 
-  // 祝日・休暇の判定ロジック (単一日の date と 期間指定の start/end の両方に対応)
   const getHoliday = (date: Date) => {
     return holidays.find(h => {
       if (h.date) return isSameDay(date, parseISO(h.date));
@@ -43,7 +42,6 @@ export function Timetable({ periods, resources, lessons, viewMode, viewType, bas
   const dayCount = getDayCount();
   const displayDates = Array.from({ length: dayCount }).map((_, i) => addDays(baseDate, i));
 
-  // 1年表示でも 60px (1ヶ月と同じ) に固定
   const colWidth = '60px';
 
   const gridStyle = {
@@ -70,7 +68,7 @@ export function Timetable({ periods, resources, lessons, viewMode, viewType, bas
            style={{ gridColumn: `${dIdx * periods.length + 2} / span ${periods.length}`, gridRow: 1 }}
            title={holiday?.name}
       >
-        {viewType === 'year' ? (isFirstOfMonth ? monthFormatter.format(date) : dateFormatter.format(date)) : dateFormatter.format(date)}
+        {dateFormatter.format(date)}
       </div>
     );
   });
@@ -103,7 +101,7 @@ export function Timetable({ periods, resources, lessons, viewMode, viewType, bas
   ));
 
   const lessonItems = lessons.filter(l => {
-    const resId = viewMode === 'room' ? l.roomId : l.teacherId;
+    const resId = viewMode === 'room' ? l.roomId : viewMode === 'teacher' ? l.teacherId : l.courseId;
     const resMatch = resources.some(r => r.id === resId);
     if (!resMatch) return false;
     const lessonDate = parseISO(l.date);
@@ -112,12 +110,19 @@ export function Timetable({ periods, resources, lessons, viewMode, viewType, bas
     const lessonDate = parseISO(l.date);
     const dayIdx = displayDates.findIndex(d => isSameDay(d, lessonDate));
     const periodIdx = periods.findIndex(p => p.id === l.startPeriodId);
-    const resId = viewMode === 'room' ? l.roomId : l.teacherId;
+    const resId = viewMode === 'room' ? l.roomId : viewMode === 'teacher' ? l.teacherId : l.courseId;
     const resourceIdx = resources.findIndex(r => r.id === resId);
 
     if (dayIdx === -1 || periodIdx === -1 || resourceIdx === -1) return null;
 
     const startCol = dayIdx * periods.length + periodIdx + 2;
+
+    // カード内の追加情報の表示ラベルを決定
+    let infoLabel = '';
+    let infoValue = '';
+    if (viewMode === 'room') { infoLabel = labels.teacher; infoValue = l.teacherId; }
+    else if (viewMode === 'teacher') { infoLabel = labels.room; infoValue = l.roomId; }
+    else { infoLabel = labels.room; infoValue = l.roomId; }
 
     return (
       <div 
@@ -130,7 +135,7 @@ export function Timetable({ periods, resources, lessons, viewMode, viewType, bas
       >
         <div className="lesson-subject">{l.subject}</div>
         <div className="lesson-info">
-          {viewMode === 'room' ? `講師:${l.teacherId}` : `教室:${l.roomId}`}
+          {infoLabel}: {infoValue}
         </div>
       </div>
     );
@@ -139,7 +144,6 @@ export function Timetable({ periods, resources, lessons, viewMode, viewType, bas
   return (
     <div className="timetable-wrapper">
       <div className="timetable-container" style={gridStyle}>
-        {/* 背景グリッド */}
         {resources.map((_, rIdx) => 
           displayDates.map((date, dIdx) => {
             const isSun = date.getDay() === 0;
@@ -157,7 +161,6 @@ export function Timetable({ periods, resources, lessons, viewMode, viewType, bas
             ));
           })
         )}
-        
         {dateHeaders}
         {periodHeaders}
         {resourceLabels}

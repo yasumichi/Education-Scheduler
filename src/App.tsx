@@ -1,7 +1,7 @@
-import { useSignal, useSignalEffect } from '@preact/signals';
+import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { Timetable } from './components/Timetable';
-import { MOCK_RESOURCES, MOCK_LESSONS, ResourceType, ViewType, DEFAULT_PERIODS, Holiday } from './types';
+import { MOCK_RESOURCES, MOCK_LESSONS, ResourceType, ViewType, DEFAULT_PERIODS, Holiday, ResourceLabels } from './types';
 import { format, addDays, getYear, getMonth } from 'date-fns';
 
 export function App() {
@@ -10,7 +10,13 @@ export function App() {
   const currentDate = useSignal<Date>(new Date('2026-03-26'));
   const holidays = useSignal<Holiday[]>([]);
 
-  // 祝日データの読み込み
+  // リソースの表示名設定 (ここで自由に変更可能)
+  const resourceLabels = useSignal<ResourceLabels>({
+    room: '教室',
+    teacher: '講師',
+    course: '講座'
+  });
+
   useEffect(() => {
     fetch('/holidays.json')
       .then(res => res.json())
@@ -41,8 +47,9 @@ export function App() {
       
       <div className="controls">
         <div className="control-group">
-          <button onClick={() => viewMode.value = 'room'}>教室</button>
-          <button onClick={() => viewMode.value = 'teacher'}>先生</button>
+          <button onClick={() => viewMode.value = 'room'}>{resourceLabels.value.room}</button>
+          <button onClick={() => viewMode.value = 'teacher'}>{resourceLabels.value.teacher}</button>
+          <button onClick={() => viewMode.value = 'course'}>{resourceLabels.value.course}</button>
         </div>
 
         <div className="control-group">
@@ -67,6 +74,7 @@ export function App() {
         viewType={viewType.value}
         baseDate={currentDate.value}
         holidays={holidays.value}
+        labels={resourceLabels.value}
       />
     </main>
   );

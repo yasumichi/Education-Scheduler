@@ -19,8 +19,13 @@ body {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0.5rem 1rem;
   text-align: center;
+}
+
+h1 {
+  margin: 0.5rem 0;
+  font-size: 1.5rem;
 }
 
 .holiday-theme .timetable-container {
