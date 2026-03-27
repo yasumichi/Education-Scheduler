@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ResourceType {
+  room
+  teacher
+  course
+}
+
+model Resource {
+  id    String       @id @default(uuid())
+  name  String
+  type  ResourceType
+  order Int          @default(0)
+
+  // 関連付け (任意)
+  lessonsAsRoom    Lesson[] @relation("RoomLessons")
+  lessonsAsTeacher Lesson[] @relation("TeacherLessons")
+  lessonsAsCourse  Lesson[] @relation("CourseLessons")
+}
+
+model Lesson {
+  id            String   @id @default(uuid())
+  subject       String
+  startDate     String   // "2026-03-26"
+  startPeriodId String   // "p1"
+  endDate       String   // "2026-03-26"
+  endPeriodId   String   // "p8"
+
+  roomId    String
+  teacherId String
+  courseId  String
+
+  room    Resource @relation("RoomLessons", fields: [roomId], references: [id])
+  teacher Resource @relation("TeacherLessons", fields: [teacherId], references: [id])
+  course  Resource @relation("CourseLessons", fields: [courseId], references: [id])
+}
+
+model ScheduleEvent {
+  id            String   @id @default(uuid())
+  name          String
+  startDate     String
+  startPeriodId String
+  endDate       String
+  endPeriodId   String
+  color         String?
+}
+
+model Holiday {
+  id    String  @id @default(uuid())
+  name  String
+  date  String? // "2026-01-01"
+  start String? // "2026-12-29"
+  end   String? // "2027-01-03"
+}
