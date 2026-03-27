@@ -16,6 +16,19 @@ enum ResourceType {
   course
 }
 
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  role     UserRole @default(STUDENT)
+}
+
 model Resource {
   id    String       @id @default(uuid())
   name  String

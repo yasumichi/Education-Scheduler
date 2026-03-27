@@ -1,4 +1,5 @@
-import { PrismaClient, ResourceType } from '@prisma/client';
+import { PrismaClient, ResourceType, UserRole } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -8,8 +9,31 @@ async function main() {
   await prisma.resource.deleteMany();
   await prisma.scheduleEvent.deleteMany();
   await prisma.holiday.deleteMany();
+  await prisma.user.deleteMany();
 
   console.log('Clearing database...');
+
+  // ユーザーの生成
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const teacherPassword = await bcrypt.hash('teacher123', 10);
+
+  await prisma.user.create({
+    data: {
+      email: 'admin@example.com',
+      password: adminPassword,
+      role: UserRole.ADMIN
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: 'teacher@example.com',
+      password: teacherPassword,
+      role: UserRole.TEACHER
+    }
+  });
+
+  console.log('Seeding users...');
 
   // リソースの生成
   const resources = [];

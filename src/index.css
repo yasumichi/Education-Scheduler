@@ -30,9 +30,47 @@ h1 {
   text-align: left;
 }
 
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-email {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.logout-button {
+  background-color: transparent;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #333;
+  border-color: #666;
+  color: #fff;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
   }
+  .user-email { color: #666; }
+  .logout-button { border-color: #ccc; color: #666; }
+  .logout-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
 }

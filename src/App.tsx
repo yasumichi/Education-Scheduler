@@ -1,8 +1,11 @@
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { Timetable } from './components/Timetable';
-import { MOCK_RESOURCES, MOCK_LESSONS, MOCK_EVENTS, ResourceType, ViewType, DEFAULT_PERIODS, Holiday, ResourceLabels, ScheduleEvent } from './types';
+import { Login } from './components/Login';
+import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, DEFAULT_PERIODS, Holiday, ResourceLabels, User, AuthResponse } from './types';
 import { format, addDays, getYear, getMonth, parseISO } from 'date-fns';
+
+const BACKEND_URL = 'http://localhost:3001/api';
 
 export function App() {
   const viewMode = useSignal<ResourceType>('room');
@@ -10,7 +13,14 @@ export function App() {
   const currentDate = useSignal<Date>(new Date('2026-03-26'));
   const holidays = useSignal<Holiday[]>([]);
   const isHolidayMode = useSignal<boolean>(false);
-  const events = useSignal<ScheduleEvent[]>(MOCK_EVENTS);
+  const resources = useSignal<Resource[]>([]);
+  const lessons = useSignal<Lesson[]>([]);
+  const events = useSignal<ScheduleEvent[]>([]);
+
+  // Auth signals
+  const user = useSignal<User | null>(null);
+  const token = useSignal<string | null>(null);
+  const authError = useSignal<string | undefined>(undefined);
 
   // リソースの表示名設定
   const resourceLabels = useSignal<ResourceLabels>({
@@ -20,14 +30,86 @@ export function App() {
     event: 'イベント'
   });
 
+  // 初期化時にlocalStorageからセッション復元
   useEffect(() => {
-    fetch('/holidays.json')
-      .then(res => res.json())
-      .then(data => holidays.value = data)
-      .catch(err => console.error('Failed to load holidays:', err));
+    const savedToken = localStorage.getItem('auth_token');
+    const savedUser = localStorage.getItem('auth_user');
+    if (savedToken && savedUser) {
+      token.value = savedToken;
+      user.value = JSON.parse(savedUser);
+    }
   }, []);
 
-  const filteredResources = MOCK_RESOURCES.filter(r => r.type === viewMode.value);
+  const fetchData = async () => {
+    if (!token.value) return;
+
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token.value}`
+      };
+      
+      const [resResources, resLessons, resEvents, resHolidays] = await Promise.all([
+        fetch(`${BACKEND_URL}/resources`, { headers }),
+        fetch(`${BACKEND_URL}/lessons`, { headers }),
+        fetch(`${BACKEND_URL}/events`, { headers }),
+        fetch(`${BACKEND_URL}/holidays`, { headers })
+      ]);
+
+      if (resResources.status === 401) {
+        handleLogout();
+        return;
+      }
+
+      resources.value = await resResources.json();
+      lessons.value = await resLessons.json();
+      events.value = await resEvents.json();
+      holidays.value = await resHolidays.json();
+    } catch (err) {
+      console.error('Failed to fetch data from backend:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (token.value) {
+      fetchData();
+    }
+  }, [token.value]);
+
+  const handleLogin = async (email: string, pass: string) => {
+    authError.value = undefined;
+    try {
+      const res = await fetch(`${BACKEND_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+
+      const data: AuthResponse & { error?: string } = await res.json();
+
+      if (!res.ok) {
+        authError.value = data.error || 'Login failed';
+        return;
+      }
+
+      token.value = data.token;
+      user.value = data.user;
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('auth_user', JSON.stringify(data.user));
+    } catch (err) {
+      authError.value = 'Server connection failed';
+    }
+  };
+
+  const handleLogout = () => {
+    token.value = null;
+    user.value = null;
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+  };
+
+  if (!token.value) {
+    return <Login onLogin={handleLogin} error={authError.value} />;
+  }
 
   const moveDate = (amount: number) => {
     if (viewType.value === 'day') currentDate.value = addDays(currentDate.value, amount);
@@ -54,7 +136,15 @@ export function App() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>EduGrid Scheduler</h1>
+        <div className="header-top">
+          <h1>EduGrid Scheduler</h1>
+          {user.value && (
+            <div className="user-info">
+              <span className="user-email">{user.value.email} ({user.value.role})</span>
+              <button className="logout-button" onClick={handleLogout}>Sign Out</button>
+            </div>
+          )}
+        </div>
 
         <div className="controls">
           <div className="control-group">
@@ -95,8 +185,8 @@ export function App() {
       <div className={`timetable-view ${isHolidayMode.value ? 'holiday-theme' : ''}`}>
         <Timetable 
           periods={DEFAULT_PERIODS}
-          resources={MOCK_RESOURCES}
-          lessons={MOCK_LESSONS}
+          resources={resources.value}
+          lessons={lessons.value}
           events={events.value}
           viewMode={viewMode.value}
           viewType={viewType.value}

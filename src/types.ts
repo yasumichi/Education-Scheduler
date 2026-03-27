@@ -4,6 +4,18 @@ export interface TimePeriod {
 }
 
 export type ResourceType = 'room' | 'teacher' | 'course';
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
 
 export interface ResourceLabels {
   room: string;
