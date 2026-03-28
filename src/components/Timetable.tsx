@@ -59,7 +59,7 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
   const gridStyle = {
     display: 'grid',
     gridTemplateColumns: `150px repeat(${displayDates.length * periods.length}, minmax(${colWidth}, 1fr))`,
-    gridTemplateRows: `auto auto 80px repeat(${filteredResources.length}, 80px)`,
+    gridTemplateRows: `40px 30px 80px repeat(${filteredResources.length}, 80px)`,
   };
 
   const dateHeaders = displayDates.map((date, dIdx) => {

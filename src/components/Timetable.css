@@ -21,24 +21,29 @@
   overflow: auto;
   border: 1px solid #444;
   border-radius: 4px;
+  position: relative; /* Sticky context */
 }
 
 .timetable-container {
   background-color: #333;
-  min-width: 100%;
+  min-width: max-content; /* Ensure container expands to fit grid */
+  display: grid;
 }
 
 /* 左上の交差点 (常に最前面：z-index: 30) */
 .grid-corner {
   background-color: #222;
-  border-right: 2px solid #666;
-  border-bottom: 2px solid #666;
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
   position: sticky;
   top: 0;
   left: 0;
   z-index: 30;
   height: 70px; /* 40 + 30 */
   box-sizing: border-box;
+  min-width: 150px;
+  width: 150px;
+  justify-self: start;
 }
 
 /* 日付ヘッダー (z-index: 20) */
@@ -46,7 +51,7 @@
   background-color: #222;
   color: #fff;
   padding: 8px;
-  height: 40px; /* 明示的に指定 */
+  height: 40px;
   box-sizing: border-box;
   font-weight: bold;
   border-bottom: 1px solid #444;
@@ -63,7 +68,7 @@
   color: #ccc;
   font-size: 0.7rem;
   padding: 4px;
-  height: 30px; /* 明示的に指定 */
+  height: 30px;
   box-sizing: border-box;
   border-bottom: 1px solid #555;
   border-right: 1px solid #555;
@@ -72,14 +77,15 @@
   z-index: 19;
 }
 
-/* イベント行 (z-index: 18) */
+/* イベント行ラベル (z-index: 25) */
 .event-label {
-  background-color: #3d3d3d !important;
+  background-color: #3d3d3d;
   color: #eee;
   font-size: 0.8rem;
-  height: 80px; /* リソース行と同じ */
+  height: 80px;
   box-sizing: border-box;
-  border-bottom: 1px solid #555 !important;
+  border-bottom: 1px solid #555;
+  border-right: 1px solid #666;
   position: sticky;
   top: 70px; /* 40 + 30 */
   left: 0;
@@ -88,7 +94,9 @@
   justify-content: center;
   align-items: center;
   font-weight: bold;
-  border-right: 2px solid #666;
+  min-width: 150px;
+  width: 150px;
+  justify-self: start;
 }
 
 .event-cell {
@@ -115,7 +123,7 @@
   white-space: nowrap;
   z-index: 20;
   position: sticky;
-  top: 72px;
+  top: 72px; /* 70 + 2 (margin) */
   font-weight: bold;
 }
 
@@ -127,10 +135,10 @@
 
 .schedule-event-card {
   border: 1px solid rgba(255,255,255,0.2);
-  color: #333; /* 背景色に応じて調整されるが、デフォルト */
+  color: #333;
 }
 
-/* リソースラベル (z-index: 10) */
+/* リソースラベル (z-index: 25) */
 .grid-label {
   background-color: #444;
   color: #fff;
@@ -138,11 +146,16 @@
   justify-content: center;
   align-items: center;
   font-weight: bold;
-  border-right: 2px solid #666;
+  border-right: 1px solid #666;
   border-bottom: 1px solid #555;
   position: sticky;
   left: 0;
-  z-index: 10;
+  z-index: 25;
+  min-width: 150px;
+  width: 150px;
+  height: 80px;
+  box-sizing: border-box;
+  justify-self: start;
 }
 
 /* 土日祝日の色設定 (ダークモード) */
