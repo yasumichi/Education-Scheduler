@@ -106,11 +106,12 @@ npm run dev
 フロントエンドとバックエンドを異なるアドレス（またはドメイン）で公開する場合の設定手順。
 
 ### 1. バックエンドの環境変数設定
-バックエンドの `.env` で `DATABASE_URL` 以外に、JWTのシークレット等を設定。
+バックエンドの `.env` で `DATABASE_URL` 以外に、JWTのシークレット、ポート、**許可するフロントエンドのURL (CORS用)** を設定します。
 ```bash
 # backend/.env
 JWT_SECRET=your_secure_random_string
 PORT=3001
+FRONTEND_URL=https://www.yourdomain.com
 ```
 
 ### 2. フロントエンドのAPIエンドポイント設定
@@ -129,13 +130,14 @@ VITE_API_URL=https://api.yourdomain.com/api
 
 Vite はビルド時にこれらのファイルを読み込み、`import.meta.env.VITE_API_URL` に値を埋め込みます。
 
-### 3. CORS設定
-バックエンドの `backend/src/index.ts` で、フロントエンドの公開ドメインからのアクセスを許可します。
-※将来的に、バックエンドも環境変数から許可リストを読み込むように修正可能です。
+### 3. CORS設定 (反映済み)
+バックエンドの `backend/src/index.ts` は、上記の `FRONTEND_URL` 環境変数を読み込んで CORS を許可します。
+ソースコードを直接修正する必要はありません。
+
 ```typescript
-app.use(cors({
-  origin: 'https://www.yourdomain.com'
-}));
+// backend/src/index.ts (参考)
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+app.use(cors({ origin: FRONTEND_URL }));
 ```
 
 ### 4. ビルドと実行

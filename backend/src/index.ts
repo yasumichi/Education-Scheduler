@@ -12,8 +12,11 @@ const app = express();
 const prisma = new PrismaClient();
 const port = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-app.use(cors());
+app.use(cors({
+  origin: FRONTEND_URL
+}));
 app.use(express.json());
 
 // --- Authentication Routes ---
