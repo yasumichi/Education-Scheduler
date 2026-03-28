@@ -60,10 +60,11 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
 
   const colWidth = viewType === 'day' ? '60px' : '50px';
   const gridStyle = {
+    '--col-width': colWidth,
     display: 'grid',
-    gridTemplateColumns: `150px repeat(${displayDates.length * periods.length}, minmax(${colWidth}, 1fr))`,
+    gridTemplateColumns: `150px repeat(${displayDates.length * periods.length}, minmax(var(--col-width), 1fr))`,
     gridTemplateRows: `40px 30px 80px repeat(${filteredResources.length}, 80px)`,
-  };
+  } as React.CSSProperties;
 
   const dateHeaders = displayDates.map((date, dIdx) => {
     const holiday = getHoliday(date);
