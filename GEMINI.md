@@ -91,7 +91,8 @@ interface Lesson {
   id: string;
   subject: string;
   teacherId: string;
-  subTeacherIds?: string[]; // サブ講師
+  subTeacherIds?: string[]; // サブ講師 (ID配列)
+  subTeachers?: { id: string }[]; // バックエンドからのリレーション
   roomId: string;
   courseId: string;
   startDate: string;
@@ -109,8 +110,18 @@ interface ScheduleEvent {
   endDate: string;
   endPeriodId: string;
   color?: string;
-  resourceIds?: string[]; // 紐付け先リソース（講師、教室など）
+  resourceIds?: string[]; // 紐付け先リソースID配列
+  resources?: { id: string }[]; // バックエンドからのリレーション
   showInEventRow?: boolean; // イベント行に表示するかどうかの制御
+}
+
+// 祝日・休暇データ
+interface Holiday {
+  id: string;
+  name: string;
+  date?: string;  // 単一日の場合
+  start?: string; // 期間の場合の開始日
+  end?: string;   // 期間の場合の終了日
 }
 ```
 
