@@ -1,6 +1,6 @@
 # EduGrid Scheduler (Resource Scheduler)
 
-学校のリソース（教室・講師・講座）管理に特化したカレンダーサービス
+教育施設のリソース（教室・講師・講座）管理に特化したカレンダーサービス
 
 ## 技術スタック (Tech Stack)
 
