@@ -26,7 +26,6 @@
 
 .timetable-container {
   background-color: #333;
-  min-width: max-content; /* Ensure container expands to fit grid */
   display: grid;
 }
 

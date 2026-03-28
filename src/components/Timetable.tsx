@@ -350,7 +350,7 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
   return (
     <div className="timetable-wrapper">
       <div 
-        key={`${viewType}-${baseDate.toISOString()}-${viewMode}-${filteredResources.length}`}
+        key={`grid-${viewType}-${baseDate.getTime()}-${viewMode}-${filteredResources.length}-${totalCols}`}
         className="timetable-container" 
         style={gridStyle}
       >
@@ -377,6 +377,14 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
         {eventCells}
         {/* レベル別の配置を確保 */}
         {holidayItems}
+        {scheduleEventItems}
+        {resourceLabels}
+        {lessonItems}
+      </div>
+    </div>
+  );
+}
+    {holidayItems}
         {scheduleEventItems}
         {resourceLabels}
         {lessonItems}
