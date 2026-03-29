@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Timetable } from './components/Timetable';
 import { Login } from './components/Login';
 import { PeriodManager } from './components/PeriodManager';
+import { LabelManager } from './components/LabelManager';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod } from './types';
 import { format, addDays, getYear, getMonth, parseISO } from 'date-fns';
 
@@ -18,6 +19,7 @@ export function App() {
   const periods = useSignal<TimePeriod[]>([]);
   const isHolidayMode = useSignal<boolean>(false);
   const showPeriodManager = useSignal<boolean>(false);
+  const showLabelManager = useSignal<boolean>(false);
   const showSettingsDropdown = useSignal<boolean>(false);
   const resources = useSignal<Resource[]>([]);
   const lessons = useSignal<Lesson[]>([]);
@@ -30,25 +32,13 @@ export function App() {
 
   // リソースの表示名設定
   const resourceLabels = useSignal<ResourceLabels>({
-    room: t('Room'),
-    teacher: t('Teacher'),
-    course: t('Course'),
-    event: t('Event'),
-    mainTeacher: t('Main Teacher'),
-    subTeacher: t('Sub Teacher')
+    room: '',
+    teacher: '',
+    course: '',
+    event: '',
+    mainTeacher: '',
+    subTeacher: ''
   });
-
-  // 言語が切り替わったときにラベルを更新
-  useEffect(() => {
-    resourceLabels.value = {
-      room: t('Room'),
-      teacher: t('Teacher'),
-      course: t('Course'),
-      event: t('Event'),
-      mainTeacher: t('Main Teacher'),
-      subTeacher: t('Sub Teacher')
-    };
-  }, [t]);
 
   // 初期化時にlocalStorageからセッション復元
   useEffect(() => {
@@ -68,12 +58,13 @@ export function App() {
         'Authorization': `Bearer ${token.value}`
       };
       
-      const [resResources, resLessons, resEvents, resHolidays, resPeriods] = await Promise.all([
+      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels] = await Promise.all([
         fetch(`${BACKEND_URL}/resources`, { headers }),
         fetch(`${BACKEND_URL}/lessons`, { headers }),
         fetch(`${BACKEND_URL}/events`, { headers }),
         fetch(`${BACKEND_URL}/holidays`, { headers }),
-        fetch(`${BACKEND_URL}/periods`, { headers })
+        fetch(`${BACKEND_URL}/periods`, { headers }),
+        fetch(`${BACKEND_URL}/labels`, { headers })
       ]);
 
       if (resResources.status === 401) {
@@ -86,6 +77,7 @@ export function App() {
       events.value = await resEvents.json();
       holidays.value = await resHolidays.json();
       periods.value = await resPeriods.json();
+      resourceLabels.value = await resLabels.json();
     } catch (err) {
       console.error('Failed to fetch data from backend:', err);
     }
@@ -180,6 +172,15 @@ export function App() {
                         }}
                       >
                         {t('Manage Periods')}
+                      </button>
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
+                          showLabelManager.value = true;
+                          showSettingsDropdown.value = false;
+                        }}
+                      >
+                        {t('Manage Labels')}
                       </button>
                     </div>
                   )}
@@ -282,6 +283,16 @@ export function App() {
           backendUrl={BACKEND_URL} 
           onClose={() => showPeriodManager.value = false}
           onUpdate={(newPeriods) => periods.value = newPeriods}
+        />
+      )}
+
+      {showLabelManager.value && token.value && (
+        <LabelManager 
+          token={token.value} 
+          backendUrl={BACKEND_URL} 
+          onClose={() => showLabelManager.value = false}
+          onUpdate={(newLabels) => resourceLabels.value = newLabels}
+          initialLabels={resourceLabels.value}
         />
       )}
     </div>

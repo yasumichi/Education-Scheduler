@@ -32,7 +32,8 @@ const resources = {
       "Add Period": "Add Period",
       "Remove": "Remove",
       "Save Changes": "Save Changes",
-      "Settings": "Settings"
+      "Settings": "Settings",
+      "Manage Labels": "Manage Labels"
     }
   },
   ja: {
@@ -65,6 +66,7 @@ const resources = {
       "Remove": "削除",
       "Save Changes": "設定を保存",
       "Settings": "設定",
+      "Manage Labels": "表示名の設定",
       "Period 1": "1限",
       "Period 2": "2限",
       "Period 3": "3限",

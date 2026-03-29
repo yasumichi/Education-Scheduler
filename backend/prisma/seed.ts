@@ -11,6 +11,7 @@ async function main() {
   await prisma.resource.deleteMany();
   await prisma.user.deleteMany();
   await prisma.timePeriod.deleteMany();
+  await prisma.resourceLabel.deleteMany();
 
   console.log('Clearing database...');
 
@@ -53,6 +54,20 @@ async function main() {
   }
 
   console.log('Seeding time periods...');
+
+  // リソースラベルの生成
+  await prisma.resourceLabel.create({
+    data: {
+      room: 'Room',
+      teacher: 'Teacher',
+      course: 'Course',
+      event: 'Event',
+      mainTeacher: 'Main Teacher',
+      subTeacher: 'Sub Teacher'
+    }
+  });
+
+  console.log('Seeding resource labels...');
 
   // リソースの生成
   // Rooms

@@ -161,6 +161,41 @@ app.post('/api/periods', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
+// リソースラベル取得 (認証必須)
+app.get('/api/labels', verifyToken, async (req, res) => {
+  try {
+    const label = await prisma.resourceLabel.findFirst();
+    res.json(label);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch resource labels' });
+  }
+});
+
+// リソースラベル更新 (ADMIN権限)
+app.post('/api/labels', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { labels } = req.body;
+  try {
+    const existing = await prisma.resourceLabel.findFirst();
+    let updated;
+    if (existing) {
+      updated = await prisma.resourceLabel.update({
+        where: { id: existing.id },
+        data: labels
+      });
+    } else {
+      updated = await prisma.resourceLabel.create({
+        data: labels
+      });
+    }
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update resource labels' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Backend server is running on http://localhost:${port}`);
 });
