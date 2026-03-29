@@ -241,7 +241,7 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
              if (resourceIdx !== -1) {
              result.push(
              <div key={`event-${e.id}-${resId}`} 
-                 className="event-card schedule-event-card"
+                 className="event-card schedule-event-card resource-event-card"
                  style={{ 
                    gridColumn: `${sCol} / span ${span}`, 
                    gridRow: resourceIdx + 4,

@@ -139,6 +139,15 @@
   color: #333;
 }
 
+.resource-event-card {
+  position: relative !important;
+  top: 0 !important;
+  z-index: 2 !important;
+  margin: 4px !important;
+  height: auto !important;
+  min-height: 20px;
+}
+
 /* リソースラベル (z-index: 25) */
 .grid-label {
   background-color: #444;
