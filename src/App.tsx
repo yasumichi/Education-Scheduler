@@ -54,13 +54,12 @@ export function App() {
 
   const fetchData = async () => {
     if (!token.value) return;
-
     try {
       const headers = {
         'Authorization': `Bearer ${token.value}`
       };
-      
-      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels] = await Promise.all([
+
+      const responses = await Promise.all([
         fetch(`${BACKEND_URL}/resources`, { headers }),
         fetch(`${BACKEND_URL}/lessons`, { headers }),
         fetch(`${BACKEND_URL}/events`, { headers }),
@@ -69,21 +68,42 @@ export function App() {
         fetch(`${BACKEND_URL}/labels`, { headers })
       ]);
 
-      if (resResources.status === 401) {
-        handleLogout();
+      const failed = responses.find(r => !r.ok);
+      if (failed) {
+        if (failed.status === 401) {
+          console.warn('Unauthorized access, logging out...');
+          handleLogout();
+        } else {
+          console.error(`Backend request failed with status ${failed.status}: ${failed.url}`);
+        }
         return;
       }
 
-      resources.value = await resResources.json();
-      lessons.value = await resLessons.json();
-      events.value = await resEvents.json();
-      holidays.value = await resHolidays.json();
-      periods.value = await resPeriods.json();
-      resourceLabels.value = await resLabels.json();
+      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels] = responses;
+
+      // すべてのJSONパースを並列で行う
+      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels] = await Promise.all([
+        resResources.json(),
+        resLessons.json(),
+        resEvents.json(),
+        resHolidays.json(),
+        resPeriods.json(),
+        resLabels.json()
+      ]);
+
+      resources.value = dataResources;
+      lessons.value = dataLessons;
+      events.value = dataEvents;
+      holidays.value = dataHolidays;
+      periods.value = dataPeriods;
+      resourceLabels.value = dataLabels || resourceLabels.value;
+
+      console.log('Successfully fetched all data from backend');
     } catch (err) {
       console.error('Failed to fetch data from backend:', err);
     }
   };
+
 
   useEffect(() => {
     if (token.value) {

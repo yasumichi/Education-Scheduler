@@ -23,13 +23,14 @@ async function main() {
   console.log('Clearing database...');
 
   // ユーザーの生成
-  const password = await bcrypt.hash('password123', 10);
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const teacherPassword = await bcrypt.hash('teacher123', 10);
   
   // 佐藤先生のユーザー (t1 に紐付ける)
   const userT1 = await prisma.user.create({
     data: {
       email: 'sato@example.com',
-      password: password,
+      password: teacherPassword,
       role: UserRole.TEACHER
     }
   });
@@ -37,8 +38,16 @@ async function main() {
   await prisma.user.create({
     data: {
       email: 'admin@example.com',
-      password: password,
+      password: adminPassword,
       role: UserRole.ADMIN
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: 'teacher@example.com',
+      password: teacherPassword,
+      role: UserRole.TEACHER
     }
   });
 
