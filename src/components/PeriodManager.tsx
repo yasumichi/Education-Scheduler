@@ -108,9 +108,13 @@ export function PeriodManager({ token, backendUrl, onClose, onUpdate }: Props) {
                   onInput={(e) => handleChange(index, 'endTime', e.currentTarget.value)}
                 />
               </div>
-              <button className="remove-button" onClick={() => handleRemove(index)}>
-                {t('Remove')}
-              </button>
+              <div className="remove-button-placeholder">
+                {index === periods.length - 1 && index > 0 && (
+                  <button className="remove-button" onClick={() => handleRemove(index)}>
+                    {t('Remove')}
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

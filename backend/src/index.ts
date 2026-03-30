@@ -145,6 +145,7 @@ app.post('/api/periods', verifyToken, async (req: AuthRequest, res) => {
       prisma.timePeriod.deleteMany(),
       prisma.timePeriod.createMany({
         data: periods.map((p: any, idx: number) => ({
+          id: `p${idx + 1}`,
           name: p.name,
           startTime: p.startTime,
           endTime: p.endTime,

@@ -89,6 +89,12 @@
   border-radius: 4px;
   cursor: pointer;
   height: 34px;
+  min-width: 80px;
+}
+
+.remove-button-placeholder {
+  height: 34px;
+  min-width: 80px;
 }
 
 .remove-button:hover {
