@@ -162,7 +162,7 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
 
     if (holiday.date && isSameDay(date, startOfDay(parseISO(holiday.date)))) {
       const startCol = dIdx * periods.length + 2;
-      const endCol = dIdx * periods.length + periods.length + 1;
+      const endCol = dIdx * periods.length + periods.length + 2;
       const level = getPlacementLevel(startCol, endCol - 1);
       const el = (
         <div key={`holiday-${date.toISOString()}`}
@@ -192,7 +192,7 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
 
              if (sIdx !== -1 && eIdx !== -1 && isSameDay(date, actualStart)) {
              const startCol = sIdx * periods.length + 2;
-             const endCol = eIdx * periods.length + periods.length + 1;
+             const endCol = eIdx * periods.length + periods.length + 2;
              const level = getPlacementLevel(startCol, endCol - 1);
              const el = (
              <div key={`holiday-range-${holiday.name}-${date.toISOString()}`}
