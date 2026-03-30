@@ -360,7 +360,7 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
         className="timetable-container" 
         style={gridStyle}
       >
-        <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: "1 / span 2", zIndex: 30 }} />
+        <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: "1 / span 2", zIndex: 100 }} />
         {filteredResources.map((_, rIdx) => 
           displayDates.map((date, dIdx) => {
             const isSun = date.getDay() === 0;
