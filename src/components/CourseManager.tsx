@@ -73,6 +73,63 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
     setFormData({ ...formData, subjects: newSubjects });
   };
 
+  const handleImportCSV = (e: any) => {
+    const file = e.currentTarget.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      let text = event.target?.result as string;
+      if (!text) return;
+
+      // Remove BOM if present
+      if (text.charCodeAt(0) === 0xFEFF) {
+        text = text.substring(1);
+      }
+
+      try {
+        const lines = text.split(/\r?\n/);
+        const importedSubjects: { name: string; totalPeriods: number }[] = [];
+        
+        lines.forEach((line, index) => {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) return;
+
+          // Simple CSV split that handles quotes
+          const parts = trimmedLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => {
+            let val = s.trim();
+            if (val.startsWith('"') && val.endsWith('"')) {
+              val = val.substring(1, val.length - 1).replace(/""/g, '"');
+            }
+            return val;
+          });
+
+          if (parts.length < 2) return;
+
+          const [name, totalPeriodsStr] = parts;
+          const totalPeriods = parseInt(totalPeriodsStr);
+          
+          // Skip header if it's the first line and totalPeriods is not a number
+          if (index === 0 && isNaN(totalPeriods)) return;
+
+          if (name && !isNaN(totalPeriods)) {
+            importedSubjects.push({ name, totalPeriods });
+          }
+        });
+
+        if (importedSubjects.length > 0) {
+          setFormData({ ...formData, subjects: [...formData.subjects, ...importedSubjects] });
+        }
+      } catch (err) {
+        console.error('Error parsing CSV:', err);
+        alert(t('Failed to parse CSV file'));
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    e.currentTarget.value = '';
+  };
+
   const handleSave = async () => {
     try {
       const res = await fetch(`${backendUrl}/courses`, {
@@ -90,7 +147,7 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
         onUpdate();
         onClose();
       } else {
-        alert('Failed to save course');
+        alert(t('Failed to save course'));
       }
     } catch (err) {
       console.error('Error saving course:', err);
@@ -110,7 +167,7 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
         onUpdate();
         onClose();
       } else {
-        alert('Failed to delete course');
+        alert(t('Failed to delete course'));
       }
     } catch (err) {
       console.error('Error deleting course:', err);
@@ -171,7 +228,7 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
               <input 
                 type="number" 
                 value={formData.order} 
-                onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) })}
+                onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
               />
             </div>
 
@@ -189,12 +246,23 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
                     type="number" 
                     placeholder={t('Total Periods')}
                     value={s.totalPeriods}
-                    onInput={(e) => handleSubjectChange(index, 'totalPeriods', parseInt(e.currentTarget.value))}
+                    onInput={(e) => handleSubjectChange(index, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
                   />
                   <button className="remove-btn" onClick={() => handleRemoveSubject(index)}>×</button>
                 </div>
               ))}
-              <button className="add-btn" onClick={handleAddSubject}>{t('Add Subject')}</button>
+              <div className="subjects-actions">
+                <button className="add-btn" onClick={handleAddSubject}>{t('Add Subject')}</button>
+                <label className="import-csv-label">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    style={{ display: 'none' }}
+                    onChange={handleImportCSV}
+                  />
+                  <span className="import-btn">{t('Import CSV')}</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>

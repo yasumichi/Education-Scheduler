@@ -127,6 +127,12 @@
   padding: 0 10px;
 }
 
+.subjects-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
 .add-btn {
   background: #252;
   color: #8f8;
@@ -135,7 +141,17 @@
   cursor: pointer;
   padding: 6px 12px;
   font-size: 0.85rem;
-  margin-top: 5px;
+}
+
+.import-btn {
+  display: inline-block;
+  background: #335;
+  color: #88f;
+  border: 1px solid #447;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: 0.85rem;
 }
 
 .course-manager-footer {
@@ -184,4 +200,5 @@
   .course-manager-header, .course-manager-footer, .course-selector { border-color: #eee; }
   .remove-btn { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
   .add-btn { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+  .import-btn { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
 }

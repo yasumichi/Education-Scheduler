@@ -45,9 +45,13 @@ const resources = {
       "Subject Name": "Subject Name",
       "Total Periods": "Total Periods",
       "Add Subject": "Add Subject",
+      "Import CSV": "Import CSV",
       "Delete": "Delete",
       "Cancel": "Cancel",
-      "Are you sure you want to delete this course?": "Are you sure you want to delete this course?"
+      "Are you sure you want to delete this course?": "Are you sure you want to delete this course?",
+      "Failed to parse CSV file": "Failed to parse CSV file",
+      "Failed to save course": "Failed to save course",
+      "Failed to delete course": "Failed to delete course"
     }
   },
   ja: {
@@ -92,9 +96,13 @@ const resources = {
       "Subject Name": "課目名",
       "Total Periods": "合計時限数",
       "Add Subject": "課目を追加",
+      "Import CSV": "CSVからインポート",
       "Delete": "削除",
       "Cancel": "キャンセル",
       "Are you sure you want to delete this course?": "この講座を削除してもよろしいですか？",
+      "Failed to parse CSV file": "CSVファイルの解析に失敗しました",
+      "Failed to save course": "講座の保存に失敗しました",
+      "Failed to delete course": "講座の削除に失敗しました",
       "Evacuation Drill": "全館避難訓練",
       "Business Trip": "出張（学会参加）",
       "Open Research Lesson": "研究授業（公開）",
