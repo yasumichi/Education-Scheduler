@@ -6,6 +6,7 @@ import { Login } from './components/Login';
 import { PeriodManager } from './components/PeriodManager';
 import { LabelManager } from './components/LabelManager';
 import { CourseManager } from './components/CourseManager';
+import { EventManager } from './components/EventManager';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod } from './types';
 import { format, addDays, getYear, getMonth, parseISO } from 'date-fns';
 
@@ -22,6 +23,8 @@ export function App() {
   const showPeriodManager = useSignal<boolean>(false);
   const showLabelManager = useSignal<boolean>(false);
   const showCourseManager = useSignal<boolean>(false);
+  const showEventManager = useSignal<boolean>(false);
+  const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const showSettingsDropdown = useSignal<boolean>(false);
   const resources = useSignal<Resource[]>([]);
   const lessons = useSignal<Lesson[]>([]);
@@ -305,6 +308,14 @@ export function App() {
           baseDate={currentDate.value}
           holidays={holidays.value}
           labels={resourceLabels.value}
+          onEventClick={(event) => {
+            editingEvent.value = event;
+            showEventManager.value = true;
+          }}
+          onEmptyEventClick={(date, periodId) => {
+            editingEvent.value = { startDate: date, startPeriodId: periodId };
+            showEventManager.value = true;
+          }}
         />
       </div>
 
@@ -334,6 +345,21 @@ export function App() {
           onClose={() => showCourseManager.value = false}
           onUpdate={fetchData}
           resources={resources.value}
+        />
+      )}
+
+      {showEventManager.value && token.value && (
+        <EventManager 
+          token={token.value} 
+          backendUrl={BACKEND_URL} 
+          onClose={() => {
+            showEventManager.value = false;
+            editingEvent.value = null;
+          }}
+          onUpdate={fetchData}
+          periods={periods.value}
+          resources={resources.value}
+          initialEvent={editingEvent.value || {}}
         />
       )}
     </div>

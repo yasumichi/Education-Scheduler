@@ -14,9 +14,11 @@ interface Props {
   baseDate: Date;
   holidays: Holiday[];
   labels: ResourceLabels;
+  onEventClick?: (event: ScheduleEvent) => void;
+  onEmptyEventClick?: (date: string, periodId: string) => void;
 }
 
-export function Timetable({ periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels }: Props) {
+export function Timetable({ periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, onEventClick, onEmptyEventClick }: Props) {
   const { t } = useTranslation();
   const locale = navigator.language;
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
@@ -136,10 +138,13 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
     if (isSat) className += ' is-saturday';
     if (holiday) className += ' is-holiday';
 
-    return periods.map((_, pIdx) => (
+    const dateStr = format(date, 'yyyy-MM-dd');
+
+    return periods.map((p, pIdx) => (
       <div key={`event-cell-${dIdx}-${pIdx}`} 
            className={className} 
-           style={{ gridColumn: dIdx * periods.length + pIdx + 2, gridRow: 3 }} />
+           style={{ gridColumn: dIdx * periods.length + pIdx + 2, gridRow: 3 }}
+           onDblClick={() => onEmptyEventClick?.(dateStr, p.id)} />
     ));
   });
 
@@ -245,8 +250,11 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
                  style={{ 
                    gridColumn: `${sCol} / span ${span}`, 
                    gridRow: resourceIdx + 4,
-                   backgroundColor: e.color
-                 }}>
+                   backgroundColor: e.color,
+                   cursor: 'pointer'
+                 }}
+                 onDblClick={() => onEventClick?.(e)}
+             >
               {t(e.name)}
              </div>
              );
@@ -263,8 +271,11 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
                gridColumn: `${sCol} / span ${span}`, 
                gridRow: 3,
                backgroundColor: e.color,
-               top: `${72 + level * 22}px`
-             }}>
+               top: `${72 + level * 22}px`,
+               cursor: 'pointer'
+             }}
+             onDblClick={() => onEventClick?.(e)}
+             >
              {t(e.name)}
              </div>
              );

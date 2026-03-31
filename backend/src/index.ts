@@ -187,6 +187,76 @@ app.get('/api/events', verifyToken, async (req, res) => {
   }
 });
 
+// 行事の作成・更新 (ADMIN権限)
+app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id, name, startDate, startPeriodId, endDate, endPeriodId, color, showInEventRow, resourceIds } = req.body;
+  try {
+    const resourceConnect = resourceIds?.map((rid: string) => ({ id: rid })) || [];
+    let event;
+
+    if (id) {
+      // 更新
+      event = await prisma.scheduleEvent.update({
+        where: { id },
+        data: {
+          name,
+          startDate,
+          startPeriodId,
+          endDate,
+          endPeriodId,
+          color,
+          showInEventRow: showInEventRow ?? true,
+          resources: {
+            set: [], // 一旦クリア
+            connect: resourceConnect
+          }
+        },
+        include: { resources: true }
+      });
+    } else {
+      // 新規作成
+      event = await prisma.scheduleEvent.create({
+        data: {
+          name,
+          startDate,
+          startPeriodId,
+          endDate,
+          endPeriodId,
+          color,
+          showInEventRow: showInEventRow ?? true,
+          resources: {
+            connect: resourceConnect
+          }
+        },
+        include: { resources: true }
+      });
+    }
+    res.json(event);
+  } catch (error) {
+    console.error('Failed to save event:', error);
+    res.status(500).json({ error: 'Failed to save event' });
+  }
+});
+
+// 行事の削除 (ADMIN権限)
+app.delete('/api/events/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id } = req.params;
+  try {
+    await prisma.scheduleEvent.delete({
+      where: { id }
+    });
+    res.json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete event' });
+  }
+});
+
 // 祝日一覧取得 (認証必須)
 app.get('/api/holidays', verifyToken, async (req, res) => {
   try {
