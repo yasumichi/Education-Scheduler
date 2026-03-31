@@ -218,6 +218,7 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
     const top = 70 + 4 + (layout.level * unitHeight);
     return (
       <div key={layout.id} className="event-card holiday-card"
+           title={h.name}
            style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: 3, top: `${top}px`, height: `${itemHeight}px` }}>
         {h.name}
       </div>
@@ -225,12 +226,23 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
   });
 
   const globalEventItems = row3Layouts.filter(l => row3Items.find(i => i.id === l.id)?.type === 'event').map(layout => {
-    const e = row3Items.find(i => i.id === layout.id)!.data;
+    const e = row3Items.find(i => i.id === layout.id)!.data as ScheduleEvent;
     const unitHeight = (80 - 8) / layout.maxLevelInGroup;
     const itemHeight = unitHeight - 8;
     const top = 70 + 4 + (layout.level * unitHeight);
+
+    const startP = periods.find(p => p.id === e.startPeriodId)?.name || e.startPeriodId;
+    const endP = periods.find(p => p.id === e.endPeriodId)?.name || e.endPeriodId;
+    const resNames = [
+      ...(e.resourceIds || []),
+      ...(e.resources || []).map(r => r.id)
+    ].map(id => getResourceName(id)).filter(name => name !== id).join(', ');
+
+    const tooltip = `${e.name}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}` + (resNames ? `\n${labels.event}: ${resNames}` : '');
+
     return (
       <div key={layout.id} className="event-card schedule-event-card"
+           title={tooltip}
            style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: 3, backgroundColor: e.color, top: `${top}px`, height: `${itemHeight}px`, cursor: 'pointer' }}
            onDblClick={() => onEventClick?.(e)}>
         {e.name}
@@ -264,8 +276,14 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
       const unitHeight = (80 - 8) / layout.maxLevelInGroup;
       const itemHeight = unitHeight - 8;
       const top = 4 + (layout.level * unitHeight);
+
+      const startP = periods.find(p => p.id === e.startPeriodId)?.name || e.startPeriodId;
+      const endP = periods.find(p => p.id === e.endPeriodId)?.name || e.endPeriodId;
+      const tooltip = `${e.name}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}`;
+
       resourceEventItems.push(
         <div key={layout.id} className="event-card schedule-event-card resource-event-card"
+             title={tooltip}
              style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: resIdx + 4, backgroundColor: e.color, top: `${top}px`, height: `${itemHeight}px`, cursor: 'pointer', position: 'relative' }}
              onDblClick={() => onEventClick?.(e)}>
           {e.name}
