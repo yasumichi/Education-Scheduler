@@ -15,6 +15,7 @@ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 const port = process.env.PORT || 3001;
+const host = process.env.HOST || '0.0.0.0';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
@@ -273,6 +274,6 @@ app.post('/api/labels', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Backend server is running on http://localhost:${port}`);
+app.listen(Number(port), host, () => {
+  console.log(`Backend server is running on http://${host}:${port}`);
 });

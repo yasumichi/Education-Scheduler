@@ -36,8 +36,13 @@ CREATE DATABASE edugrid OWNER edugrid;
    ```env
    DATABASE_URL="postgresql://edugrid:password@localhost:5432/edugrid?schema=public"
    PORT=3001
+   HOST=0.0.0.0
    JWT_SECRET="任意のリテラル文字列（例: your_secret_key_12345）"
+   FRONTEND_URL="http://localhost:5173"
    ```
+   - **PORT:** バックエンドが待ち受けるポート番号。
+   - **HOST:** バックエンドが待ち受けるアドレス。`0.0.0.0` を指定するとすべてのインターフェースで待ち受けます。
+   - **FRONTEND_URL:** CORS設定に使用されます。ブラウザでアクセスするフロントエンドのURLを指定してください。
 
 ## 4. 依存関係のインストール (Installation)
 
@@ -79,8 +84,8 @@ cd ..
 npm run dev
 ```
 
-- **フロントエンド:** `http://localhost:5173`
-- **バックエンド API:** `http://localhost:3001`
+- **フロントエンド:** `http://localhost:5173` (またはサーバーのIP)
+- **バックエンド API:** `http://localhost:3001/api` (またはサーバーのIP)
 
 ## 7. テスト用ログイン情報 (Test Credentials)
 
@@ -103,58 +108,62 @@ npm run dev
 
 ---
 
-## 8. 外部アドレスでの公開 (External Deployment)
+## 8. 外部アドレスでの公開と開発 (External Access & Deployment)
 
-フロントエンドとバックエンドを異なるアドレス（またはドメイン）で公開する場合の設定手順。
+LAN内の他のPCや外部からアクセスする場合、バックエンドとフロントエンドの両方でネットワーク待ち受け設定が必要です。
 
-### 1. バックエンドの環境変数設定
-バックエンドの `.env` で `DATABASE_URL` 以外に、JWTのシークレット、ポート、**許可するフロントエンドのURL (CORS用)** を設定します。
+### 1. バックエンドの設定 (CORS & Listen Address)
+バックエンドの `backend/.env` で `HOST` と `FRONTEND_URL` を設定します。
 ```bash
 # backend/.env
-JWT_SECRET=your_secure_random_string
 PORT=3001
-FRONTEND_URL=https://www.yourdomain.com
+HOST=0.0.0.0  # すべてのネットワークインターフェースで待ち受け
+FRONTEND_URL=http://192.168.1.10:5173  # ブラウザからアクセスするフロントエンドの実際のURL
 ```
 
-### 2. フロントエンドのAPIエンドポイント設定
-フロントエンドは、環境変数 `VITE_API_URL` を使用してバックエンドのURLを切り替えます。
-ソースコード (`src/App.tsx`) を直接修正する必要はありません。
+### 2. フロントエンドの設定 (Vite Server & API URL)
+#### Vite の待ち受け設定 (`vite.config.ts`)
+Vite 開発サーバーを外部からアクセス可能にするには、`server.host: true` が必要です（反映済み）。
+```typescript
+// vite.config.ts (抜粋)
+export default defineConfig({
+  server: {
+    host: true, // 0.0.0.0 で待ち受け
+    port: 5173
+  }
+});
+```
 
-開発時や特定のデプロイ環境に合わせて、プロジェクトルートに以下のファイルを作成または修正してください。
-
+#### バックエンドへの接続先指定 (API Endpoint)
+プロジェクトルートに `.env` ファイルを作成し、ブラウザから見えるバックエンドのURLを指定します。
 ```bash
-# .env.local (ローカル開発時の上書き用)
-VITE_API_URL=http://localhost:3001/api
-
-# .env.production (本番ビルド npm run build 用)
-VITE_API_URL=https://api.yourdomain.com/api
+# .env (プロジェクトルート)
+VITE_API_URL=http://192.168.1.10:3001/api
 ```
+Vite はビルド時または開発実行時にこの値を `import.meta.env.VITE_API_URL` として埋め込みます。
 
-Vite はビルド時にこれらのファイルを読み込み、`import.meta.env.VITE_API_URL` に値を埋め込みます。
-
-### 3. CORS設定 (反映済み)
-バックエンドの `backend/src/index.ts` は、上記の `FRONTEND_URL` 環境変数を読み込んで CORS を許可します。
-ソースコードを直接修正する必要はありません。
-
+### 3. CORS設定の詳細
+バックエンドの `backend/src/index.ts` は、環境変数 `FRONTEND_URL` に基づいて CORS を許可します。
 ```typescript
 // backend/src/index.ts (参考)
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 app.use(cors({ origin: FRONTEND_URL }));
 ```
 
-### 4. ビルドと実行
+### 4. ビルドと実行 (Production)
 #### バックエンド (Node.js/TypeScript)
 ```bash
 cd backend
 npm run build
-npm start
+# PM2 やシステムサービスとして起動する場合の例:
+# HOST=0.0.0.0 PORT=3001 FRONTEND_URL=https://your-frontend.com node dist/index.js
 ```
 
 #### フロントエンド (Vite)
 ```bash
 # ビルド (dist ディレクトリに出力)
 npm run build
-# dist 内の静的ファイルを Nginx や S3/CloudFront 等で公開
+# dist 内の静的ファイルを Nginx, Apache, または S3/CloudFront 等で公開します。
 ```
 
 ### 5. リバースプロキシの設定 (例: Nginx)
