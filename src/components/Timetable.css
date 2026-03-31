@@ -303,7 +303,7 @@
   .is-saturday { color: #33d; background-color: #f0f0ff !important; }
   .period-header { background-color: #f5f5f5; color: #666; }
   .grid-label { background-color: #eee; color: #333; }
-  .event-label { background-color: #e5e5e5 !important; border-bottom-color: #ccc !important; }
+  .event-label { background-color: #e5e5e5 !important; color: #000 !important; border-bottom-color: #ccc !important; }
   .event-cell { background-color: #fff; border-bottom-color: #ccc; border-right-color: #eee; }
   .holiday-card { background-color: #fee2e2 !important; color: #b91c1c !important; border-color: #fecaca; }
   .schedule-event-card { border-color: rgba(0,0,0,0.1); }
