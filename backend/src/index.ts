@@ -87,6 +87,21 @@ app.get('/api/resources', verifyToken, async (req, res) => {
   }
 });
 
+// ユーザー一覧取得 (ADMIN権限)
+app.get('/api/users', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, role: true }
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
 // 教室の作成・更新 (ADMIN権限)
 app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
@@ -133,6 +148,57 @@ app.delete('/api/rooms/:id', verifyToken, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Failed to delete room:', error);
     res.status(500).json({ error: 'Failed to delete room' });
+  }
+});
+
+// 講師の作成・更新 (ADMIN権限)
+app.post('/api/teachers', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id, name, order, userId } = req.body;
+  try {
+    let teacher;
+    if (id) {
+      teacher = await prisma.resource.update({
+        where: { id },
+        data: {
+          name,
+          order: order || 0,
+          userId: userId || null
+        }
+      });
+    } else {
+      teacher = await prisma.resource.create({
+        data: {
+          name,
+          type: ResourceType.teacher,
+          order: order || 0,
+          userId: userId || null
+        }
+      });
+    }
+    res.json(teacher);
+  } catch (error) {
+    console.error('Failed to save teacher:', error);
+    res.status(500).json({ error: 'Failed to save teacher' });
+  }
+});
+
+// 講師の削除 (ADMIN権限)
+app.delete('/api/teachers/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id } = req.params;
+  try {
+    await prisma.resource.delete({
+      where: { id }
+    });
+    res.json({ message: 'Teacher deleted successfully' });
+  } catch (error) {
+    console.error('Failed to delete teacher:', error);
+    res.status(500).json({ error: 'Failed to delete teacher' });
   }
 });
 
