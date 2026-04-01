@@ -45,7 +45,8 @@ export function App() {
     course: '',
     event: '',
     mainTeacher: '',
-    subTeacher: ''
+    subTeacher: '',
+    mainRoom: ''
   });
 
   // 初期化時にlocalStorageからセッション復元
@@ -325,7 +326,12 @@ export function App() {
           }}
           onEmptyResourceCellClick={(resourceId, date, periodId) => {
             const initial: Partial<Lesson> = { startDate: date, startPeriodId: periodId, endDate: date, endPeriodId: periodId };
-            if (viewMode.value === 'room') initial.roomId = resourceId;
+            if (viewMode.value === 'room') {
+              initial.roomId = resourceId;
+              // この教室をメイン教室としている講座があれば、それを初期選択
+              const relatedCourse = resources.value.find(c => c.type === 'course' && c.mainRoomId === resourceId);
+              if (relatedCourse) initial.courseId = relatedCourse.id;
+            }
             else if (viewMode.value === 'teacher') initial.teacherId = resourceId;
             else if (viewMode.value === 'course') initial.courseId = resourceId;
             editingLesson.value = initial;
@@ -360,6 +366,7 @@ export function App() {
           onClose={() => showCourseManager.value = false}
           onUpdate={fetchData}
           resources={resources.value}
+          labels={resourceLabels.value}
         />
       )}
 
@@ -390,6 +397,7 @@ export function App() {
           periods={periods.value}
           resources={resources.value}
           lessons={lessons.value}
+          labels={resourceLabels.value}
           initialLesson={editingLesson.value || {}}
         />
       )}

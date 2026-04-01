@@ -98,6 +98,14 @@ export function LabelManager({ token, backendUrl, onClose, onUpdate, initialLabe
               onInput={(e) => handleChange('subTeacher', e.currentTarget.value)}
             />
           </div>
+          <div className="period-field" style={{ marginBottom: '15px' }}>
+            <label>{t('Main Room')}</label>
+            <input 
+              type="text" 
+              value={labels.mainRoom} 
+              onInput={(e) => handleChange('mainRoom', e.currentTarget.value)}
+            />
+          </div>
         </div>
 
         <div className="period-manager-footer">

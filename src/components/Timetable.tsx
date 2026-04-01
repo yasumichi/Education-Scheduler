@@ -332,23 +332,28 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
       if (resourceIdx === -1) return null;
       const infoItems = [];
 
+      const currentCourse = resources.find(c => c.id === l.courseId);
+      const mainTeacherLabel = currentCourse?.mainTeacherLabel || labels.mainTeacher;
+      const subTeacherLabel = currentCourse?.subTeacherLabel || labels.subTeacher;
+
       const roomValue = l.roomId ? getResourceName(l.roomId) : (l.location || t('No room'));
       if (viewMode !== 'room') infoItems.push({ label: labels.room, value: roomValue });
 
       const mainTeacherName = l.teacherId ? getResourceName(l.teacherId) : t('No main teacher');
+      const subIds = [
+        ...(l.subTeacherIds || []),
+        ...(l.subTeachers || []).map(t => t.id)
+      ];
       const subTeacherNames = subIds.map(id => getResourceName(id));
 
       if (viewMode !== 'teacher') {
-        const allTeachers = [mainTeacherName, ...subTeacherNames].filter(n => n !== t('No main teacher')).join(', ') || t('No teacher');
-        infoItems.push({ label: labels.teacher, value: allTeachers });
+        if (l.teacherId) infoItems.push({ label: mainTeacherLabel, value: mainTeacherName });
+        if (subTeacherNames.length > 0) infoItems.push({ label: subTeacherLabel, value: subTeacherNames.join(', ') });
       } else {
-        if (subTeacherNames.length > 0 || l.teacherId) {
-          const allTeachers = [
-            ...(l.teacherId ? [getResourceName(l.teacherId)] : []),
-            ...subTeacherNames
-          ].join(', ');
-          infoItems.push({ label: labels.teacher, value: allTeachers });
-        }
+        // 講師ビューの場合は、全講師（自分含む）を併記するがラベルはどうするか？
+        // 講師ビューではシンプルに「講師」ラベルまたは個別の役割を表示
+        if (l.teacherId) infoItems.push({ label: mainTeacherLabel, value: mainTeacherName });
+        if (subTeacherNames.length > 0) infoItems.push({ label: subTeacherLabel, value: subTeacherNames.join(', ') });
       }
       if (viewMode !== 'course') infoItems.push({ label: labels.course, value: getResourceName(l.courseId) });
 

@@ -29,9 +29,25 @@ model Resource {
   user             User?           @relation("UserResource", fields: [userId], references: [id])
   events           ScheduleEvent[] @relation("ResourceEvents")
   lessonsAsSub     Lesson[]        @relation("SubTeacherLessons")
+
+  // 追加: メイン教室・教官設定
+  mainRoomId       String?
+  mainRoom         Resource?       @relation("CourseMainRoom", fields: [mainRoomId], references: [id])
+  coursesAsMainRoom Resource[]     @relation("CourseMainRoom")
+  
+  defaultTeacherId String?
+  defaultTeacher   Resource?       @relation("CourseDefaultTeacher", fields: [defaultTeacherId], references: [id])
+  coursesAsDefaultTeacher Resource[] @relation("CourseDefaultTeacher")
+
+  defaultSubTeachers Resource[]    @relation("CourseDefaultSubTeachers")
+  coursesAsDefaultSub Resource[]    @relation("CourseDefaultSubTeachers")
+
+  mainTeacherLabel String?
+  subTeacherLabel  String?
 }
 
 model CourseSubject {
+// ... (rest of the file)
   id           String   @id @default(uuid())
   name         String
   totalPeriods Int
@@ -92,6 +108,7 @@ model ResourceLabel {
   event       String @default("Event")
   mainTeacher String @default("Main Teacher")
   subTeacher  String @default("Sub Teacher")
+  mainRoom    String @default("Main Room")
 }
 
 enum ResourceType {

@@ -76,7 +76,8 @@ app.get('/api/resources', verifyToken, async (req, res) => {
   try {
     const resources = await prisma.resource.findMany({
       include: {
-        subjects: true
+        subjects: true,
+        defaultSubTeachers: { select: { id: true } }
       },
       orderBy: { order: 'asc' }
     });
@@ -91,45 +92,53 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { id, name, order, startDate, endDate, subjects } = req.body;
+  const { id, name, order, startDate, endDate, subjects, mainRoomId, defaultTeacherId, defaultSubTeacherIds, mainTeacherLabel, subTeacherLabel } = req.body;
   try {
     let course;
+    const commonData = {
+      name,
+      order: order || 0,
+      startDate,
+      endDate,
+      mainRoomId: mainRoomId || null,
+      defaultTeacherId: defaultTeacherId || null,
+      mainTeacherLabel: mainTeacherLabel || null,
+      subTeacherLabel: subTeacherLabel || null,
+      subjects: {
+        deleteMany: {},
+        create: subjects.map((s: any) => ({
+          name: s.name,
+          totalPeriods: s.totalPeriods
+        }))
+      }
+    };
+
+    const subTeachersConnect = defaultSubTeacherIds?.map((tid: string) => ({ id: tid })) || [];
+
     if (id) {
       // 更新
       course = await prisma.resource.update({
         where: { id },
         data: {
-          name,
-          order: order || 0,
-          startDate,
-          endDate,
-          subjects: {
-            deleteMany: {},
-            create: subjects.map((s: any) => ({
-              name: s.name,
-              totalPeriods: s.totalPeriods
-            }))
+          ...commonData,
+          defaultSubTeachers: {
+            set: [],
+            connect: subTeachersConnect
           }
         },
-        include: { subjects: true }
+        include: { subjects: true, defaultSubTeachers: true }
       });
     } else {
       // 新規作成
       course = await prisma.resource.create({
         data: {
-          name,
+          ...commonData,
           type: ResourceType.course,
-          order: order || 0,
-          startDate,
-          endDate,
-          subjects: {
-            create: subjects.map((s: any) => ({
-              name: s.name,
-              totalPeriods: s.totalPeriods
-            }))
+          defaultSubTeachers: {
+            connect: subTeachersConnect
           }
         },
-        include: { subjects: true }
+        include: { subjects: true, defaultSubTeachers: true }
       });
     }
     res.json(course);

@@ -28,6 +28,7 @@ export interface ResourceLabels {
   event: string;
   mainTeacher: string;
   subTeacher: string;
+  mainRoom: string;
 }
 
 export interface CourseSubject {
@@ -45,6 +46,12 @@ export interface Resource {
   startDate?: string; // YYYY-MM-DD
   endDate?: string;   // YYYY-MM-DD
   subjects?: CourseSubject[];
+  mainRoomId?: string;
+  defaultTeacherId?: string;
+  defaultSubTeacherIds?: string[];
+  defaultSubTeachers?: { id: string }[];
+  mainTeacherLabel?: string;
+  subTeacherLabel?: string;
 }
 
 export interface ScheduleEvent {

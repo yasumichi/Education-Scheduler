@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Resource, CourseSubject } from '../types';
+import { Resource, ResourceLabels } from '../types';
 import './CourseManager.css';
 
 interface Props {
@@ -9,9 +9,10 @@ interface Props {
   onClose: () => void;
   onUpdate: () => void;
   resources: Resource[];
+  labels: ResourceLabels;
 }
 
-export function CourseManager({ token, backendUrl, onClose, onUpdate, resources }: Props) {
+export function CourseManager({ token, backendUrl, onClose, onUpdate, resources, labels }: Props) {
   const { t } = useTranslation();
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
@@ -19,16 +20,28 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
     order: number;
     startDate: string;
     endDate: string;
+    mainRoomId: string;
+    defaultTeacherId: string;
+    defaultSubTeacherIds: string[];
+    mainTeacherLabel: string;
+    subTeacherLabel: string;
     subjects: { name: string; totalPeriods: number }[];
   }>({
     name: '',
     order: 0,
     startDate: '',
     endDate: '',
+    mainRoomId: '',
+    defaultTeacherId: '',
+    defaultSubTeacherIds: [],
+    mainTeacherLabel: '',
+    subTeacherLabel: '',
     subjects: []
   });
 
   const courses = resources.filter(r => r.type === 'course');
+  const rooms = resources.filter(r => r.type === 'room');
+  const teachers = resources.filter(r => r.type === 'teacher');
 
   useEffect(() => {
     if (selectedCourseId) {
@@ -39,6 +52,11 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
           order: course.order || 0,
           startDate: course.startDate || '',
           endDate: course.endDate || '',
+          mainRoomId: course.mainRoomId || '',
+          defaultTeacherId: course.defaultTeacherId || '',
+          defaultSubTeacherIds: course.defaultSubTeacherIds || (course.defaultSubTeachers || []).map(t => t.id),
+          mainTeacherLabel: course.mainTeacherLabel || '',
+          subTeacherLabel: course.subTeacherLabel || '',
           subjects: course.subjects?.map(s => ({ name: s.name, totalPeriods: s.totalPeriods })) || []
         });
       }
@@ -48,6 +66,11 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
         order: (courses.length + 1),
         startDate: '',
         endDate: '',
+        mainRoomId: '',
+        defaultTeacherId: '',
+        defaultSubTeacherIds: [],
+        mainTeacherLabel: '',
+        subTeacherLabel: '',
         subjects: []
       });
     }
@@ -71,6 +94,13 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
     const newSubjects = [...formData.subjects];
     newSubjects[index] = { ...newSubjects[index], [field]: value };
     setFormData({ ...formData, subjects: newSubjects });
+  };
+
+  const toggleSubTeacher = (id: string) => {
+    const newIds = formData.defaultSubTeacherIds.includes(id)
+      ? formData.defaultSubTeacherIds.filter(tid => tid !== id)
+      : [...formData.defaultSubTeacherIds, id];
+    setFormData({ ...formData, defaultSubTeacherIds: newIds });
   };
 
   const handleImportCSV = (e: any) => {
@@ -230,6 +260,66 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources 
                 value={formData.order} 
                 onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
               />
+            </div>
+
+            <div className="form-group">
+              <label>{labels.mainRoom}</label>
+              <select 
+                value={formData.mainRoomId} 
+                onChange={(e) => setFormData({ ...formData, mainRoomId: e.currentTarget.value })}
+              >
+                <option value="">{t('Select Room')}</option>
+                {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>{labels.mainTeacher} ({t('Default')})</label>
+                <select 
+                  value={formData.defaultTeacherId} 
+                  onChange={(e) => setFormData({ ...formData, defaultTeacherId: e.currentTarget.value })}
+                >
+                  <option value="">{t('Select Teacher')}</option>
+                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>{t('Instructor Label (Main)')}</label>
+                <input 
+                  type="text" 
+                  value={formData.mainTeacherLabel} 
+                  onInput={(e) => setFormData({ ...formData, mainTeacherLabel: e.currentTarget.value })}
+                  placeholder={labels.mainTeacher}
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>{labels.subTeacher} ({t('Default')})</label>
+                <div className="sub-teacher-list" style={{ maxHeight: '100px' }}>
+                  {teachers.filter(t => t.id !== formData.defaultTeacherId).map(t => (
+                    <label key={t.id} className={`sub-teacher-item ${formData.defaultSubTeacherIds.includes(t.id) ? 'selected' : ''}`}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.defaultSubTeacherIds.includes(t.id)}
+                        onChange={() => toggleSubTeacher(t.id)}
+                      />
+                      {t.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>{t('Instructor Label (Sub)')}</label>
+                <input 
+                  type="text" 
+                  value={formData.subTeacherLabel} 
+                  onInput={(e) => setFormData({ ...formData, subTeacherLabel: e.currentTarget.value })}
+                  placeholder={labels.subTeacher}
+                />
+              </div>
             </div>
 
             <div className="subjects-section">

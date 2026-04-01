@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Lesson, TimePeriod, Resource } from '../types';
+import { Lesson, TimePeriod, Resource, ResourceLabels } from '../types';
 import './LessonManager.css';
 
 interface Props {
@@ -11,10 +11,11 @@ interface Props {
   periods: TimePeriod[];
   resources: Resource[];
   lessons: Lesson[];
+  labels: ResourceLabels;
   initialLesson?: Partial<Lesson>;
 }
 
-export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, resources, lessons, initialLesson }: Props) {
+export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, resources, lessons, labels, initialLesson }: Props) {
   const { t } = useTranslation();
   
   const [formData, setFormData] = useState<{
@@ -47,9 +48,24 @@ export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, r
   const rooms = resources.filter(r => r.type === 'room');
   const courses = resources.filter(r => r.type === 'course');
 
+  const selectedCourse = useMemo(() => courses.find(c => c.id === formData.courseId), [formData.courseId, courses]);
+  const mainTeacherLabel = selectedCourse?.mainTeacherLabel || labels.mainTeacher;
+  const subTeacherLabel = selectedCourse?.subTeacherLabel || labels.subTeacher;
+
+  // 講座が変更された際のデフォルト教官の自動入力
+  useEffect(() => {
+    if (!formData.id && selectedCourse) {
+      setFormData(prev => ({
+        ...prev,
+        teacherId: prev.teacherId || selectedCourse.defaultTeacherId || '',
+        subTeacherIds: prev.subTeacherIds.length > 0 ? prev.subTeacherIds : (selectedCourse.defaultSubTeacherIds || (selectedCourse.defaultSubTeachers || []).map(t => t.id))
+      }));
+    }
+  }, [formData.courseId]);
+
   // 選択された講座に関連する課目と残り時限の計算
   const subjectOptions = useMemo(() => {
-    const course = courses.find(c => c.id === formData.courseId);
+    const course = selectedCourse;
     if (!course || !course.subjects) return [];
 
     return course.subjects.map(s => {
@@ -68,7 +84,7 @@ export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, r
         remaining: s.totalPeriods - scheduledPeriods
       };
     });
-  }, [formData.courseId, formData.id, lessons, courses, periods]);
+  }, [formData.courseId, formData.id, lessons, courses, periods, selectedCourse]);
 
   const handleSave = async () => {
     // Basic validation
@@ -100,10 +116,10 @@ export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, r
     }
 
     // Validate date range against course
-    const selectedCourse = courses.find(c => c.id === formData.courseId);
-    if (selectedCourse && selectedCourse.startDate && selectedCourse.endDate) {
-      if (formData.startDate < selectedCourse.startDate || formData.endDate > selectedCourse.endDate) {
-        alert(`${t('Lesson date must be between')} ${selectedCourse.startDate} ${t('and')} ${selectedCourse.endDate}`);
+    const selectedCourseData = selectedCourse;
+    if (selectedCourseData && selectedCourseData.startDate && selectedCourseData.endDate) {
+      if (formData.startDate < selectedCourseData.startDate || formData.endDate > selectedCourseData.endDate) {
+        alert(`${t('Lesson date must be between')} ${selectedCourseData.startDate} ${t('and')} ${selectedCourseData.endDate}`);
         return;
       }
     }
@@ -289,7 +305,7 @@ export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, r
           </div>
 
           <div className="form-group">
-            <label>{t('Main Teacher')}</label>
+            <label>{mainTeacherLabel}</label>
             <select 
               value={formData.teacherId} 
               onChange={(e) => setFormData({ ...formData, teacherId: e.currentTarget.value })}
@@ -300,7 +316,7 @@ export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, r
           </div>
 
           <div className="form-group">
-            <label>{t('Sub Teachers')}</label>
+            <label>{subTeacherLabel}</label>
             <div className="sub-teacher-list">
               {teachers.filter(t => t.id !== formData.teacherId).map(t => (
                 <label key={t.id} className={`sub-teacher-item ${formData.subTeacherIds.includes(t.id) ? 'selected' : ''}`}>
