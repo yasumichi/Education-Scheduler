@@ -6,6 +6,7 @@ import { Login } from './components/Login';
 import { PeriodManager } from './components/PeriodManager';
 import { LabelManager } from './components/LabelManager';
 import { CourseManager } from './components/CourseManager';
+import { RoomManager } from './components/RoomManager';
 import { EventManager } from './components/EventManager';
 import { LessonManager } from './components/LessonManager';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod } from './types';
@@ -24,6 +25,7 @@ export function App() {
   const showPeriodManager = useSignal<boolean>(false);
   const showLabelManager = useSignal<boolean>(false);
   const showCourseManager = useSignal<boolean>(false);
+  const showRoomManager = useSignal<boolean>(false);
   const showEventManager = useSignal<boolean>(false);
   const showLessonManager = useSignal<boolean>(false);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
@@ -214,11 +216,20 @@ export function App() {
                       <button 
                         className="dropdown-item" 
                         onClick={() => {
+                          showRoomManager.value = true;
+                          showSettingsDropdown.value = false;
+                        }}
+                      >
+                        {t('Manage {{resource}}', { resource: resourceLabels.value.room })}
+                      </button>
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
                           showCourseManager.value = true;
                           showSettingsDropdown.value = false;
                         }}
                       >
-                        {t('Manage Courses')}
+                        {t('Manage {{resource}}', { resource: resourceLabels.value.course })}
                       </button>
                     </div>
                   )}
@@ -364,6 +375,17 @@ export function App() {
           token={token.value} 
           backendUrl={BACKEND_URL} 
           onClose={() => showCourseManager.value = false}
+          onUpdate={fetchData}
+          resources={resources.value}
+          labels={resourceLabels.value}
+        />
+      )}
+
+      {showRoomManager.value && token.value && (
+        <RoomManager 
+          token={token.value} 
+          backendUrl={BACKEND_URL} 
+          onClose={() => showRoomManager.value = false}
           onUpdate={fetchData}
           resources={resources.value}
           labels={resourceLabels.value}

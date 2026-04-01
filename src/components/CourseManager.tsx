@@ -208,18 +208,18 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
     <div className="course-manager-overlay">
       <div className="course-manager-box">
         <div className="course-manager-header">
-          <h2>{t('Manage Courses')}</h2>
+          <h2>{t('Manage {{resource}}', { resource: labels.course })}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
         <div className="course-manager-content">
           <div className="course-selector">
-            <label>{t('Select Course to Edit')}</label>
+            <label>{t('Select {{resource}} to Edit', { resource: labels.course })}</label>
             <select 
               value={selectedCourseId || ''} 
               onChange={(e) => setSelectedCourseId(e.currentTarget.value || null)}
             >
-              <option value="">{t('Add New Course')}</option>
+              <option value="">{t('Add New {{resource}}', { resource: labels.course })}</option>
               {courses.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -228,7 +228,7 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
 
           <div className="course-form">
             <div className="form-group">
-              <label>{t('Course Name')}</label>
+              <label>{t('{{resource}} Name', { resource: labels.course })}</label>
               <input 
                 type="text" 
                 value={formData.name} 

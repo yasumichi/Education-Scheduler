@@ -87,6 +87,55 @@ app.get('/api/resources', verifyToken, async (req, res) => {
   }
 });
 
+// 教室の作成・更新 (ADMIN権限)
+app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id, name, order } = req.body;
+  try {
+    let room;
+    if (id) {
+      room = await prisma.resource.update({
+        where: { id },
+        data: {
+          name,
+          order: order || 0
+        }
+      });
+    } else {
+      room = await prisma.resource.create({
+        data: {
+          name,
+          type: ResourceType.room,
+          order: order || 0
+        }
+      });
+    }
+    res.json(room);
+  } catch (error) {
+    console.error('Failed to save room:', error);
+    res.status(500).json({ error: 'Failed to save room' });
+  }
+});
+
+// 教室の削除 (ADMIN権限)
+app.delete('/api/rooms/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id } = req.params;
+  try {
+    await prisma.resource.delete({
+      where: { id }
+    });
+    res.json({ message: 'Room deleted successfully' });
+  } catch (error) {
+    console.error('Failed to delete room:', error);
+    res.status(500).json({ error: 'Failed to delete room' });
+  }
+});
+
 // 講座の作成・更新 (ADMIN権限)
 app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
