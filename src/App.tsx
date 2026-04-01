@@ -17,7 +17,7 @@ export function App() {
   const { t } = useTranslation();
   const viewMode = useSignal<ResourceType>('room');
   const viewType = useSignal<ViewType>('day');
-  const currentDate = useSignal<Date>(new Date('2026-03-26'));
+  const currentDate = useSignal<Date>(new Date());
   const holidays = useSignal<Holiday[]>([]);
   const periods = useSignal<TimePeriod[]>([]);
   const isHolidayMode = useSignal<boolean>(false);
