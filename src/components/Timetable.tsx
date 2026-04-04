@@ -333,8 +333,8 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
       const infoItems = [];
 
       const currentCourse = resources.find(c => c.id === l.courseId);
-      const mainTeacherLabel = currentCourse?.mainTeacherLabel || labels.mainTeacher;
-      const subTeacherLabel = currentCourse?.subTeacherLabel || labels.subTeacher;
+      const mainTeacherLabel = labels.mainTeacher;
+      const subTeacherLabel = labels.subTeacher;
 
       const roomValue = l.roomId ? getResourceName(l.roomId) : (l.location || t('No room'));
       if (viewMode !== 'room') infoItems.push({ label: labels.room, value: roomValue });
