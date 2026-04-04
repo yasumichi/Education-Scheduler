@@ -307,7 +307,14 @@ export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, r
             <label>{mainTeacherLabel}</label>
             <select 
               value={formData.teacherId} 
-              onChange={(e) => setFormData({ ...formData, teacherId: e.currentTarget.value })}
+              onChange={(e) => {
+                const newTeacherId = e.currentTarget.value;
+                setFormData({ 
+                  ...formData, 
+                  teacherId: newTeacherId,
+                  subTeacherIds: formData.subTeacherIds.filter(id => id !== newTeacherId)
+                });
+              }}
             >
               <option value="">{t('Select Teacher')}</option>
               {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}

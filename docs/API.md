@@ -111,7 +111,7 @@ Creates or updates a course resource.
     *   `startDate` (string, optional): Course start date (YYYY-MM-DD).
     *   `endDate` (string, optional): Course end date (YYYY-MM-DD).
     *   `subjects` (array of objects, optional): List of subjects for the course. Each object: `{ name: string, totalPeriods: number }`.
-    *   `mainRoomId` (string, optional): ID of the main room for this course.
+    *   `mainRoomId` (string, optional): ID of the main room for this course (used as default for lessons).
     *   `chiefTeacherId` (string, optional): ID of the chief teacher for this course (informational, not used as default for lessons).
     *   `assistantTeacherIds` (array of strings, optional): IDs of assistant teachers for this course (informational).
     *   `mainTeacherLabel` (string, optional): Custom label for the chief teacher role (e.g., "Professor").
