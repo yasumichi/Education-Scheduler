@@ -112,10 +112,10 @@ Creates or updates a course resource.
     *   `endDate` (string, optional): Course end date (YYYY-MM-DD).
     *   `subjects` (array of objects, optional): List of subjects for the course. Each object: `{ name: string, totalPeriods: number }`.
     *   `mainRoomId` (string, optional): ID of the main room for this course.
-    *   `defaultTeacherId` (string, optional): ID of the default main teacher for this course.
-    *   `defaultSubTeacherIds` (array of strings, optional): IDs of default sub-teachers.
-    *   `mainTeacherLabel` (string, optional): Custom label for the main teacher role (e.g., "Professor").
-    *   `subTeacherLabel` (string, optional): Custom label for the sub teacher role (e.g., "TA").
+    *   `chiefTeacherId` (string, optional): ID of the chief teacher for this course (informational, not used as default for lessons).
+    *   `assistantTeacherIds` (array of strings, optional): IDs of assistant teachers for this course (informational).
+    *   `mainTeacherLabel` (string, optional): Custom label for the chief teacher role (e.g., "Professor").
+    *   `subTeacherLabel` (string, optional): Custom label for the assistant teacher role (e.g., "TA").
 *   **Response Body**: The created or updated `Resource` object for the course.
 
 #### `DELETE /api/courses/:id`

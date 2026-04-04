@@ -21,8 +21,8 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
     startDate: string;
     endDate: string;
     mainRoomId: string;
-    defaultTeacherId: string;
-    defaultSubTeacherIds: string[];
+    chiefTeacherId: string;
+    assistantTeacherIds: string[];
     mainTeacherLabel: string;
     subTeacherLabel: string;
     subjects: { name: string; totalPeriods: number }[];
@@ -32,8 +32,8 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
     startDate: '',
     endDate: '',
     mainRoomId: '',
-    defaultTeacherId: '',
-    defaultSubTeacherIds: [],
+    chiefTeacherId: '',
+    assistantTeacherIds: [],
     mainTeacherLabel: '',
     subTeacherLabel: '',
     subjects: []
@@ -53,8 +53,8 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
           startDate: course.startDate || '',
           endDate: course.endDate || '',
           mainRoomId: course.mainRoomId || '',
-          defaultTeacherId: course.defaultTeacherId || '',
-          defaultSubTeacherIds: course.defaultSubTeacherIds || (course.defaultSubTeachers || []).map(t => t.id),
+          chiefTeacherId: course.chiefTeacherId || '',
+          assistantTeacherIds: course.assistantTeacherIds || (course.assistantTeachers || []).map(t => t.id),
           mainTeacherLabel: course.mainTeacherLabel || '',
           subTeacherLabel: course.subTeacherLabel || '',
           subjects: course.subjects?.map(s => ({ name: s.name, totalPeriods: s.totalPeriods })) || []
@@ -67,8 +67,8 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
         startDate: '',
         endDate: '',
         mainRoomId: '',
-        defaultTeacherId: '',
-        defaultSubTeacherIds: [],
+        chiefTeacherId: '',
+        assistantTeacherIds: [],
         mainTeacherLabel: '',
         subTeacherLabel: '',
         subjects: []
@@ -96,11 +96,11 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
     setFormData({ ...formData, subjects: newSubjects });
   };
 
-  const toggleSubTeacher = (id: string) => {
-    const newIds = formData.defaultSubTeacherIds.includes(id)
-      ? formData.defaultSubTeacherIds.filter(tid => tid !== id)
-      : [...formData.defaultSubTeacherIds, id];
-    setFormData({ ...formData, defaultSubTeacherIds: newIds });
+  const toggleAssistantTeacher = (id: string) => {
+    const newIds = formData.assistantTeacherIds.includes(id)
+      ? formData.assistantTeacherIds.filter(tid => tid !== id)
+      : [...formData.assistantTeacherIds, id];
+    setFormData({ ...formData, assistantTeacherIds: newIds });
   };
 
   const handleImportCSV = (e: any) => {
@@ -275,10 +275,10 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
 
             <div className="form-row">
               <div className="form-group">
-                <label>{labels.mainTeacher} ({t('Default')})</label>
+                <label>{labels.mainTeacher}</label>
                 <select 
-                  value={formData.defaultTeacherId} 
-                  onChange={(e) => setFormData({ ...formData, defaultTeacherId: e.currentTarget.value })}
+                  value={formData.chiefTeacherId} 
+                  onChange={(e) => setFormData({ ...formData, chiefTeacherId: e.currentTarget.value })}
                 >
                   <option value="">{t('Select Teacher')}</option>
                   {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -297,14 +297,14 @@ export function CourseManager({ token, backendUrl, onClose, onUpdate, resources,
 
             <div className="form-row">
               <div className="form-group">
-                <label>{labels.subTeacher} ({t('Default')})</label>
+                <label>{labels.subTeacher}</label>
                 <div className="sub-teacher-list" style={{ maxHeight: '100px' }}>
-                  {teachers.filter(t => t.id !== formData.defaultTeacherId).map(t => (
-                    <label key={t.id} className={`sub-teacher-item ${formData.defaultSubTeacherIds.includes(t.id) ? 'selected' : ''}`}>
+                  {teachers.filter(t => t.id !== formData.chiefTeacherId).map(t => (
+                    <label key={t.id} className={`sub-teacher-item ${formData.assistantTeacherIds.includes(t.id) ? 'selected' : ''}`}>
                       <input 
                         type="checkbox" 
-                        checked={formData.defaultSubTeacherIds.includes(t.id)}
-                        onChange={() => toggleSubTeacher(t.id)}
+                        checked={formData.assistantTeacherIds.includes(t.id)}
+                        onChange={() => toggleAssistantTeacher(t.id)}
                       />
                       {t.name}
                     </label>

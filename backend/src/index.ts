@@ -77,7 +77,7 @@ app.get('/api/resources', verifyToken, async (req, res) => {
     const resources = await prisma.resource.findMany({
       include: {
         subjects: true,
-        defaultSubTeachers: { select: { id: true } }
+        assistantTeachers: { select: { id: true } }
       },
       orderBy: { order: 'asc' }
     });
@@ -207,7 +207,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { id, name, order, startDate, endDate, subjects, mainRoomId, defaultTeacherId, defaultSubTeacherIds, mainTeacherLabel, subTeacherLabel } = req.body;
+  const { id, name, order, startDate, endDate, subjects, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel } = req.body;
   try {
     let course;
     const commonData = {
@@ -216,7 +216,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
       startDate,
       endDate,
       mainRoomId: mainRoomId || null,
-      defaultTeacherId: defaultTeacherId || null,
+      chiefTeacherId: chiefTeacherId || null,
       mainTeacherLabel: mainTeacherLabel || null,
       subTeacherLabel: subTeacherLabel || null,
       subjects: {
@@ -228,7 +228,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
       }
     };
 
-    const subTeachersConnect = defaultSubTeacherIds?.map((tid: string) => ({ id: tid })) || [];
+    const subTeachersConnect = assistantTeacherIds?.map((tid: string) => ({ id: tid })) || [];
 
     if (id) {
       // 更新
@@ -236,12 +236,12 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
         where: { id },
         data: {
           ...commonData,
-          defaultSubTeachers: {
+          assistantTeachers: {
             set: [],
             connect: subTeachersConnect
           }
         },
-        include: { subjects: true, defaultSubTeachers: true }
+        include: { subjects: true, assistantTeachers: true }
       });
     } else {
       // 新規作成
@@ -249,11 +249,11 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
         data: {
           ...commonData,
           type: ResourceType.course,
-          defaultSubTeachers: {
+          assistantTeachers: {
             connect: subTeachersConnect
           }
         },
-        include: { subjects: true, defaultSubTeachers: true }
+        include: { subjects: true, assistantTeachers: true }
       });
     }
     res.json(course);

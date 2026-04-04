@@ -52,17 +52,6 @@ export function LessonManager({ token, backendUrl, onClose, onUpdate, periods, r
   const mainTeacherLabel = selectedCourse?.mainTeacherLabel || labels.mainTeacher;
   const subTeacherLabel = selectedCourse?.subTeacherLabel || labels.subTeacher;
 
-  // 講座が変更された際のデフォルト教官の自動入力
-  useEffect(() => {
-    if (!formData.id && selectedCourse) {
-      setFormData(prev => ({
-        ...prev,
-        teacherId: prev.teacherId || selectedCourse.defaultTeacherId || '',
-        subTeacherIds: prev.subTeacherIds.length > 0 ? prev.subTeacherIds : (selectedCourse.defaultSubTeacherIds || (selectedCourse.defaultSubTeachers || []).map(t => t.id))
-      }));
-    }
-  }, [formData.courseId]);
-
   // 選択された講座に関連する課目と残り時限の計算
   const subjectOptions = useMemo(() => {
     const course = selectedCourse;

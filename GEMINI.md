@@ -65,7 +65,7 @@
   - 講座の編集時、講座課目（CourseSubject）は、CSV からのインポートも可能とする（name, totalPeriods の 2 列）。
   - **メイン教室の設定:** 講座ごとに「メイン教室」を設定可能。
     - 教室（Room）ビューでメイン教室の空きセルをダブルクリックした場合、その講座を初期選択した状態で授業作成ダイアログを開く。
-  - **デフォルト講師の設定:** 講座ごとに「管理講師（メイン）」と「補佐講師（サブ）」をあらかじめ指定でき、授業作成時に自動入力される。
+  - **デフォルト講師の設定:** 講座ごとに「管理講師（主任）」と「補佐講師（助手）」をあらかじめ指定できる（授業作成時のデフォルト値には使用しない）。
   - **講師呼称のカスタマイズ:** 講座ごとに講師の呼び方（例：「教授」「TA」など）を個別に設定可能（未設定時はグローバル設定を使用）。
   - 管理画面から講座の作成・修正・削除を行えるようにする。
 - **教室 (Room) 管理:**
@@ -146,8 +146,8 @@ interface Resource {
   endDate?: string;   // 講座終了日 YYYY-MM-DD
   subjects?: CourseSubject[]; // 講座に関連する課目
   mainRoomId?: string;
-  defaultTeacherId?: string;
-  defaultSubTeacherIds?: string[];
+  chiefTeacherId?: string;
+  assistantTeacherIds?: string[];
   mainTeacherLabel?: string;
   subTeacherLabel?: string;
 }

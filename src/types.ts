@@ -47,9 +47,9 @@ export interface Resource {
   endDate?: string;   // YYYY-MM-DD
   subjects?: CourseSubject[];
   mainRoomId?: string;
-  defaultTeacherId?: string;
-  defaultSubTeacherIds?: string[];
-  defaultSubTeachers?: { id: string }[];
+  chiefTeacherId?: string;
+  assistantTeacherIds?: string[];
+  assistantTeachers?: { id: string }[];
   mainTeacherLabel?: string;
   subTeacherLabel?: string;
 }
