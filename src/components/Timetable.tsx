@@ -253,44 +253,126 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
   });
 
   // --- リソース行のデータ準備 ---
-  const resourceEventItems: JSX.Element[] = [];
+  const resourceRowItems: JSX.Element[] = [];
+  
   filteredResources.forEach((res, resIdx) => {
-    const resItems: { id: string, start: number, end: number, data: ScheduleEvent }[] = [];
+    const resItems: { id: string, start: number, end: number, type: 'event' | 'lesson', data: any }[] = [];
+    
+    // このリソースに関連するイベントを収集
     events.forEach(e => {
       const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
       if (resourceIdList.includes(res.id)) {
         const eStart = startOfDay(parseISO(e.startDate));
         const eEnd = startOfDay(parseISO(e.endDate));
         if (isAfter(eStart, currentViewEnd) || isBefore(eEnd, currentViewStart)) return;
+        
         const startDayIdx = displayDates.findIndex(d => isSameDay(d, eStart));
         const endDayIdx = displayDates.findIndex(d => isSameDay(d, eEnd));
         const startPeriodIdx = periods.findIndex(p => p.id === e.startPeriodId);
         const endPeriodIdx = periods.findIndex(p => p.id === e.endPeriodId);
         const sCol = (startDayIdx === -1) ? 2 : startDayIdx * periods.length + startPeriodIdx + 2;
         const eCol = (endDayIdx === -1) ? (displayDates.length * periods.length + 1) : endDayIdx * periods.length + endPeriodIdx + 2;
-        resItems.push({ id: `event-${e.id}-${res.id}`, start: sCol, end: eCol, data: e });
+        resItems.push({ id: `event-${e.id}-${res.id}`, start: sCol, end: eCol, type: 'event', data: e });
+      }
+    });
+
+    // このリソースに関連する授業を収集
+    lessons.forEach(l => {
+      const lStart = startOfDay(parseISO(l.startDate));
+      const lEnd = startOfDay(parseISO(l.endDate));
+      if (isAfter(lStart, currentViewEnd) || isBefore(lEnd, currentViewStart)) return;
+
+      const subIds = [...(l.subTeacherIds || []), ...(l.subTeachers || []).map(t => t.id)];
+      let isTarget = false;
+      if (viewMode === 'room' && l.roomId === res.id) isTarget = true;
+      else if (viewMode === 'teacher' && (l.teacherId === res.id || subIds.includes(res.id))) isTarget = true;
+      else if (viewMode === 'course' && l.courseId === res.id) isTarget = true;
+
+      if (isTarget) {
+        const startDayIdx = displayDates.findIndex(d => isSameDay(d, lStart));
+        const endDayIdx = displayDates.findIndex(d => isSameDay(d, lEnd));
+        const startPeriodIdx = periods.findIndex(p => p.id === l.startPeriodId);
+        const endPeriodIdx = periods.findIndex(p => p.id === l.endPeriodId);
+        const sCol = (startDayIdx === -1) ? 2 : startDayIdx * periods.length + startPeriodIdx + 2;
+        const eCol = (endDayIdx === -1) ? (displayDates.length * periods.length + 1) : endDayIdx * periods.length + endPeriodIdx + 2;
+        resItems.push({ id: `lesson-${l.id}-${res.id}`, start: sCol, end: eCol, type: 'lesson', data: l });
       }
     });
 
     const layouts = calculateLayout(resItems);
     layouts.forEach(layout => {
-      const e = resItems.find(i => i.id === layout.id)!.data;
+      const item = resItems.find(i => i.id === layout.id)!;
       const unitHeight = (80 - 8) / layout.maxLevelInGroup;
       const itemHeight = unitHeight - 8;
       const top = 4 + (layout.level * unitHeight);
 
-      const startP = periods.find(p => p.id === e.startPeriodId)?.name || e.startPeriodId;
-      const endP = periods.find(p => p.id === e.endPeriodId)?.name || e.endPeriodId;
-      const tooltip = `${e.name}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}`;
+      if (item.type === 'event') {
+        const e = item.data as ScheduleEvent;
+        const startP = periods.find(p => p.id === e.startPeriodId)?.name || e.startPeriodId;
+        const endP = periods.find(p => p.id === e.endPeriodId)?.name || e.endPeriodId;
+        const tooltip = `${e.name}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}`;
 
-      resourceEventItems.push(
-        <div key={layout.id} className="event-card schedule-event-card resource-event-card"
-             title={tooltip}
-             style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: resIdx + 4, backgroundColor: e.color, top: `${top}px`, height: `${itemHeight}px`, cursor: 'pointer', position: 'relative' }}
-             onDblClick={() => onEventClick?.(e)}>
-          {e.name}
-        </div>
-      );
+        resourceRowItems.push(
+          <div key={layout.id} className="event-card schedule-event-card resource-event-card"
+               title={tooltip}
+               style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: resIdx + 4, backgroundColor: e.color, top: `${top}px`, height: `${itemHeight}px`, cursor: 'pointer', position: 'relative' }}
+               onDblClick={() => onEventClick?.(e)}>
+            {e.name}
+          </div>
+        );
+      } else {
+        const l = item.data as Lesson;
+        const infoItems = [];
+        const roomValue = l.roomId ? getResourceName(l.roomId) : (l.location || t('No room'));
+        if (viewMode !== 'room') infoItems.push({ label: labels.room, value: roomValue });
+
+        const mainTeacherName = l.teacherId ? getResourceName(l.teacherId) : t('No main teacher');
+        const subIds = [...(l.subTeacherIds || []), ...(l.subTeachers || []).map(t => t.id)];
+        const subTeacherNames = subIds.map(id => getResourceName(id));
+
+        if (viewMode !== 'teacher') {
+          if (l.teacherId) infoItems.push({ label: labels.mainTeacher, value: mainTeacherName });
+          if (subTeacherNames.length > 0) infoItems.push({ label: labels.subTeacher, value: subTeacherNames.join(', ') });
+        } else {
+          if (l.teacherId) infoItems.push({ label: labels.mainTeacher, value: mainTeacherName });
+          if (subTeacherNames.length > 0) infoItems.push({ label: labels.subTeacher, value: subTeacherNames.join(', ') });
+        }
+        if (viewMode !== 'course') infoItems.push({ label: labels.course, value: getResourceName(l.courseId) });
+
+        const translatedSubject = t(l.subject);
+        const tooltipText = `${translatedSubject}\n` + 
+                           (l.location ? `${t('Location')}: ${l.location}\n` : '') +
+                           infoItems.map(item => `${item.label}: ${item.value}`).join('\n');
+
+        resourceRowItems.push(
+          <div 
+            key={layout.id} 
+            className={`lesson-card ${!l.teacherId ? 'no-main-teacher' : ''}`}
+            style={{
+              gridColumn: `${layout.start} / ${layout.end + 1}`,
+              gridRow: resIdx + 4,
+              cursor: 'pointer',
+              backgroundColor: !l.teacherId ? '#e884fa' : undefined,
+              top: `${top}px`,
+              height: `${itemHeight}px`,
+              position: 'relative'
+            }}
+            title={tooltipText}
+            onDblClick={() => onLessonClick?.(l)}
+          >
+            <div className="lesson-subject">{translatedSubject}</div>
+            {layout.maxLevelInGroup === 1 && (
+              <div className="lesson-details">
+                {infoItems.map((item, idx) => (
+                  <div key={idx} className="lesson-info">
+                    {item.label}: {item.value}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }
     });
   });
 
@@ -299,94 +381,6 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
       {t(r.name)}
     </div>
   ));
-
-  const lessonItems = lessons.flatMap(l => {
-    const lStart = startOfDay(parseISO(l.startDate));
-    const lEnd = startOfDay(parseISO(l.endDate));
-    if (isAfter(lStart, currentViewEnd) || isBefore(lEnd, currentViewStart)) return [];
-
-    const startDayIdx = displayDates.findIndex(d => isSameDay(d, lStart));
-    const endDayIdx = displayDates.findIndex(d => isSameDay(d, lEnd));
-    const startPeriodIdx = periods.findIndex(p => p.id === l.startPeriodId);
-    const endPeriodIdx = periods.findIndex(p => p.id === l.endPeriodId);
-    const sCol = (startDayIdx === -1) ? 2 : startDayIdx * periods.length + startPeriodIdx + 2;
-    const eCol = (endDayIdx === -1) ? (displayDates.length * periods.length + 1) : endDayIdx * periods.length + endPeriodIdx + 2;
-    const span = eCol - sCol + 1;
-    const subIds = [
-      ...(l.subTeacherIds || []),
-      ...(l.subTeachers || []).map(t => t.id)
-    ];
-    // 関連するリソースIDを特定
-    let targetResIds: string[] = [];
-    if (viewMode === 'room' && l.roomId) targetResIds = [l.roomId];
-    else if (viewMode === 'teacher') {
-      const allTeacherIds = [];
-      if (l.teacherId) allTeacherIds.push(l.teacherId);
-      if (subIds.length > 0) allTeacherIds.push(...subIds);
-      targetResIds = allTeacherIds;
-    }
-    else if (viewMode === 'course') targetResIds = [l.courseId];
-
-    return targetResIds.map(resId => {
-      const resourceIdx = filteredResources.findIndex(r => r.id === resId);
-      if (resourceIdx === -1) return null;
-      const infoItems = [];
-
-      const currentCourse = resources.find(c => c.id === l.courseId);
-      const mainTeacherLabel = labels.mainTeacher;
-      const subTeacherLabel = labels.subTeacher;
-
-      const roomValue = l.roomId ? getResourceName(l.roomId) : (l.location || t('No room'));
-      if (viewMode !== 'room') infoItems.push({ label: labels.room, value: roomValue });
-
-      const mainTeacherName = l.teacherId ? getResourceName(l.teacherId) : t('No main teacher');
-      const subIds = [
-        ...(l.subTeacherIds || []),
-        ...(l.subTeachers || []).map(t => t.id)
-      ];
-      const subTeacherNames = subIds.map(id => getResourceName(id));
-
-      if (viewMode !== 'teacher') {
-        if (l.teacherId) infoItems.push({ label: mainTeacherLabel, value: mainTeacherName });
-        if (subTeacherNames.length > 0) infoItems.push({ label: subTeacherLabel, value: subTeacherNames.join(', ') });
-      } else {
-        // 講師ビューの場合は、全講師（自分含む）を併記するがラベルはどうするか？
-        // 講師ビューではシンプルに「講師」ラベルまたは個別の役割を表示
-        if (l.teacherId) infoItems.push({ label: mainTeacherLabel, value: mainTeacherName });
-        if (subTeacherNames.length > 0) infoItems.push({ label: subTeacherLabel, value: subTeacherNames.join(', ') });
-      }
-      if (viewMode !== 'course') infoItems.push({ label: labels.course, value: getResourceName(l.courseId) });
-
-      const translatedSubject = t(l.subject);
-      const tooltipText = `${translatedSubject}\n` + 
-                         (l.location ? `${t('Location')}: ${l.location}\n` : '') +
-                         infoItems.map(item => `${item.label}: ${item.value}`).join('\n');
-
-      return (
-        <div 
-          key={`lesson-${l.id}-${resId}`} 
-          className={`lesson-card ${!l.teacherId ? 'no-main-teacher' : ''}`}
-          style={{
-            gridColumn: `${sCol} / span ${span}`,
-            gridRow: resourceIdx + 4,
-            cursor: 'pointer',
-            backgroundColor: !l.teacherId ? '#e884fa' : undefined 
-          }}
-          title={tooltipText}
-          onDblClick={() => onLessonClick?.(l)}
-        >
-          <div className="lesson-subject">{translatedSubject}</div>
-          <div className="lesson-details">
-            {infoItems.map((item, idx) => (
-              <div key={idx} className="lesson-info">
-                {item.label}: {item.value}
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }).filter(Boolean);
-  });
 
   const wrapperStyle = {
     overflowX: isDayView ? 'hidden' : 'auto'
@@ -425,9 +419,8 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
         {/* レベル別の配置を確保 */}
         {holidayItems}
         {globalEventItems}
-        {resourceEventItems}
+        {resourceRowItems}
         {resourceLabels}
-        {lessonItems}
       </div>
     </div>
   );

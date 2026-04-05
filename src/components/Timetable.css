@@ -133,6 +133,7 @@
   position: sticky;
   top: 72px; /* 70 + 2 (margin) */
   font-weight: bold;
+  box-sizing: border-box;
 }
 
 .holiday-card {
@@ -148,11 +149,10 @@
 
 .resource-event-card {
   position: relative !important;
-  top: 0 !important;
+  top: auto !important;
   z-index: 2 !important;
-  margin: 4px !important;
+  margin: 2px 4px !important;
   height: auto !important;
-  min-height: 20px;
 }
 
 /* リソースラベル (z-index: 25) */
@@ -192,9 +192,9 @@
 .lesson-card {
   background-color: #646cff;
   color: white;
-  margin: 4px;
-  padding: 4px;
-  border-radius: 4px;
+  margin: 2px 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -204,6 +204,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .lesson-card.no-main-teacher {
