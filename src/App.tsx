@@ -11,6 +11,9 @@ import { TeacherManager } from './components/TeacherManager';
 import { EventManager } from './components/EventManager';
 import { LessonManager } from './components/LessonManager';
 import { HolidayManager } from './components/HolidayManager';
+import { UserManager } from './components/UserManager';
+import { ProfileManager } from './components/ProfileManager';
+import { SystemSettingManager } from './components/SystemSettingManager';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod } from './types';
 import { format, addDays, getYear, getMonth, parseISO } from 'date-fns';
 
@@ -32,6 +35,9 @@ export function App() {
   const showEventManager = useSignal<boolean>(false);
   const showLessonManager = useSignal<boolean>(false);
   const showHolidayManager = useSignal<boolean>(false);
+  const showUserManager = useSignal<boolean>(false);
+  const showProfileManager = useSignal<boolean>(false);
+  const showSystemSettingManager = useSignal<boolean>(false);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const showSettingsDropdown = useSignal<boolean>(false);
@@ -171,7 +177,7 @@ export function App() {
   }
 
   if (!user.value) {
-    return <Login onLogin={handleLogin} error={authError.value} />;
+    return <Login onLogin={handleLogin} error={authError.value} backendUrl={BACKEND_URL} />;
   }
 
   const moveDate = (amount: number) => {
@@ -267,10 +273,31 @@ export function App() {
                       >
                         {t('Manage Holidays')}
                       </button>
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
+                          showUserManager.value = true;
+                          showSettingsDropdown.value = false;
+                        }}
+                      >
+                        {t('Manage Users')}
+                      </button>
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
+                          showSystemSettingManager.value = true;
+                          showSettingsDropdown.value = false;
+                        }}
+                      >
+                        {t('System Settings')}
+                      </button>
                     </div>
                   )}
                 </div>
               )}
+              <button className="profile-button" onClick={() => showProfileManager.value = true}>
+                {t('My Profile')}
+              </button>
               <span className="user-email">{user.value.email} ({user.value.role})</span>
               <button className="logout-button" onClick={handleLogout}>{t('Sign Out')}</button>
             </div>
@@ -471,6 +498,29 @@ export function App() {
           onUpdate={fetchData}
           holidays={holidays.value}
           initialYear={getYear(currentDate.value)}
+        />
+      )}
+
+      {showUserManager.value && user.value && (
+        <UserManager 
+          backendUrl={BACKEND_URL} 
+          onClose={() => showUserManager.value = false}
+          currentUser={user.value}
+        />
+      )}
+
+      {showProfileManager.value && user.value && (
+        <ProfileManager 
+          backendUrl={BACKEND_URL} 
+          onClose={() => showProfileManager.value = false}
+          user={user.value}
+        />
+      )}
+
+      {showSystemSettingManager.value && (
+        <SystemSettingManager 
+          backendUrl={BACKEND_URL} 
+          onClose={() => showSystemSettingManager.value = false}
         />
       )}
     </div>

@@ -1,0 +1,79 @@
+.profile-manager-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.profile-manager-box {
+  background-color: #242424;
+  color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 450px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.profile-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.profile-manager-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.profile-manager-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.user-info-section {
+  background-color: #1a1a1a;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.user-info-section p {
+  margin: 5px 0;
+  font-size: 0.95rem;
+}
+
+.password-change-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  color: #646cff;
+}
+
+.profile-manager-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #444;
+  padding-top: 15px;
+}
+
+@media (prefers-color-scheme: light) {
+  .profile-manager-box { background-color: #fff; color: #333; }
+  .user-info-section { background-color: #f5f5f5; }
+  .profile-manager-header, .profile-manager-footer { border-color: #eee; }
+  .password-change-section h3 { color: #646cff; }
+}

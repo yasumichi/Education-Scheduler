@@ -33,6 +33,11 @@ app.use(cookieParser());
 app.post('/api/auth/register', async (req, res) => {
   const { email, password, role } = req.body;
   try {
+    const settings = await prisma.systemSetting.findFirst();
+    if (settings && !settings.allowPublicSignup) {
+      return res.status(403).json({ error: 'Public signup is disabled' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
@@ -44,6 +49,29 @@ app.post('/api/auth/register', async (req, res) => {
     res.json({ message: 'User created successfully', userId: user.id });
   } catch (error) {
     res.status(400).json({ error: 'User already exists or invalid data' });
+  }
+});
+
+// パスワード変更 (自分自身)
+app.post('/api/auth/change-password', verifyToken, async (req: AuthRequest, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) return res.status(400).json({ error: 'Invalid current password' });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to change password' });
   }
 });
 
@@ -131,6 +159,113 @@ app.get('/api/users', verifyToken, async (req: AuthRequest, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// ユーザー作成・更新 (ADMIN権限)
+app.post('/api/users', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id, email, password, role } = req.body;
+  try {
+    let user;
+    if (id) {
+      // 更新
+      const data: any = { email, role };
+      if (password) {
+        data.password = await bcrypt.hash(password, 10);
+      }
+      user = await prisma.user.update({
+        where: { id },
+        data,
+        select: { id: true, email: true, role: true }
+      });
+    } else {
+      // 新規作成
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user = await prisma.user.create({
+        data: { email, password: hashedPassword, role },
+        select: { id: true, email: true, role: true }
+      });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save user' });
+  }
+});
+
+// ユーザー削除 (ADMIN権限)
+app.delete('/api/users/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id } = req.params;
+  try {
+    // 自分自身は削除できないようにする
+    if (req.user.id === id) {
+      return res.status(400).json({ error: 'Cannot delete yourself' });
+    }
+    await prisma.user.delete({ where: { id } });
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// 管理者によるパスワードリセット (ADMIN権限)
+app.post('/api/users/:id/reset-password', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id } = req.params;
+  const { newPassword } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword }
+    });
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// システム設定取得
+app.get('/api/settings', async (req, res) => {
+  try {
+    let settings = await prisma.systemSetting.findFirst();
+    if (!settings) {
+      settings = await prisma.systemSetting.create({ data: { allowPublicSignup: true } });
+    }
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+// システム設定更新 (ADMIN権限)
+app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { allowPublicSignup } = req.body;
+  try {
+    let settings = await prisma.systemSetting.findFirst();
+    if (settings) {
+      settings = await prisma.systemSetting.update({
+        where: { id: settings.id },
+        data: { allowPublicSignup }
+      });
+    } else {
+      settings = await prisma.systemSetting.create({
+        data: { allowPublicSignup }
+      });
+    }
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save settings' });
   }
 });
 

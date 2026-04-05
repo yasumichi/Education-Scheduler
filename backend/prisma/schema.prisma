@@ -111,6 +111,11 @@ model ResourceLabel {
   mainRoom    String @default("Main Room")
 }
 
+model SystemSetting {
+  id                 String  @id @default(uuid())
+  allowPublicSignup  Boolean @default(true)
+}
+
 enum ResourceType {
   room
   teacher

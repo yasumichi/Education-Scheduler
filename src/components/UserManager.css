@@ -1,0 +1,220 @@
+.user-manager-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.user-manager-box {
+  background-color: #242424;
+  color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.user-manager-box.larger {
+  max-width: 800px;
+  width: 95%;
+}
+
+.user-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.user-manager-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.user-manager-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.user-list-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 15px;
+}
+
+.search-input {
+  flex: 1;
+  background-color: #333;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.user-table-container {
+  overflow-x: auto;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 500px;
+}
+
+.user-table th, .user-table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid #444;
+}
+
+.user-table th {
+  background-color: #1a1a1a;
+  color: #aaa;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  background-color: #4b5563;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.action-btn:hover {
+  background-color: #374151;
+}
+
+.action-btn.delete-btn {
+  background-color: #7f1d1d;
+  color: #fca5a5;
+  border: 1px solid #991b1b;
+}
+
+.action-btn.delete-btn:hover {
+  background-color: #991b1b;
+}
+
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.user-form h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 5px;
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  background-color: #333;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 8px;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.user-manager-footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #444;
+  padding-top: 15px;
+}
+
+.footer-right {
+  display: flex;
+  gap: 10px;
+}
+
+.save-button {
+  background-color: #646cff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: transparent;
+  color: #ccc;
+  border: 1px solid #555;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-button {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+@media (prefers-color-scheme: light) {
+  .user-manager-box { background-color: #fff; color: #333; }
+  .search-input { background-color: #f5f5f5; border-color: #ccc; color: #333; }
+  .user-table th { background-color: #f9f9f9; color: #666; }
+  .user-table td { border-bottom-color: #eee; }
+  .action-btn { background-color: #e5e7eb; color: #374151; }
+  .action-btn:hover { background-color: #d1d5db; }
+  .action-btn.delete-btn { background-color: #fee2e2; color: #dc2626; border-color: #fecaca; }
+  .action-btn.delete-btn:hover { background-color: #fecaca; }
+  .user-manager-header, .user-manager-footer { border-color: #eee; }
+  .user-form h3 { border-bottom-color: #eee; }
+  .form-group input, .form-group select { background-color: #f5f5f5; border-color: #ccc; color: #333; }
+  .cancel-button { color: #666; border-color: #ccc; }
+  .close-button { color: #666; }
+}

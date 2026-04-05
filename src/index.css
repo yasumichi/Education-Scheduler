@@ -52,7 +52,7 @@ h1 {
   position: relative;
 }
 
-.settings-button, .logout-button {
+.settings-button, .logout-button, .profile-button {
   background-color: transparent;
   border: 1px solid #444;
   color: #ccc;
@@ -63,7 +63,7 @@ h1 {
   transition: all 0.2s;
 }
 
-.settings-button:hover, .logout-button:hover {
+.settings-button:hover, .logout-button:hover, .profile-button:hover {
   background-color: #333;
   border-color: #666;
   color: #fff;
@@ -106,6 +106,6 @@ h1 {
     background-color: #ffffff;
   }
   .user-email { color: #666; }
-  .logout-button { border-color: #ccc; color: #666; }
-  .logout-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
+  .logout-button, .profile-button { border-color: #ccc; color: #666; }
+  .logout-button:hover, .profile-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
 }

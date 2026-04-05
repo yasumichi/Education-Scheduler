@@ -19,6 +19,7 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.timePeriod.deleteMany();
   await prisma.resourceLabel.deleteMany();
+  await prisma.systemSetting.deleteMany();
 
   console.log('Clearing database...');
 
@@ -84,6 +85,14 @@ async function main() {
   });
 
   console.log('Seeding resource labels...');
+
+  await prisma.systemSetting.create({
+    data: {
+      allowPublicSignup: true
+    }
+  });
+
+  console.log('Seeding system settings...');
 
   // リソースの生成
   // Rooms
