@@ -1,6 +1,6 @@
 # API Documentation
 
-This document outlines the available backend API endpoints for the Education Scheduler.
+This document outlines the available backend API endpoints for ScholaTile.
 
 ## Base URL
 

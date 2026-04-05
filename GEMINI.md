@@ -1,4 +1,4 @@
-# Education Scheduler (Resource Scheduler)
+# ScholaTile
 
 教育施設のリソース（教室・講師・講座）管理に特化したカレンダーサービス。
 

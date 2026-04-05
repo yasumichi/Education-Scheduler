@@ -128,7 +128,7 @@ app.get('/api/auth/me', verifyToken, async (req: AuthRequest, res) => {
 
 // 基本的なヘルスチェック
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'EduGrid Scheduler Backend is running' });
+  res.json({ status: 'ok', message: 'ScholaTile Backend is running' });
 });
 
 // リソース一覧取得 (認証必須)

@@ -206,7 +206,7 @@ export function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-top">
-          <h1>EduGrid Scheduler</h1>
+          <h1>ScholaTile</h1>
           {user.value && (
             <div className="user-info">
               {user.value.role === 'ADMIN' && (

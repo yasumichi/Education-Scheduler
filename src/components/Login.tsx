@@ -70,7 +70,7 @@ export function Login({ onLogin, error: loginError, backendUrl }: Props) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h2>EduGrid Scheduler</h2>
+        <h2>ScholaTile</h2>
         <p>{isSignup ? t('Create your account') : t('Please sign in to continue')}</p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">

@@ -1,4 +1,4 @@
-# Education Scheduler デプロイガイド
+# ScholaTile デプロイガイド
 
 新規環境に本プロジェクトをセットアップし、実行するための手順です。
 
