@@ -623,10 +623,10 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 行事の削除 (ADMIN権限)
+// 行事の削除 (ADMIN/TEACHER権限)
 app.delete('/api/events/:id', verifyToken, async (req: AuthRequest, res) => {
-  if (req.user?.role !== UserRole.ADMIN) {
-    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.TEACHER) {
+    return res.status(403).json({ error: 'Access denied. Admin or Teacher role required.' });
   }
   const { id } = req.params;
   try {
