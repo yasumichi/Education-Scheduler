@@ -68,8 +68,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const courses = resources.filter(r => r.type === 'course');
 
   const selectedCourse = useMemo(() => courses.find(c => c.id === formData.courseId), [formData.courseId, courses]);
-  const mainTeacherLabel = selectedCourse?.mainTeacherLabel || labels.mainTeacher;
-  const subTeacherLabel = selectedCourse?.subTeacherLabel || labels.subTeacher;
+  const mainTeacherLabel = labels.mainTeacher;
+  const subTeacherLabel = labels.subTeacher;
 
   const canManage = useMemo(() => {
     if (user.role === 'ADMIN') return true;
@@ -269,7 +269,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
         <div className="lesson-manager-content">
           <div className="form-group">
-            <label>{t('Course')} *</label>
+            <label>{labels.course} *</label>
             <select 
               value={formData.courseId} 
               onChange={(e) => setFormData({ ...formData, courseId: e.currentTarget.value, subject: '' })}
