@@ -375,19 +375,10 @@ export function App() {
             />
             <button onClick={() => moveDate(1)}>{t('Next')}</button>
           </div>
-
-          <label className="holiday-toggle">
-            <input 
-              type="checkbox" 
-              checked={isHolidayMode.value} 
-              onChange={(e) => isHolidayMode.value = e.currentTarget.checked} 
-            />
-            {t('Holiday Theme')}
-          </label>
         </div>
       </header>
 
-      <div className={`timetable-view ${isHolidayMode.value ? 'holiday-theme' : ''}`}>
+      <div className={`timetable-view`}>
         <Timetable 
           periods={periods.value}
           resources={resources.value}
