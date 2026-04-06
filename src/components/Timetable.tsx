@@ -345,7 +345,7 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
         const methodNames = (l.deliveryMethods || []).map(m => m.name).join(', ');
         const tooltipText = `${translatedSubject}\n` + 
                            (l.location ? `${t('Location')}: ${l.location}\n` : '') +
-                           (methodNames ? `${t('Delivery Methods')}: ${methodNames}\n` : '') +
+                           (methodNames ? `${labels.deliveryMethod}: ${methodNames}\n` : '') +
                            infoItems.map(item => `${item.label}: ${item.value}`).join('\n');
 
         resourceRowItems.push(
