@@ -364,16 +364,14 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
             title={tooltipText}
             onDblClick={() => onLessonClick?.(l)}
           >
-            <div className="lesson-subject">{translatedSubject}</div>
+            <div className="lesson-subject"><div className="lesson-delivery-methods">{translatedSubject}
             {l.deliveryMethods && l.deliveryMethods.length > 0 && (
-              <div className="lesson-delivery-methods">
-                {l.deliveryMethods.map(m => (
+                l.deliveryMethods.map(m => (
                   <span key={m.id} className="delivery-method-tag" style={{ backgroundColor: m.color || '#646cff' }}>
                     {m.name}
                   </span>
-                ))}
-              </div>
-            )}
+                ))
+            )}</div></div>
             {layout.maxLevelInGroup === 1 && (
               <div className="lesson-details">
                 {infoItems.map((item, idx) => (
