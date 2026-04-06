@@ -298,11 +298,7 @@ const resources = {
       "Don't have an account?": "アカウントをお持ちでない場合",
       "Already have an account?": "既にアカウントをお持ちの場合",
       "Signup failed": "サインアップに失敗しました",
-      "Please fill in all required fields": "必須項目をすべて入力してください",
-      "Evacuation Drill": "全館避難訓練",
-      "Business Trip": "出張（学会参加）",
-      "Open Research Lesson": "研究授業（公開）",
-      "School Cleaning": "校内清掃"
+      "Please fill in all required fields": "必須項目をすべて入力してください"
     }
   }
 };
