@@ -36,20 +36,25 @@
 - **表示ラベルの動的変更:** リソース名や「メイン講師」等のラベルをDBで一括管理・変更可能。
 - **講師とユーザーの紐付け:** 講師リソースを特定のシステムユーザーと 1:1 で紐付け可能。
 - **講座の詳細管理:** 開始/終了年月日、メイン教室、管理講師（主任・補佐）、および関連する課目（Subject）と合計時限数を管理。
+- **授業方式（Delivery Method）:** 対面、オンライン、オンデマンド等の方式を定義し、各授業に複数割り当て可能。
 
 ### Administration (管理機能)
-- **CRUD 画面:** 時限、教室、講師、講座、授業、行事、祝日、ユーザー、システム設定の各管理画面。
+- **CRUD 画面:** 時限、教室、講師、講座、授業、行事、祝日、授業方式、ユーザー、システム設定の各管理画面。
 - **インポート機能:** 
   - 祝日: Nager.Date API または JSON ファイルからインポート。
   - 講座課目: CSV からの一括インポート。
-- **ユーザー管理:** ロール（ADMIN, TEACHER, STUDENT）による RBAC。サインアップの許可設定、パスワードリセット機能。
+- **ユーザー管理 & 権限:** 
+  - ロール（ADMIN, TEACHER, STUDENT）による RBAC。
+  - **講師の授業管理:** 講師は、自身が「主任講師」または「副主任講師」として割り当てられている講座の授業のみ、追加・編集・削除が可能。
+  - 管理者は全リソースのフルアクセス権限を保持。
 
 ### UI/UX & Layout (レイアウト)
 - **Sticky レイアウト:** ヘッダー（日付・時限・イベント）およびサイドバー（リソース列）を完全固定。
 - **ビューごとの列幅制御:** 
   - 1日ビュー: `1fr` (等分割、水平スクロールなし)
   - 週間・月間・年間ビュー: `50px` 固定 (水平スクロールあり)
-- **視覚的強調:** 土日祝日の配色変更、メイン講師不在時の授業背景色変更 (#e884fa)、現在の表示モードのハイライト。
+- **視覚的強調:** 土日祝日の配色変更、メイン講師不在時の授業背景色変更 (#e884fa)、授業方式タグの表示、現在の表示モードのハイライト。
+- **フォームの利便性:** 複数選択リスト（講師、教室、方式）では、選択済みの項目をリストの先頭に自動で並び替え。
 
 ---
 
@@ -89,8 +94,9 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 
 ### Main Entities
 - **Resource:** `id, name, type, order, userId, startDate, endDate, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel`
-- **Lesson:** `id, subject, startDate, startPeriodId, endDate, endPeriodId, roomId, teacherId, courseId, location, subTeacherIds`
-- **ScheduleEvent:** `id, name, startDate, startPeriodId, endDate, endPeriodId, color, showInEventRow, resourceIds`
+- **Lesson:** `id, subject, startDate, startPeriodId, endDate, endPeriodId, roomId, teacherId, courseId, location, subTeacherIds, deliveryMethodIds`
+- **ScheduleEvent:** `id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, showInEventRow, resourceIds`
+- **DeliveryMethod:** `id, name, color, order`
 - **TimePeriod:** `id, name, startTime, endTime, order` (IDは `p1`, `p2` ... 形式を維持)
 - **Holiday:** `id, name, date, start, end`
 - **ResourceLabels:** `room, teacher, course, event, mainTeacher, subTeacher, mainRoom`
@@ -103,10 +109,11 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 - [x] Preact + Signals + CSS Grid によるマルチビュー・Sticky レイアウト
 - [x] Node.js + Prisma + PostgreSQL バックエンド & JWT 認証 (HttpOnly Cookie)
 - [x] 国際化 (i18n) 完全実装 (日・英対応)
-- [x] 全リソースの CRUD 管理画面 (時限, 教室, 講師, 講座, 授業, 行事, 祝日, ユーザー)
+- [x] 全リソースの CRUD 管理画面 (時限, 教室, 講師, 講座, 授業, 行事, 祝日, 授業方式, ユーザー)
 - [x] イベント行・リソース行の重なり自動回避ロジック
 - [x] 祝日・課目データのインポート機能
 - [x] システム設定管理 (パブリックサインアップ等)
+- [x] 講座担当講師による限定的な授業管理権限（RBACの拡張）
 
 ### Upcoming Tasks (Next Steps)
 - [ ] ドラッグ＆ドロップによる授業の移動・編集機能
