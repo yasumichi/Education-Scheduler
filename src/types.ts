@@ -29,6 +29,7 @@ export interface ResourceLabels {
   mainTeacher: string;
   subTeacher: string;
   mainRoom: string;
+  deliveryMethod: string;
 }
 
 export interface CourseSubject {

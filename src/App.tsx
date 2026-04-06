@@ -60,7 +60,8 @@ export function App() {
     event: '',
     mainTeacher: '',
     subTeacher: '',
-    mainRoom: ''
+    mainRoom: '',
+    deliveryMethod: ''
   });
 
   // 初期化時に /auth/me でセッション復元
@@ -282,7 +283,7 @@ export function App() {
                           showSettingsDropdown.value = false;
                         }}
                       >
-                        {t('Manage Delivery Methods')}
+                        {t('Manage {{resource}}', { resource: resourceLabels.value.deliveryMethod })}
                       </button>
                       <button 
                         className="dropdown-item" 

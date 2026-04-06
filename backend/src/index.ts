@@ -913,6 +913,9 @@ app.post('/api/periods', verifyToken, async (req: AuthRequest, res) => {
 app.get('/api/labels', verifyToken, async (req, res) => {
   try {
     const label = await prisma.resourceLabel.findFirst();
+    if (label && !label.deliveryMethod) {
+      (label as any).deliveryMethod = "Delivery Method";
+    }
     res.json(label);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch resource labels' });

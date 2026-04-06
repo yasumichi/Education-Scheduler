@@ -397,7 +397,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           </div>
 
           <div className="form-group">
-            <label>{t('Delivery Methods')}</label>
+            <label>{labels.deliveryMethod}</label>
             <div className="delivery-method-list">
               {(() => {
                 const selected = deliveryMethods.filter(m => formData.deliveryMethodIds.includes(m.id));

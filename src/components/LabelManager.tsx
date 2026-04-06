@@ -98,11 +98,19 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>{t('Main Room')}</label>
+            <label>Main Room</label>
             <input 
               type="text" 
               value={labels.mainRoom} 
               onInput={(e) => handleChange('mainRoom', e.currentTarget.value)}
+            />
+          </div>
+          <div className="period-field" style={{ marginBottom: '15px' }}>
+            <label>Delivery Method</label>
+            <input 
+              type="text" 
+              value={labels.deliveryMethod} 
+              onInput={(e) => handleChange('deliveryMethod', e.currentTarget.value)}
             />
           </div>
         </div>

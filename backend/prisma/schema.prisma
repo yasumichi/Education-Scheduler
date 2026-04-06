@@ -111,14 +111,15 @@ model TimePeriod {
 }
 
 model ResourceLabel {
-  id          String @id @default(uuid())
-  room        String @default("Room")
-  teacher     String @default("Teacher")
-  course      String @default("Course")
-  event       String @default("Event")
-  mainTeacher String @default("Main Teacher")
-  subTeacher  String @default("Sub Teacher")
-  mainRoom    String @default("Main Room")
+  id             String @id @default(uuid())
+  room           String @default("Room")
+  teacher        String @default("Teacher")
+  course         String @default("Course")
+  event          String @default("Event")
+  mainTeacher    String @default("Main Teacher")
+  subTeacher     String @default("Sub Teacher")
+  mainRoom       String @default("Main Room")
+  deliveryMethod String @default("Delivery Method")
 }
 
 model SystemSetting {
