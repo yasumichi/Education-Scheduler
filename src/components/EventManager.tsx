@@ -97,7 +97,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
   return (
     <div className="event-manager-overlay">
       <div className="event-manager-box">
-        <div className="event-manager-header">
+        <div className="dialog-header">
           <h2>{formData.id ? t('Edit Event') : t('Create Event')}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
@@ -234,7 +234,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
           </div>
         </div>
 
-        <div className="event-manager-footer">
+        <div className="dialog-footer">
           {formData.id && (
             <button className="delete-button" onClick={handleDelete}>{t('Delete')}</button>
           )}

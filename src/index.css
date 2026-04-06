@@ -100,6 +100,31 @@ h1 {
   color: #fff;
 }
 
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.dialog-header h2 {
+  margin: 0;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #444;
+  padding-top: 15px;
+}
+
+.footer-right {
+  display: flex;
+  gap: 10px;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -109,4 +134,5 @@ h1 {
   .logout-button, .profile-button { border-color: #ccc; color: #666; }
   .settings-button:hover,.logout-button:hover, .profile-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
   .settings-button, .logout-button, .profile-button { color: black; }
+  .dialog-header, .dialog-footer { border-color: #eee; }
 }

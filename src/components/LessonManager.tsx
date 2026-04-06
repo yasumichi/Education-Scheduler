@@ -259,7 +259,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   return (
     <div className="lesson-manager-overlay">
       <div className="lesson-manager-box">
-        <div className="lesson-manager-header">
+        <div className="dialog-header">
           <h2>
             {formData.id ? t('Edit Lesson') : t('Create Lesson')}
             {!canManage && <span className="readonly-badge"> ({t('Read-only')})</span>}
@@ -420,7 +420,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           </div>
         </div>
 
-        <div className="lesson-manager-footer">
+        <div className="dialog-footer">
           {formData.id && (
             <button className="delete-button" onClick={handleDelete} disabled={!canManage}>{t('Delete')}</button>
           )}
