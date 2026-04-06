@@ -192,16 +192,20 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
               <div className="resource-section">
                 <div className="resource-section-title">{labels.teacher || t('Teacher')}</div>
                 <div className="resource-selector-list">
-                  {teacherResources.map(r => (
-                    <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
-                      <input 
-                        type="checkbox" 
-                        checked={formData.resourceIds.includes(r.id)}
-                        onChange={() => handleResourceToggle(r.id)}
-                      />
-                      {r.name}
-                    </label>
-                  ))}
+                  {(() => {
+                    const selected = teacherResources.filter(r => formData.resourceIds.includes(r.id));
+                    const unselected = teacherResources.filter(r => !formData.resourceIds.includes(r.id));
+                    return [...selected, ...unselected].map(r => (
+                      <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
+                        <input 
+                          type="checkbox" 
+                          checked={formData.resourceIds.includes(r.id)}
+                          onChange={() => handleResourceToggle(r.id)}
+                        />
+                        {r.name}
+                      </label>
+                    ));
+                  })()}
                 </div>
               </div>
             )}
@@ -210,16 +214,20 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
               <div className="resource-section">
                 <div className="resource-section-title">{labels.room || t('Room')}</div>
                 <div className="resource-selector-list">
-                  {roomResources.map(r => (
-                    <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
-                      <input 
-                        type="checkbox" 
-                        checked={formData.resourceIds.includes(r.id)}
-                        onChange={() => handleResourceToggle(r.id)}
-                      />
-                      {r.name}
-                    </label>
-                  ))}
+                  {(() => {
+                    const selected = roomResources.filter(r => formData.resourceIds.includes(r.id));
+                    const unselected = roomResources.filter(r => !formData.resourceIds.includes(r.id));
+                    return [...selected, ...unselected].map(r => (
+                      <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
+                        <input 
+                          type="checkbox" 
+                          checked={formData.resourceIds.includes(r.id)}
+                          onChange={() => handleResourceToggle(r.id)}
+                        />
+                        {r.name}
+                      </label>
+                    ));
+                  })()}
                 </div>
               </div>
             )}

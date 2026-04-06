@@ -378,32 +378,41 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           <div className="form-group">
             <label>{subTeacherLabel}</label>
             <div className="sub-teacher-list">
-              {teachers.filter(t => t.id !== formData.teacherId).map(t => (
-                <label key={t.id} className={`sub-teacher-item ${formData.subTeacherIds.includes(t.id) ? 'selected' : ''}`}>
-                  <input 
-                    type="checkbox" 
-                    checked={formData.subTeacherIds.includes(t.id)}
-                    onChange={() => toggleSubTeacher(t.id)}
-                  />
-                  {t.name}
-                </label>
-              ))}
+              {(() => {
+                const list = teachers.filter(t => t.id !== formData.teacherId);
+                const selected = list.filter(t => formData.subTeacherIds.includes(t.id));
+                const unselected = list.filter(t => !formData.subTeacherIds.includes(t.id));
+                return [...selected, ...unselected].map(t => (
+                  <label key={t.id} className={`sub-teacher-item ${formData.subTeacherIds.includes(t.id) ? 'selected' : ''}`}>
+                    <input 
+                      type="checkbox" 
+                      checked={formData.subTeacherIds.includes(t.id)}
+                      onChange={() => toggleSubTeacher(t.id)}
+                    />
+                    {t.name}
+                  </label>
+                ));
+              })()}
             </div>
           </div>
 
           <div className="form-group">
             <label>{t('Delivery Methods')}</label>
             <div className="delivery-method-list">
-              {deliveryMethods.map(m => (
-                <label key={m.id} className={`delivery-method-item ${formData.deliveryMethodIds.includes(m.id) ? 'selected' : ''}`}>
-                  <input 
-                    type="checkbox" 
-                    checked={formData.deliveryMethodIds.includes(m.id)}
-                    onChange={() => toggleDeliveryMethod(m.id)}
-                  />
-                  {m.name}
-                </label>
-              ))}
+              {(() => {
+                const selected = deliveryMethods.filter(m => formData.deliveryMethodIds.includes(m.id));
+                const unselected = deliveryMethods.filter(m => !formData.deliveryMethodIds.includes(m.id));
+                return [...selected, ...unselected].map(m => (
+                  <label key={m.id} className={`delivery-method-item ${formData.deliveryMethodIds.includes(m.id) ? 'selected' : ''}`}>
+                    <input 
+                      type="checkbox" 
+                      checked={formData.deliveryMethodIds.includes(m.id)}
+                      onChange={() => toggleDeliveryMethod(m.id)}
+                    />
+                    {m.name}
+                  </label>
+                ));
+              })()}
               {deliveryMethods.length === 0 && (
                 <span className="empty-info">{t('No methods defined')}</span>
               )}
