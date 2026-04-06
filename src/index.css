@@ -107,5 +107,6 @@ h1 {
   }
   .user-email { color: #666; }
   .logout-button, .profile-button { border-color: #ccc; color: #666; }
-  .logout-button:hover, .profile-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
+  .settings-button:hover,.logout-button:hover, .profile-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
+  .settings-button, .logout-button, .profile-button { color: black; }
 }
