@@ -99,7 +99,7 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 - **DeliveryMethod:** `id, name, color, order`
 - **TimePeriod:** `id, name, startTime, endTime, order` (IDは `p1`, `p2` ... 形式を維持)
 - **Holiday:** `id, name, date, start, end`
-- **ResourceLabels:** `room, teacher, course, event, mainTeacher, subTeacher, mainRoom`
+- **ResourceLabels:** `room, teacher, course, event, mainTeacher, subTeacher, mainRoom, deliveryMethod`
 
 ---
 
