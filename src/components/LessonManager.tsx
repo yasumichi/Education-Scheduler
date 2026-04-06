@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Lesson, TimePeriod, Resource, ResourceLabels } from '../types';
+import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod } from '../types';
 import { parseISO, differenceInDays } from 'date-fns';
 import './LessonManager.css';
 
@@ -17,6 +17,7 @@ interface Props {
 
 export function LessonManager({ backendUrl, onClose, onUpdate, periods, resources, lessons, labels, initialLesson }: Props) {
   const { t } = useTranslation();
+  const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
   
   const [formData, setFormData] = useState<{
     id?: string;
@@ -26,6 +27,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     roomId: string;
     courseId: string;
     location: string;
+    deliveryMethodIds: string[];
     startDate: string;
     startPeriodId: string;
     endDate: string;
@@ -38,11 +40,27 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     roomId: initialLesson?.roomId || '',
     courseId: initialLesson?.courseId || '',
     location: initialLesson?.location || '',
+    deliveryMethodIds: initialLesson?.deliveryMethodIds || (initialLesson?.deliveryMethods || []).map(m => m.id),
     startDate: initialLesson?.startDate || '',
     startPeriodId: initialLesson?.startPeriodId || periods[0]?.id || 'p1',
     endDate: initialLesson?.endDate || initialLesson?.startDate || '',
     endPeriodId: initialLesson?.endPeriodId || initialLesson?.startPeriodId || periods[0]?.id || 'p1',
   });
+
+  useEffect(() => {
+    const fetchDeliveryMethods = async () => {
+      try {
+        const res = await fetch(`${backendUrl}/delivery-methods`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setDeliveryMethods(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch delivery methods:', err);
+      }
+    };
+    fetchDeliveryMethods();
+  }, [backendUrl]);
 
   const teachers = resources.filter(r => r.type === 'teacher');
   const rooms = resources.filter(r => r.type === 'room');
@@ -178,7 +196,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           ...formData,
           teacherId: formData.teacherId || null,
           roomId: formData.roomId || null,
-          location: formData.location || null
+          location: formData.location || null,
+          deliveryMethodIds: formData.deliveryMethodIds
         })
       });
       if (res.ok) {
@@ -217,6 +236,13 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
       ? formData.subTeacherIds.filter(tid => tid !== id)
       : [...formData.subTeacherIds, id];
     setFormData({ ...formData, subTeacherIds: newIds });
+  };
+
+  const toggleDeliveryMethod = (id: string) => {
+    const newIds = formData.deliveryMethodIds.includes(id)
+      ? formData.deliveryMethodIds.filter(did => did !== id)
+      : [...formData.deliveryMethodIds, id];
+    setFormData({ ...formData, deliveryMethodIds: newIds });
   };
 
   return (
@@ -348,6 +374,25 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                   {t.name}
                 </label>
               ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>{t('Delivery Methods')}</label>
+            <div className="delivery-method-list">
+              {deliveryMethods.map(m => (
+                <label key={m.id} className={`delivery-method-item ${formData.deliveryMethodIds.includes(m.id) ? 'selected' : ''}`}>
+                  <input 
+                    type="checkbox" 
+                    checked={formData.deliveryMethodIds.includes(m.id)}
+                    onChange={() => toggleDeliveryMethod(m.id)}
+                  />
+                  {m.name}
+                </label>
+              ))}
+              {deliveryMethods.length === 0 && (
+                <span className="empty-info">{t('No methods defined')}</span>
+              )}
             </div>
           </div>
         </div>

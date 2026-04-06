@@ -240,14 +240,16 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
       ...(e.resources || []).map(r => r.id)
     ].map(id => getResourceName(id)).join(', ');
 
-    const tooltip = `${e.name}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}` + (resNames ? `\n${labels.event}: ${resNames}` : '');
+    const tooltip = `${e.name}${e.location ? ` (${e.location})` : ''}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}` + 
+                   (e.location ? `\n${t('Location')}: ${e.location}` : '') +
+                   (resNames ? `\n${labels.event}: ${resNames}` : '');
 
     return (
       <div key={layout.id} className="event-card schedule-event-card"
            title={tooltip}
            style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: 3, backgroundColor: e.color, top: `${top}px`, height: `${itemHeight}px`, cursor: 'pointer' }}
            onDblClick={() => onEventClick?.(e)}>
-        {e.name}
+        {e.name}{e.location && <span className="event-location"> ({e.location})</span>}
       </div>
     );
   });
@@ -310,14 +312,14 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
         const e = item.data as ScheduleEvent;
         const startP = periods.find(p => p.id === e.startPeriodId)?.name || e.startPeriodId;
         const endP = periods.find(p => p.id === e.endPeriodId)?.name || e.endPeriodId;
-        const tooltip = `${e.name}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}`;
+        const tooltip = `${e.name}${e.location ? ` (${e.location})` : ''}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}`;
 
         resourceRowItems.push(
           <div key={layout.id} className="event-card schedule-event-card resource-event-card"
                title={tooltip}
                style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: resIdx + 4, backgroundColor: e.color, top: `${top}px`, height: `${itemHeight}px`, cursor: 'pointer', position: 'relative' }}
                onDblClick={() => onEventClick?.(e)}>
-            {e.name}
+            {e.name}{e.location && <span className="event-location"> ({e.location})</span>}
           </div>
         );
       } else {
@@ -340,8 +342,10 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
         if (viewMode !== 'course') infoItems.push({ label: labels.course, value: getResourceName(l.courseId) });
 
         const translatedSubject = t(l.subject);
+        const methodNames = (l.deliveryMethods || []).map(m => m.name).join(', ');
         const tooltipText = `${translatedSubject}\n` + 
                            (l.location ? `${t('Location')}: ${l.location}\n` : '') +
+                           (methodNames ? `${t('Delivery Methods')}: ${methodNames}\n` : '') +
                            infoItems.map(item => `${item.label}: ${item.value}`).join('\n');
 
         resourceRowItems.push(
@@ -361,6 +365,15 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
             onDblClick={() => onLessonClick?.(l)}
           >
             <div className="lesson-subject">{translatedSubject}</div>
+            {l.deliveryMethods && l.deliveryMethods.length > 0 && (
+              <div className="lesson-delivery-methods">
+                {l.deliveryMethods.map(m => (
+                  <span key={m.id} className="delivery-method-tag" style={{ backgroundColor: m.color || '#646cff' }}>
+                    {m.name}
+                  </span>
+                ))}
+              </div>
+            )}
             {layout.maxLevelInGroup === 1 && (
               <div className="lesson-details">
                 {infoItems.map((item, idx) => (

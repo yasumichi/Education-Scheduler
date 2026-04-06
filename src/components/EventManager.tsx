@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { ScheduleEvent, TimePeriod, Resource } from '../types';
+import { ScheduleEvent, TimePeriod, Resource, ResourceLabels } from '../types';
 import './EventManager.css';
 
 interface Props {
@@ -9,10 +9,11 @@ interface Props {
   onUpdate: () => void;
   periods: TimePeriod[];
   resources: Resource[];
+  labels: ResourceLabels;
   initialEvent?: Partial<ScheduleEvent>; // 編集時は既存、新規時は日付・時限のみ
 }
 
-export function EventManager({ backendUrl, onClose, onUpdate, periods, resources, initialEvent }: Props) {
+export function EventManager({ backendUrl, onClose, onUpdate, periods, resources, labels, initialEvent }: Props) {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<{
     id?: string;
@@ -22,6 +23,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
     endDate: string;
     endPeriodId: string;
     color: string;
+    location: string;
     showInEventRow: boolean;
     resourceIds: string[];
   }>({
@@ -32,11 +34,16 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
     endDate: initialEvent?.endDate || initialEvent?.startDate || '',
     endPeriodId: initialEvent?.endPeriodId || initialEvent?.startPeriodId || periods[periods.length - 1]?.id || 'p8',
     color: initialEvent?.color || '#3b82f6',
+    location: initialEvent?.location || '',
     showInEventRow: initialEvent?.showInEventRow ?? true,
     resourceIds: initialEvent?.resourceIds || []
   });
 
   const handleSave = async () => {
+    if (!formData.name.trim()) {
+      alert(t('Event name is required'));
+      return;
+    }
     try {
       const res = await fetch(`${backendUrl}/events`, {
         method: 'POST',
@@ -84,6 +91,9 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
     setFormData({ ...formData, resourceIds: newIds });
   };
 
+  const teacherResources = resources.filter(r => r.type === 'teacher');
+  const roomResources = resources.filter(r => r.type === 'room');
+
   return (
     <div className="event-manager-overlay">
       <div className="event-manager-box">
@@ -94,12 +104,13 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
 
         <div className="event-manager-content">
           <div className="form-group">
-            <label>{t('Event Name')}</label>
+            <label>{t('Event Name')} *</label>
             <input 
               type="text" 
               value={formData.name} 
               onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
               placeholder={t('e.g. School Trip')}
+              required
             />
           </div>
 
@@ -143,13 +154,24 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
             </div>
           </div>
 
-          <div className="form-group">
-            <label>{t('Color')}</label>
-            <input 
-              type="color" 
-              value={formData.color} 
-              onInput={(e) => setFormData({ ...formData, color: e.currentTarget.value })}
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label>{t('Location')}</label>
+              <input 
+                type="text" 
+                value={formData.location} 
+                onInput={(e) => setFormData({ ...formData, location: e.currentTarget.value })}
+                placeholder={t('e.g. Gym, Library')}
+              />
+            </div>
+            <div className="form-group">
+              <label>{t('Color')}</label>
+              <input 
+                type="color" 
+                value={formData.color} 
+                onInput={(e) => setFormData({ ...formData, color: e.currentTarget.value })}
+              />
+            </div>
           </div>
 
           <div className="form-group checkbox-group">
@@ -165,18 +187,42 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
 
           <div className="form-group">
             <label>{t('Target Resources (Optional)')}</label>
-            <div className="resource-selector-list">
-              {resources.filter(r => r.type !== 'course').map(r => (
-                <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
-                  <input 
-                    type="checkbox" 
-                    checked={formData.resourceIds.includes(r.id)}
-                    onChange={() => handleResourceToggle(r.id)}
-                  />
-                  {r.name}
-                </label>
-              ))}
-            </div>
+            
+            {teacherResources.length > 0 && (
+              <div className="resource-section">
+                <div className="resource-section-title">{labels.teacher || t('Teacher')}</div>
+                <div className="resource-selector-list">
+                  {teacherResources.map(r => (
+                    <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.resourceIds.includes(r.id)}
+                        onChange={() => handleResourceToggle(r.id)}
+                      />
+                      {r.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {roomResources.length > 0 && (
+              <div className="resource-section">
+                <div className="resource-section-title">{labels.room || t('Room')}</div>
+                <div className="resource-selector-list">
+                  {roomResources.map(r => (
+                    <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.resourceIds.includes(r.id)}
+                        onChange={() => handleResourceToggle(r.id)}
+                      />
+                      {r.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

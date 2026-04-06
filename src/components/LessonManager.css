@@ -73,7 +73,8 @@
   border-radius: 4px;
 }
 
-.sub-teacher-list {
+.sub-teacher-list,
+.delivery-method-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -85,7 +86,8 @@
   overflow-y: auto;
 }
 
-.sub-teacher-item {
+.sub-teacher-item,
+.delivery-method-item {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -97,64 +99,27 @@
   border: 1px solid transparent;
 }
 
-.sub-teacher-item:hover {
+.sub-teacher-item:hover,
+.delivery-method-item:hover {
   background: #555;
 }
 
-.sub-teacher-item.selected {
+.sub-teacher-item.selected,
+.delivery-method-item.selected {
   background: #646cff;
   border-color: #888;
 }
 
-.sub-teacher-item input {
+.sub-teacher-item input,
+.delivery-method-item input {
   display: none;
-}
-
-.lesson-manager-footer {
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid #444;
-  padding-top: 15px;
-}
-
-.delete-button {
-  background-color: #522;
-  color: #f88;
-  border: 1px solid #744;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.footer-right {
-  display: flex;
-  gap: 10px;
-}
-
-.cancel-button {
-  background-color: transparent;
-  border: 1px solid #666;
-  color: #ccc;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.save-button {
-  background-color: #646cff;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
 }
 
 @media (prefers-color-scheme: light) {
   .lesson-manager-box { background-color: #fff; color: #333; }
-  .form-group input, .form-group select, .sub-teacher-list { background-color: #f5f5f5; border-color: #ccc; color: #333; }
-  .sub-teacher-item { background: #eee; color: #333; }
-  .sub-teacher-item.selected { background: #646cff; color: #fff; }
+  .form-group input, .form-group select, .sub-teacher-list, .delivery-method-list { background-color: #f5f5f5; border-color: #ccc; color: #333; }
+  .sub-teacher-item, .delivery-method-item { background: #eee; color: #333; }
+  .sub-teacher-item.selected, .delivery-method-item.selected { background: #646cff; color: #fff; }
   .lesson-manager-header, .lesson-manager-footer { border-color: #eee; }
   .delete-button { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
 }

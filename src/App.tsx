@@ -14,6 +14,7 @@ import { HolidayManager } from './components/HolidayManager';
 import { UserManager } from './components/UserManager';
 import { ProfileManager } from './components/ProfileManager';
 import { SystemSettingManager } from './components/SystemSettingManager';
+import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod } from './types';
 import { format, addDays, getYear, getMonth, parseISO } from 'date-fns';
 
@@ -38,6 +39,7 @@ export function App() {
   const showUserManager = useSignal<boolean>(false);
   const showProfileManager = useSignal<boolean>(false);
   const showSystemSettingManager = useSignal<boolean>(false);
+  const showDeliveryMethodManager = useSignal<boolean>(false);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const showSettingsDropdown = useSignal<boolean>(false);
@@ -276,6 +278,15 @@ export function App() {
                       <button 
                         className="dropdown-item" 
                         onClick={() => {
+                          showDeliveryMethodManager.value = true;
+                          showSettingsDropdown.value = false;
+                        }}
+                      >
+                        {t('Manage Delivery Methods')}
+                      </button>
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
                           showUserManager.value = true;
                           showSettingsDropdown.value = false;
                         }}
@@ -471,6 +482,7 @@ export function App() {
           onUpdate={fetchData}
           periods={periods.value}
           resources={resources.value}
+          labels={resourceLabels.value}
           initialEvent={editingEvent.value || {}}
         />
       )}
@@ -521,6 +533,14 @@ export function App() {
         <SystemSettingManager 
           backendUrl={BACKEND_URL} 
           onClose={() => showSystemSettingManager.value = false}
+        />
+      )}
+
+      {showDeliveryMethodManager.value && (
+        <DeliveryMethodManager 
+          backendUrl={BACKEND_URL} 
+          onClose={() => showDeliveryMethodManager.value = false}
+          onUpdate={fetchData}
         />
       )}
     </div>

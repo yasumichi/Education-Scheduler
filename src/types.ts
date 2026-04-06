@@ -37,6 +37,13 @@ export interface CourseSubject {
   totalPeriods: number;
 }
 
+export interface DeliveryMethod {
+  id: string;
+  name: string;
+  color?: string;
+  order: number;
+}
+
 export interface Resource {
   id: string;
   name: string;
@@ -62,6 +69,7 @@ export interface ScheduleEvent {
   endDate: string;
   endPeriodId: string;
   color?: string;
+  location?: string;
   resourceIds?: string[]; // 紐付けられたリソースID（講師、教室など）
   resources?: { id: string }[]; // バックエンドからのリレーション
   showInEventRow?: boolean; // イベント行（最上部）に表示するかどうか
@@ -76,6 +84,8 @@ export interface Lesson {
   roomId?: string;
   courseId: string;
   location?: string;
+  deliveryMethodIds?: string[]; // 授業方式
+  deliveryMethods?: { id: string, name: string, color?: string }[]; // バックエンドからのリレーション
   startDate: string;   // 開始日 "2026-03-26"
   startPeriodId: string; // 開始時限 "p1"
   endDate: string;     // 終了日 "2026-03-27"

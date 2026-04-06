@@ -453,6 +453,9 @@ app.get('/api/lessons', verifyToken, async (req, res) => {
       include: {
         subTeachers: {
           select: { id: true }
+        },
+        deliveryMethods: {
+          select: { id: true, name: true, color: true }
         }
       }
     });
@@ -467,9 +470,10 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { id, subject, teacherId, subTeacherIds, roomId, courseId, location, startDate, startPeriodId, endDate, endPeriodId } = req.body;
+  const { id, subject, teacherId, subTeacherIds, roomId, courseId, location, startDate, startPeriodId, endDate, endPeriodId, deliveryMethodIds } = req.body;
   try {
     const subTeachersConnect = subTeacherIds?.map((tid: string) => ({ id: tid })) || [];
+    const deliveryMethodsConnect = deliveryMethodIds?.map((did: string) => ({ id: did })) || [];
     
     // 共通のデータ
     const commonData = {
@@ -489,6 +493,10 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         subTeachers: {
           set: [],
           connect: subTeachersConnect
+        },
+        deliveryMethods: {
+          set: [],
+          connect: deliveryMethodsConnect
         }
       };
 
@@ -507,7 +515,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
       const lesson = await prisma.lesson.update({
         where: { id },
         data,
-        include: { subTeachers: true }
+        include: { subTeachers: true, deliveryMethods: true }
       });
       res.json(lesson);
     } else {
@@ -517,6 +525,9 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         course: { connect: { id: courseId } },
         subTeachers: {
           connect: subTeachersConnect
+        },
+        deliveryMethods: {
+          connect: deliveryMethodsConnect
         }
       };
 
@@ -529,13 +540,70 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
 
       const lesson = await prisma.lesson.create({
         data,
-        include: { subTeachers: true }
+        include: { subTeachers: true, deliveryMethods: true }
       });
       res.json(lesson);
     }
   } catch (error) {
     console.error('Failed to save lesson:', error);
     res.status(500).json({ error: 'Failed to save lesson' });
+  }
+});
+
+// 授業方式一覧取得
+app.get('/api/delivery-methods', verifyToken, async (req, res) => {
+  try {
+    const methods = await prisma.deliveryMethod.findMany({
+      orderBy: { order: 'asc' }
+    });
+    res.json(methods);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch delivery methods' });
+  }
+});
+
+// 授業方式の一括更新/作成 (ADMIN権限)
+app.post('/api/delivery-methods', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { methods } = req.body;
+  try {
+    await prisma.$transaction(async (tx) => {
+      // 既存のIDリストを取得
+      const existingMethods = await tx.deliveryMethod.findMany();
+      const existingIds = existingMethods.map(m => m.id);
+      const incomingIds = methods.filter((m: any) => m.id).map((m: any) => m.id);
+
+      // 削除されたものを特定して削除
+      const idsToDelete = existingIds.filter(id => !incomingIds.includes(id));
+      if (idsToDelete.length > 0) {
+        await tx.deliveryMethod.deleteMany({ where: { id: { in: idsToDelete } } });
+      }
+
+      // 更新または新規作成
+      for (let i = 0; i < methods.length; i++) {
+        const m = methods[i];
+        if (m.id) {
+          await tx.deliveryMethod.update({
+            where: { id: m.id },
+            data: { name: m.name, color: m.color, order: i }
+          });
+        } else {
+          await tx.deliveryMethod.create({
+            data: { name: m.name, color: m.color, order: i }
+          });
+        }
+      }
+    });
+
+    const updated = await prisma.deliveryMethod.findMany({
+      orderBy: { order: 'asc' }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to save delivery methods:', error);
+    res.status(500).json({ error: 'Failed to save delivery methods' });
   }
 });
 
@@ -574,7 +642,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.TEACHER) {
     return res.status(403).json({ error: 'Access denied. Admin or Teacher role required.' });
   }
-  const { id, name, startDate, startPeriodId, endDate, endPeriodId, color, showInEventRow, resourceIds } = req.body;
+  const { id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, showInEventRow, resourceIds } = req.body;
   try {
     const resourceConnect = resourceIds?.map((rid: string) => ({ id: rid })) || [];
     let event;
@@ -590,6 +658,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
           endDate,
           endPeriodId,
           color,
+          location: location || null,
           showInEventRow: showInEventRow ?? true,
           resources: {
             set: [], // 一旦クリア
@@ -608,6 +677,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
           endDate,
           endPeriodId,
           color,
+          location: location || null,
           showInEventRow: showInEventRow ?? true,
           resources: {
             connect: resourceConnect

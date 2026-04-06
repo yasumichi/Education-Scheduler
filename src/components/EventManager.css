@@ -92,15 +92,35 @@
   cursor: pointer;
 }
 
+.resource-section {
+  margin-top: 10px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 8px;
+  background-color: #2a2a2a;
+}
+
+@media (prefers-color-scheme: light) {
+  .resource-section {
+    border-color: #ccc;
+    background-color: #fafafa;
+  }
+}
+
+.resource-section-title {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #888;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
 .resource-selector-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  background-color: #333;
-  padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #555;
-  max-height: 150px;
+  padding: 4px;
+  max-height: 120px;
   overflow-y: auto;
 }
 

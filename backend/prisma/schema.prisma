@@ -56,20 +56,29 @@ model CourseSubject {
 }
 
 model Lesson {
-  id            String     @id @default(uuid())
-  subject       String
-  startDate     String
-  startPeriodId String
-  endDate       String
-  endPeriodId   String
-  roomId        String?
-  teacherId     String?
-  courseId      String
-  location      String?
-  course        Resource   @relation("CourseLessons", fields: [courseId], references: [id])
-  room          Resource?  @relation("RoomLessons", fields: [roomId], references: [id])
-  teacher       Resource?  @relation("TeacherLessons", fields: [teacherId], references: [id])
-  subTeachers   Resource[] @relation("SubTeacherLessons")
+  id              String           @id @default(uuid())
+  subject         String
+  startDate       String
+  startPeriodId   String
+  endDate         String
+  endPeriodId     String
+  roomId          String?
+  teacherId       String?
+  courseId        String
+  location        String?
+  course          Resource         @relation("CourseLessons", fields: [courseId], references: [id])
+  room            Resource?        @relation("RoomLessons", fields: [roomId], references: [id])
+  teacher         Resource?        @relation("TeacherLessons", fields: [teacherId], references: [id])
+  subTeachers     Resource[]       @relation("SubTeacherLessons")
+  deliveryMethods DeliveryMethod[] @relation("LessonDeliveryMethods")
+}
+
+model DeliveryMethod {
+  id      String   @id @default(uuid())
+  name    String
+  color   String?
+  order   Int      @default(0)
+  lessons Lesson[] @relation("LessonDeliveryMethods")
 }
 
 model ScheduleEvent {
@@ -80,6 +89,7 @@ model ScheduleEvent {
   endDate        String
   endPeriodId    String
   color          String?
+  location       String?
   showInEventRow Boolean    @default(true)
   resources      Resource[] @relation("ResourceEvents")
 }

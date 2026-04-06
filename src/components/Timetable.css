@@ -217,6 +217,23 @@
   margin-bottom: 2px;
 }
 
+.lesson-delivery-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.delivery-method-tag {
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  border-radius: 2px;
+  color: #fff;
+  background-color: #646cff;
+  border: 1px solid rgba(255,255,255,0.3);
+  white-space: nowrap;
+}
+
 .lesson-details {
   display: flex;
   flex-direction: column;
