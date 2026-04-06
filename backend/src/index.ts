@@ -27,6 +27,32 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// --- Helper for Authorization ---
+const canManageCourseLessons = async (userId: string, courseId: string): Promise<boolean> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { resource: true }
+  });
+
+  if (!user) return false;
+  if (user.role === UserRole.ADMIN) return true;
+  if (user.role !== UserRole.TEACHER || !user.resource) return false;
+
+  const teacherResourceId = user.resource.id;
+
+  const course = await prisma.resource.findUnique({
+    where: { id: courseId },
+    include: { assistantTeachers: { select: { id: true } } }
+  });
+
+  if (!course || course.type !== ResourceType.course) return false;
+
+  const isChief = course.chiefTeacherId === teacherResourceId;
+  const isAssistant = course.assistantTeachers.some(t => t.id === teacherResourceId);
+
+  return isChief || isAssistant;
+};
+
 // --- Authentication Routes ---
 
 // ユーザー登録
@@ -79,7 +105,10 @@ app.post('/api/auth/change-password', verifyToken, async (req: AuthRequest, res)
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ 
+      where: { email },
+      include: { resource: { select: { id: true } } }
+    });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
     const isValid = await bcrypt.compare(password, user.password);
@@ -96,7 +125,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
     res.json({
-      user: { id: user.id, email: user.email, role: user.role }
+      user: { id: user.id, email: user.email, role: user.role, resourceId: user.resource?.id }
     });
   } catch (error) {
     res.status(500).json({ error: 'Login failed' });
@@ -115,10 +144,20 @@ app.get('/api/auth/me', verifyToken, async (req: AuthRequest, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, email: true, role: true }
+      select: { 
+        id: true, 
+        email: true, 
+        role: true, 
+        resource: { select: { id: true } } 
+      }
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
+    res.json({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      resourceId: user.resource?.id
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
@@ -465,13 +504,34 @@ app.get('/api/lessons', verifyToken, async (req, res) => {
   }
 });
 
-// 授業の作成・更新 (ADMIN権限)
+// 授業の作成・更新 (ADMIN / Course Chief or Assistant Teacher)
 app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
-  if (req.user?.role !== UserRole.ADMIN) {
-    return res.status(403).json({ error: 'Access denied. Admin role required.' });
-  }
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  
   const { id, subject, teacherId, subTeacherIds, roomId, courseId, location, startDate, startPeriodId, endDate, endPeriodId, deliveryMethodIds } = req.body;
+
   try {
+    // 権限チェック
+    if (id) {
+      // 更新時: 現在の授業の講座に対して権限があるか
+      const currentLesson = await prisma.lesson.findUnique({ where: { id } });
+      if (!currentLesson) return res.status(404).json({ error: 'Lesson not found' });
+      
+      const hasPermissionToCurrent = await canManageCourseLessons(req.user.id, currentLesson.courseId);
+      if (!hasPermissionToCurrent) return res.status(403).json({ error: 'Access denied.' });
+
+      // 講座が変更される場合、変更先への権限もチェック
+      if (courseId && courseId !== currentLesson.courseId) {
+        const hasPermissionToNew = await canManageCourseLessons(req.user.id, courseId);
+        if (!hasPermissionToNew) return res.status(403).json({ error: 'Access denied to new course.' });
+      }
+    } else {
+      // 新規作成時: 指定された講座に対して権限があるか
+      if (!courseId) return res.status(400).json({ error: 'courseId is required' });
+      const hasPermission = await canManageCourseLessons(req.user.id, courseId);
+      if (!hasPermission) return res.status(403).json({ error: 'Access denied.' });
+    }
+
     const subTeachersConnect = subTeacherIds?.map((tid: string) => ({ id: tid })) || [];
     const deliveryMethodsConnect = deliveryMethodIds?.map((did: string) => ({ id: did })) || [];
     
@@ -607,13 +667,17 @@ app.post('/api/delivery-methods', verifyToken, async (req: AuthRequest, res) => 
   }
 });
 
-// 授業の削除 (ADMIN権限)
+// 授業の削除 (ADMIN / Course Chief or Assistant Teacher)
 app.delete('/api/lessons/:id', verifyToken, async (req: AuthRequest, res) => {
-  if (req.user?.role !== UserRole.ADMIN) {
-    return res.status(403).json({ error: 'Access denied. Admin role required.' });
-  }
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   const { id } = req.params;
   try {
+    const lesson = await prisma.lesson.findUnique({ where: { id } });
+    if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+
+    const hasPermission = await canManageCourseLessons(req.user.id, lesson.courseId);
+    if (!hasPermission) return res.status(403).json({ error: 'Access denied.' });
+
     await prisma.lesson.delete({ where: { id } });
     res.json({ message: 'Lesson deleted successfully' });
   } catch (error) {

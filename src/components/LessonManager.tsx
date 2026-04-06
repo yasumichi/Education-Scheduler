@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod } from '../types';
+import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User } from '../types';
 import { parseISO, differenceInDays } from 'date-fns';
 import './LessonManager.css';
 
@@ -13,9 +13,10 @@ interface Props {
   lessons: Lesson[];
   labels: ResourceLabels;
   initialLesson?: Partial<Lesson>;
+  user: User;
 }
 
-export function LessonManager({ backendUrl, onClose, onUpdate, periods, resources, lessons, labels, initialLesson }: Props) {
+export function LessonManager({ backendUrl, onClose, onUpdate, periods, resources, lessons, labels, initialLesson, user }: Props) {
   const { t } = useTranslation();
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
   
@@ -69,6 +70,16 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const selectedCourse = useMemo(() => courses.find(c => c.id === formData.courseId), [formData.courseId, courses]);
   const mainTeacherLabel = selectedCourse?.mainTeacherLabel || labels.mainTeacher;
   const subTeacherLabel = selectedCourse?.subTeacherLabel || labels.subTeacher;
+
+  const canManage = useMemo(() => {
+    if (user.role === 'ADMIN') return true;
+    if (user.role !== 'TEACHER' || !user.resourceId || !selectedCourse) return false;
+
+    const isChief = selectedCourse.chiefTeacherId === user.resourceId;
+    const isAssistant = (selectedCourse.assistantTeachers || []).some(t => t.id === user.resourceId);
+    
+    return isChief || isAssistant;
+  }, [user, selectedCourse]);
 
   // 講座が変更された際のメイン教室の自動入力
   useEffect(() => {
@@ -249,7 +260,10 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     <div className="lesson-manager-overlay">
       <div className="lesson-manager-box">
         <div className="lesson-manager-header">
-          <h2>{formData.id ? t('Edit Lesson') : t('Create Lesson')}</h2>
+          <h2>
+            {formData.id ? t('Edit Lesson') : t('Create Lesson')}
+            {!canManage && <span className="readonly-badge"> ({t('Read-only')})</span>}
+          </h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
@@ -399,11 +413,11 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
         <div className="lesson-manager-footer">
           {formData.id && (
-            <button className="delete-button" onClick={handleDelete}>{t('Delete')}</button>
+            <button className="delete-button" onClick={handleDelete} disabled={!canManage}>{t('Delete')}</button>
           )}
           <div className="footer-right">
             <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-            <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+            <button className="save-button" onClick={handleSave} disabled={!canManage}>{t('Save Changes')}</button>
           </div>
         </div>
       </div>

@@ -500,6 +500,7 @@ export function App() {
           lessons={lessons.value}
           labels={resourceLabels.value}
           initialLesson={editingLesson.value || {}}
+          user={user.value!}
         />
       )}
 
