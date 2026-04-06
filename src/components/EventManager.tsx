@@ -36,7 +36,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
     color: initialEvent?.color || '#3b82f6',
     location: initialEvent?.location || '',
     showInEventRow: initialEvent?.showInEventRow ?? true,
-    resourceIds: initialEvent?.resourceIds || []
+    resourceIds: initialEvent?.resourceIds || (initialEvent?.resources || []).map(r => r.id)
   });
 
   const handleSave = async () => {
