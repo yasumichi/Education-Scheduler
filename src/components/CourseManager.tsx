@@ -6,7 +6,7 @@ import './CourseManager.css';
 interface Props {
   backendUrl: string;
   onClose: () => void;
-  onUpdate: () => void;
+  onUpdate: () => Promise<void> | void;
   resources: Resource[];
   labels: ResourceLabels;
 }
@@ -14,6 +14,7 @@ interface Props {
 export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels }: Props) {
   const { t } = useTranslation();
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
     order: number;
@@ -203,6 +204,31 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!selectedCourseId) return;
+    try {
+      const res = await fetch(`${backendUrl}/courses/${selectedCourseId}/duplicate`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // データを再取得
+        await onUpdate();
+        // 新しい講座を選択状態にする
+        setSelectedCourseId(data.id);
+        // メッセージを表示
+        setStatusMessage(t('Course duplicated successfully'));
+        // 数秒後にメッセージを消す
+        setTimeout(() => setStatusMessage(null), 3000);
+      } else {
+        alert(t('Failed to duplicate {{resource}}', { resource: labels.course }));
+      }
+    } catch (err) {
+      console.error('Error duplicating course:', err);
+    }
+  };
+
   return (
     <div className="course-manager-overlay">
       <div className="course-manager-box">
@@ -210,6 +236,12 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           <h2>{t('Manage {{resource}}', { resource: labels.course })}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
+
+        {statusMessage && (
+          <div className="status-message-banner">
+            {statusMessage}
+          </div>
+        )}
 
         <div className="course-manager-content">
           <div className="course-selector">
@@ -358,7 +390,10 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
         <div className="course-manager-footer">
           {selectedCourseId && (
-            <button className="delete-button" onClick={handleDelete}>{t('Delete')}</button>
+            <div className="footer-left">
+              <button className="delete-button" onClick={handleDelete}>{t('Delete')}</button>
+              <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate')}</button>
+            </div>
           )}
           <div className="footer-right">
             <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>

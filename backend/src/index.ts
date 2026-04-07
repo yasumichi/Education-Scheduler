@@ -485,6 +485,70 @@ app.delete('/api/courses/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
+// 講座の複製 (ADMIN権限)
+app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id } = req.params;
+  try {
+    // 元の講座を取得 (関連する課目、サブ講師も含む)
+    const original = await prisma.resource.findUnique({
+      where: { id },
+      include: {
+        subjects: true,
+        assistantTeachers: true
+      }
+    });
+
+    if (!original || original.type !== ResourceType.course) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+
+    // 新しい講座の作成 (トランザクションを使用)
+    const duplicated = await prisma.$transaction(async (tx) => {
+      // 1. 講座リソースを新規作成
+      const newCourse = await tx.resource.create({
+        data: {
+          name: `(Copy) ${original.name}`,
+          type: ResourceType.course,
+          order: (original.order || 0) + 1, // 元の講座の次の位置に配置
+          startDate: original.startDate,
+          endDate: original.endDate,
+          mainRoomId: original.mainRoomId,
+          chiefTeacherId: original.chiefTeacherId,
+          mainTeacherLabel: original.mainTeacherLabel,
+          subTeacherLabel: original.subTeacherLabel,
+          assistantTeachers: {
+            connect: original.assistantTeachers.map(t => ({ id: t.id }))
+          }
+        }
+      });
+
+      // 2. 課目を複製
+      if (original.subjects.length > 0) {
+        await tx.courseSubject.createMany({
+          data: original.subjects.map(s => ({
+            name: s.name,
+            totalPeriods: s.totalPeriods,
+            resourceId: newCourse.id
+          }))
+        });
+      }
+
+      return await tx.resource.findUnique({
+        where: { id: newCourse.id },
+        include: { subjects: true, assistantTeachers: true }
+      });
+    });
+
+    res.json(duplicated);
+  } catch (error) {
+    console.error('Failed to duplicate course:', error);
+    res.status(500).json({ error: 'Failed to duplicate course' });
+  }
+});
+
 // 授業一覧取得 (認証必須)
 app.get('/api/lessons', verifyToken, async (req, res) => {
   try {
