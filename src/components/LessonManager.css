@@ -49,6 +49,34 @@
   font-weight: normal;
 }
 
+.readonly-badge.limited {
+  background-color: #1e3a2a;
+  color: #a7f3d0;
+  border: 1px solid #065f46;
+}
+
+.readonly-value {
+  background-color: #2a2a2a;
+  color: #ddd;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  font-size: 0.9rem;
+  min-height: 1.5rem;
+  display: block;
+}
+
+.sub-teacher-item.disabled,
+.delivery-method-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sub-teacher-item.disabled:hover,
+.delivery-method-item.disabled:hover {
+  background: #444;
+}
+
 @media (prefers-color-scheme: light) {
   .readonly-badge {
     background-color: #eee;
@@ -135,6 +163,24 @@
 }
 
 @media (prefers-color-scheme: light) {
+  .readonly-badge {
+    background-color: #eee;
+    color: #888;
+  }
+  .readonly-badge.limited {
+    background-color: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+  .readonly-value {
+    background-color: #f9f9f9;
+    color: #333;
+    border-color: #ddd;
+  }
+  .sub-teacher-item.disabled:hover,
+  .delivery-method-item.disabled:hover {
+    background: #eee;
+  }
   .lesson-manager-box { background-color: #fff; color: #333; }
   .form-group input, .form-group select, .sub-teacher-list, .delivery-method-list { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .sub-teacher-item, .delivery-method-item { background: #eee; color: #333; }

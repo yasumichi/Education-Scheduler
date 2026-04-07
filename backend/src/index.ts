@@ -578,16 +578,64 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
     // 権限チェック
     if (id) {
       // 更新時: 現在の授業の講座に対して権限があるか
-      const currentLesson = await prisma.lesson.findUnique({ where: { id } });
+      const currentLesson = await prisma.lesson.findUnique({ 
+        where: { id },
+        include: { subTeachers: { select: { id: true } } }
+      });
       if (!currentLesson) return res.status(404).json({ error: 'Lesson not found' });
       
       const hasPermissionToCurrent = await canManageCourseLessons(req.user.id, currentLesson.courseId);
-      if (!hasPermissionToCurrent) return res.status(403).json({ error: 'Access denied.' });
+      
+      // 追加: 授業の担当講師（メインまたはサブ）であれば、授業方式のみ変更可能とするためのフラグ
+      let onlyDeliveryMethodAllowed = false;
+      if (!hasPermissionToCurrent && req.user.role === UserRole.TEACHER) {
+        const user = await prisma.user.findUnique({
+          where: { id: req.user.id },
+          include: { resource: true }
+        });
+        const teacherResourceId = user?.resource?.id;
+        if (teacherResourceId) {
+          const isMain = currentLesson.teacherId === teacherResourceId;
+          const isSub = currentLesson.subTeachers.some(t => t.id === teacherResourceId);
+          if (isMain || isSub) {
+            onlyDeliveryMethodAllowed = true;
+          }
+        }
+      }
+
+      if (!hasPermissionToCurrent && !onlyDeliveryMethodAllowed) {
+        return res.status(403).json({ error: 'Access denied.' });
+      }
 
       // 講座が変更される場合、変更先への権限もチェック
       if (courseId && courseId !== currentLesson.courseId) {
+        if (onlyDeliveryMethodAllowed) {
+           return res.status(403).json({ error: 'Access denied. You can only change delivery methods for this lesson.' });
+        }
         const hasPermissionToNew = await canManageCourseLessons(req.user.id, courseId);
         if (!hasPermissionToNew) return res.status(403).json({ error: 'Access denied to new course.' });
+      }
+
+      // 権限が「授業方式のみ」の場合、他のフィールドが変更されていないかチェック
+      if (onlyDeliveryMethodAllowed) {
+        const isOtherFieldChanged = 
+          subject !== currentLesson.subject ||
+          teacherId !== currentLesson.teacherId ||
+          roomId !== currentLesson.roomId ||
+          location !== currentLesson.location ||
+          startDate !== currentLesson.startDate ||
+          startPeriodId !== currentLesson.startPeriodId ||
+          endDate !== currentLesson.endDate ||
+          endPeriodId !== currentLesson.endPeriodId ||
+          // サブ講師の変更チェック (簡易的)
+          (subTeacherIds && (
+            subTeacherIds.length !== currentLesson.subTeachers.length ||
+            !subTeacherIds.every(id => currentLesson.subTeachers.some(t => t.id === id))
+          ));
+        
+        if (isOtherFieldChanged) {
+          return res.status(403).json({ error: 'Access denied. You can only change delivery methods for this lesson.' });
+        }
       }
     } else {
       // 新規作成時: 指定された講座に対して権限があるか

@@ -81,6 +81,16 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     return isChief || isAssistant;
   }, [user, selectedCourse]);
 
+  const canEditDeliveryMethod = useMemo(() => {
+    if (canManage) return true;
+    if (user.role !== 'TEACHER' || !user.resourceId || !formData.id) return false;
+
+    const isLessonMain = formData.teacherId === user.resourceId;
+    const isLessonSub = formData.subTeacherIds.includes(user.resourceId);
+
+    return isLessonMain || isLessonSub;
+  }, [canManage, user, formData.id, formData.teacherId, formData.subTeacherIds]);
+
   // 講座が変更された際のメイン教室の自動入力
   useEffect(() => {
     if (!formData.id && selectedCourse?.mainRoomId) {
@@ -265,7 +275,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
         <div className="dialog-header">
           <h2>
             {formData.id ? t('Edit Lesson') : t('Create Lesson')}
-            {!canManage && <span className="readonly-badge"> ({t('Read-only')})</span>}
+            {!canManage && canEditDeliveryMethod && <span className="readonly-badge limited"> ({t('Limited Edit')})</span>}
+            {!canManage && !canEditDeliveryMethod && <span className="readonly-badge"> ({t('Read-only')})</span>}
           </h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
@@ -273,130 +284,181 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
         <div className="lesson-manager-content">
           <div className="form-group">
             <label>{labels.course} *</label>
-            <select 
-              value={formData.courseId} 
-              onChange={(e) => setFormData({ ...formData, courseId: e.currentTarget.value, subject: '' })}
-            >
-              <option value="">{t('Select Course')}</option>
-              {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            {canManage ? (
+              <select 
+                value={formData.courseId} 
+                onChange={(e) => setFormData({ ...formData, courseId: e.currentTarget.value, subject: '' })}
+                disabled={!canManage}
+              >
+                <option value="">{t('Select Course')}</option>
+                {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            ) : (
+              <span className="readonly-value">{courses.find(c => c.id === formData.courseId)?.name || '-'}</span>
+            )}
           </div>
 
           <div className="form-group">
             <label>{labels.subject} *</label>
-            <select 
-              value={formData.subject} 
-              onChange={(e) => setFormData({ ...formData, subject: e.currentTarget.value })}
-              disabled={!formData.courseId}
-            >
-              <option value="">{t('Select {{resource}}', { resource: labels.subject })}</option>
-              {subjectOptions.map(s => (
-                <option key={s.name} value={s.name} disabled={s.remaining <= 0}>
-                  {s.name} ({t('Remaining')}: {s.remaining}/{s.total})
-                </option>
-              ))}
-            </select>
+            {canManage ? (
+              <select 
+                value={formData.subject} 
+                onChange={(e) => setFormData({ ...formData, subject: e.currentTarget.value })}
+                disabled={!canManage || !formData.courseId}
+              >
+                <option value="">{t('Select {{resource}}', { resource: labels.subject })}</option>
+                {subjectOptions.map(s => (
+                  <option key={s.name} value={s.name} disabled={s.remaining <= 0}>
+                    {s.name} ({t('Remaining')}: {s.remaining}/{s.total})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="readonly-value">{formData.subject || '-'}</span>
+            )}
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>{t('Start Date')} *</label>
-              <input 
-                type="date" 
-                value={formData.startDate} 
-                onInput={(e) => setFormData({ ...formData, startDate: e.currentTarget.value })}
-              />
+              {canManage ? (
+                <input 
+                  type="date" 
+                  value={formData.startDate} 
+                  onInput={(e) => setFormData({ ...formData, startDate: e.currentTarget.value })}
+                  disabled={!canManage}
+                />
+              ) : (
+                <span className="readonly-value">{formData.startDate || '-'}</span>
+              )}
             </div>
             <div className="form-group">
               <label>{t('End Date')} *</label>
-              <input 
-                type="date" 
-                value={formData.endDate} 
-                onInput={(e) => setFormData({ ...formData, endDate: e.currentTarget.value })}
-              />
+              {canManage ? (
+                <input 
+                  type="date" 
+                  value={formData.endDate} 
+                  onInput={(e) => setFormData({ ...formData, endDate: e.currentTarget.value })}
+                  disabled={!canManage}
+                />
+              ) : (
+                <span className="readonly-value">{formData.endDate || '-'}</span>
+              )}
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>{t('Start Period')}</label>
-              <select 
-                value={formData.startPeriodId} 
-                onChange={(e) => setFormData({ ...formData, startPeriodId: e.currentTarget.value })}
-              >
-                {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              {canManage ? (
+                <select 
+                  value={formData.startPeriodId} 
+                  onChange={(e) => setFormData({ ...formData, startPeriodId: e.currentTarget.value })}
+                  disabled={!canManage}
+                >
+                  {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              ) : (
+                <span className="readonly-value">{periods.find(p => p.id === formData.startPeriodId)?.name || '-'}</span>
+              )}
             </div>
             <div className="form-group">
               <label>{t('End Period')}</label>
-              <select 
-                value={formData.endPeriodId} 
-                onChange={(e) => setFormData({ ...formData, endPeriodId: e.currentTarget.value })}
-              >
-                {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              {canManage ? (
+                <select 
+                  value={formData.endPeriodId} 
+                  onChange={(e) => setFormData({ ...formData, endPeriodId: e.currentTarget.value })}
+                  disabled={!canManage}
+                >
+                  {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              ) : (
+                <span className="readonly-value">{periods.find(p => p.id === formData.endPeriodId)?.name || '-'}</span>
+              )}
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>{t('Room')}</label>
-              <select 
-                value={formData.roomId} 
-                onChange={(e) => setFormData({ ...formData, roomId: e.currentTarget.value })}
-              >
-                <option value="">{t('Select Room')}</option>
-                {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
+              {canManage ? (
+                <select 
+                  value={formData.roomId} 
+                  onChange={(e) => setFormData({ ...formData, roomId: e.currentTarget.value })}
+                  disabled={!canManage}
+                >
+                  <option value="">{t('Select Room')}</option>
+                  {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              ) : (
+                <span className="readonly-value">{rooms.find(r => r.id === formData.roomId)?.name || '-'}</span>
+              )}
             </div>
             <div className="form-group">
               <label>{t('Location (if no room)')}</label>
-              <input 
-                type="text" 
-                value={formData.location} 
-                onInput={(e) => setFormData({ ...formData, location: e.currentTarget.value })}
-                placeholder={t('e.g. Online, Gym')}
-              />
+              {canManage ? (
+                <input 
+                  type="text" 
+                  value={formData.location} 
+                  onInput={(e) => setFormData({ ...formData, location: e.currentTarget.value })}
+                  placeholder={t('e.g. Online, Gym')}
+                  disabled={!canManage}
+                />
+              ) : (
+                <span className="readonly-value">{formData.location || '-'}</span>
+              )}
             </div>
           </div>
 
           <div className="form-group">
             <label>{mainTeacherLabel}</label>
-            <select 
-              value={formData.teacherId} 
-              onChange={(e) => {
-                const newTeacherId = e.currentTarget.value;
-                setFormData({ 
-                  ...formData, 
-                  teacherId: newTeacherId,
-                  subTeacherIds: formData.subTeacherIds.filter(id => id !== newTeacherId)
-                });
-              }}
-            >
-              <option value="">{t('Select Teacher')}</option>
-              {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+            {canManage ? (
+              <select 
+                value={formData.teacherId} 
+                onChange={(e) => {
+                  const newTeacherId = e.currentTarget.value;
+                  setFormData({ 
+                    ...formData, 
+                    teacherId: newTeacherId,
+                    subTeacherIds: formData.subTeacherIds.filter(id => id !== newTeacherId)
+                  });
+                }}
+                disabled={!canManage}
+              >
+                <option value="">{t('Select Teacher')}</option>
+                {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            ) : (
+              <span className="readonly-value">{teachers.find(t => t.id === formData.teacherId)?.name || '-'}</span>
+            )}
           </div>
 
           <div className="form-group">
             <label>{subTeacherLabel}</label>
-            <div className="sub-teacher-list">
-              {(() => {
-                const list = teachers.filter(t => t.id !== formData.teacherId);
-                const selected = list.filter(t => formData.subTeacherIds.includes(t.id));
-                const unselected = list.filter(t => !formData.subTeacherIds.includes(t.id));
-                return [...selected, ...unselected].map(t => (
-                  <label key={t.id} className={`sub-teacher-item ${formData.subTeacherIds.includes(t.id) ? 'selected' : ''}`}>
-                    <input 
-                      type="checkbox" 
-                      checked={formData.subTeacherIds.includes(t.id)}
-                      onChange={() => toggleSubTeacher(t.id)}
-                    />
-                    {t.name}
-                  </label>
-                ));
-              })()}
-            </div>
+            {canManage ? (
+              <div className="sub-teacher-list">
+                {(() => {
+                  const list = teachers.filter(t => t.id !== formData.teacherId);
+                  const selected = list.filter(t => formData.subTeacherIds.includes(t.id));
+                  const unselected = list.filter(t => !formData.subTeacherIds.includes(t.id));
+                  return [...selected, ...unselected].map(t => (
+                    <label key={t.id} className={`sub-teacher-item ${formData.subTeacherIds.includes(t.id) ? 'selected' : ''} ${!canManage ? 'disabled' : ''}`}>
+                      <input 
+                        type="checkbox" 
+                        checked={formData.subTeacherIds.includes(t.id)}
+                        onChange={() => toggleSubTeacher(t.id)}
+                        disabled={!canManage}
+                      />
+                      {t.name}
+                    </label>
+                  ));
+                })()}
+              </div>
+            ) : (
+              <span className="readonly-value">
+                {teachers.filter(t => formData.subTeacherIds.includes(t.id)).map(t => t.name).join(', ') || '-'}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
@@ -406,11 +468,12 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                 const selected = deliveryMethods.filter(m => formData.deliveryMethodIds.includes(m.id));
                 const unselected = deliveryMethods.filter(m => !formData.deliveryMethodIds.includes(m.id));
                 return [...selected, ...unselected].map(m => (
-                  <label key={m.id} className={`delivery-method-item ${formData.deliveryMethodIds.includes(m.id) ? 'selected' : ''}`}>
+                  <label key={m.id} className={`delivery-method-item ${formData.deliveryMethodIds.includes(m.id) ? 'selected' : ''} ${!canEditDeliveryMethod ? 'disabled' : ''}`}>
                     <input 
                       type="checkbox" 
                       checked={formData.deliveryMethodIds.includes(m.id)}
                       onChange={() => toggleDeliveryMethod(m.id)}
+                      disabled={!canEditDeliveryMethod}
                     />
                     {m.name}
                   </label>
@@ -429,7 +492,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           )}
           <div className="footer-right">
             <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-            <button className="save-button" onClick={handleSave} disabled={!canManage}>{t('Save Changes')}</button>
+            <button className="save-button" onClick={handleSave} disabled={!canEditDeliveryMethod}>{t('Save Changes')}</button>
           </div>
         </div>
       </div>
