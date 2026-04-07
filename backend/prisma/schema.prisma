@@ -120,6 +120,7 @@ model ResourceLabel {
   subTeacher     String @default("Sub Teacher")
   mainRoom       String @default("Main Room")
   deliveryMethod String @default("Delivery Method")
+  subject        String @default("Subject")
 }
 
 model SystemSetting {

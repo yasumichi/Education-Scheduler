@@ -80,7 +80,10 @@ async function main() {
       course: 'Course',
       event: 'Event',
       mainTeacher: 'Main Teacher',
-      subTeacher: 'Sub Teacher'
+      subTeacher: 'Sub Teacher',
+      mainRoom: 'Main Room',
+      deliveryMethod: 'Delivery Method',
+      subject: 'Subject'
     }
   });
 

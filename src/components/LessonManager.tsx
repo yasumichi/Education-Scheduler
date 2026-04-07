@@ -124,7 +124,10 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const handleSave = async () => {
     // Basic validation
     if (!formData.courseId || !formData.subject) {
-      alert(t('Please select all required fields (Course, Subject)'));
+      alert(t('Please select all required fields ({{course}}, {{subject}})', { 
+        course: labels.course, 
+        subject: labels.subject 
+      }));
       return;
     }
 
@@ -280,13 +283,13 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           </div>
 
           <div className="form-group">
-            <label>{t('Subject')} *</label>
+            <label>{labels.subject} *</label>
             <select 
               value={formData.subject} 
               onChange={(e) => setFormData({ ...formData, subject: e.currentTarget.value })}
               disabled={!formData.courseId}
             >
-              <option value="">{t('Select Subject')}</option>
+              <option value="">{t('Select {{resource}}', { resource: labels.subject })}</option>
               {subjectOptions.map(s => (
                 <option key={s.name} value={s.name} disabled={s.remaining <= 0}>
                   {s.name} ({t('Remaining')}: {s.remaining}/{s.total})

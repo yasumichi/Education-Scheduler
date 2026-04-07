@@ -113,6 +113,14 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
               onInput={(e) => handleChange('deliveryMethod', e.currentTarget.value)}
             />
           </div>
+          <div className="period-field" style={{ marginBottom: '15px' }}>
+            <label>Subject</label>
+            <input 
+              type="text" 
+              value={labels.subject} 
+              onInput={(e) => handleChange('subject', e.currentTarget.value)}
+            />
+          </div>
         </div>
 
         <div className="period-manager-footer">

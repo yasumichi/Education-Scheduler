@@ -61,7 +61,8 @@ export function App() {
     mainTeacher: '',
     subTeacher: '',
     mainRoom: '',
-    deliveryMethod: ''
+    deliveryMethod: '',
+    subject: ''
   });
 
   // 初期化時に /auth/me でセッション復元

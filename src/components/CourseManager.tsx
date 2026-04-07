@@ -322,12 +322,12 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
             </div>
 
             <div className="subjects-section">
-              <h3>{t('Subjects')}</h3>
+              <h3>{labels.subject}</h3>
               {formData.subjects.map((s, index) => (
                 <div key={index} className="subject-row">
                   <input 
                     type="text" 
-                    placeholder={t('Subject Name')}
+                    placeholder={t('{{resource}} Name', { resource: labels.subject })}
                     value={s.name}
                     onInput={(e) => handleSubjectChange(index, 'name', e.currentTarget.value)}
                   />
@@ -341,7 +341,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 </div>
               ))}
               <div className="subjects-actions">
-                <button className="add-btn" onClick={handleAddSubject}>{t('Add Subject')}</button>
+                <button className="add-btn" onClick={handleAddSubject}>{t('Add {{resource}}', { resource: labels.subject })}</button>
                 <label className="import-csv-label">
                   <input
                     type="file"

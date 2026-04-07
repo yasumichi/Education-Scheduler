@@ -913,8 +913,10 @@ app.post('/api/periods', verifyToken, async (req: AuthRequest, res) => {
 app.get('/api/labels', verifyToken, async (req, res) => {
   try {
     const label = await prisma.resourceLabel.findFirst();
-    if (label && !label.deliveryMethod) {
-      (label as any).deliveryMethod = "Delivery Method";
+    if (label) {
+      if (!label.deliveryMethod) (label as any).deliveryMethod = "Delivery Method";
+      if (!label.mainRoom) (label as any).mainRoom = "Main Room";
+      if (!label.subject) (label as any).subject = "Subject";
     }
     res.json(label);
   } catch (error) {
@@ -928,21 +930,25 @@ app.post('/api/labels', verifyToken, async (req: AuthRequest, res) => {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
   const { labels } = req.body;
+  // id が含まれている場合は削除（Prismaの更新エラー回避）
+  const { id, ...labelData } = labels;
+
   try {
     const existing = await prisma.resourceLabel.findFirst();
     let updated;
     if (existing) {
       updated = await prisma.resourceLabel.update({
         where: { id: existing.id },
-        data: labels
+        data: labelData
       });
     } else {
       updated = await prisma.resourceLabel.create({
-        data: labels
+        data: labelData
       });
     }
     res.json(updated);
   } catch (error) {
+    console.error('Failed to update resource labels:', error);
     res.status(500).json({ error: 'Failed to update resource labels' });
   }
 });
