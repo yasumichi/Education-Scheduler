@@ -131,8 +131,20 @@ h1 {
     background-color: #ffffff;
   }
   .user-email { color: #666; }
-  .logout-button, .profile-button { border-color: #ccc; color: #666; }
+  .settings-button, .logout-button, .profile-button { border-color: #ccc; color: #666; }
   .settings-button:hover,.logout-button:hover, .profile-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
   .settings-button, .logout-button, .profile-button { color: black; }
   .dialog-header, .dialog-footer { border-color: #eee; }
+  .settings-dropdown {
+    background-color: #fff;
+    border-color: #ccc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .dropdown-item {
+    color: #333;
+  }
+  .dropdown-item:hover {
+    background-color: #f5f5f5;
+    color: #000;
+  }
 }
