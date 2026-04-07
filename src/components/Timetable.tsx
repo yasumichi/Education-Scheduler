@@ -1,4 +1,4 @@
-import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday, ResourceLabels, ScheduleEvent } from '../types';
+import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday, ResourceLabels, ScheduleEvent, SystemSetting } from '../types';
 import { format, addDays, isSameDay, parseISO, getYear, differenceInDays, isWithinInterval, isBefore, isAfter, startOfDay } from 'date-fns';
 import './Timetable.css';
 import { useTranslation } from 'react-i18next';
@@ -14,13 +14,17 @@ interface Props {
   baseDate: Date;
   holidays: Holiday[];
   labels: ResourceLabels;
+  systemSettings: SystemSetting | null;
   onEventClick?: (event: ScheduleEvent) => void;
   onEmptyEventClick?: (date: string, periodId: string) => void;
   onLessonClick?: (lesson: Lesson) => void;
   onEmptyResourceCellClick?: (resourceId: string, date: string, periodId: string) => void;
 }
 
-export function Timetable({ periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, onEventClick, onEmptyEventClick, onLessonClick, onEmptyResourceCellClick }: Props) {
+export function Timetable({ 
+  periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings,
+  onEventClick, onEmptyEventClick, onLessonClick, onEmptyResourceCellClick 
+}: Props) {
   const { t } = useTranslation();
   const locale = navigator.language;
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
@@ -51,9 +55,12 @@ export function Timetable({ periods, resources, lessons, events, viewMode, viewT
     if (viewType === 'week') return 7;
     if (viewType === 'month') return 30;
     if (viewType === 'year') {
-      const start = new Date(getYear(baseDate), 3, 1);
-      const end = new Date(getYear(baseDate) + 1, 2, 31);
-      return differenceInDays(end, start) + 1;
+      const month = systemSettings?.yearViewStartMonth ?? 4;
+      const day = systemSettings?.yearViewStartDay ?? 1;
+      
+      const start = new Date(getYear(baseDate), month - 1, day);
+      const end = new Date(getYear(baseDate) + 1, month - 1, day);
+      return differenceInDays(end, start);
     }
     return 1;
   };

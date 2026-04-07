@@ -126,6 +126,8 @@ model ResourceLabel {
 model SystemSetting {
   id                 String  @id @default(uuid())
   allowPublicSignup  Boolean @default(true)
+  yearViewStartMonth Int     @default(4)
+  yearViewStartDay   Int     @default(1)
 }
 
 enum ResourceType {

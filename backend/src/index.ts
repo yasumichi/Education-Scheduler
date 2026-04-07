@@ -276,7 +276,13 @@ app.get('/api/settings', async (req, res) => {
   try {
     let settings = await prisma.systemSetting.findFirst();
     if (!settings) {
-      settings = await prisma.systemSetting.create({ data: { allowPublicSignup: true } });
+      settings = await prisma.systemSetting.create({ 
+        data: { 
+          allowPublicSignup: true,
+          yearViewStartMonth: 4,
+          yearViewStartDay: 1
+        } 
+      });
     }
     res.json(settings);
   } catch (error) {
@@ -289,17 +295,25 @@ app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { allowPublicSignup } = req.body;
+  const { allowPublicSignup, yearViewStartMonth, yearViewStartDay } = req.body;
   try {
     let settings = await prisma.systemSetting.findFirst();
     if (settings) {
       settings = await prisma.systemSetting.update({
         where: { id: settings.id },
-        data: { allowPublicSignup }
+        data: {
+          allowPublicSignup,
+          yearViewStartMonth: parseInt(yearViewStartMonth) || 4,
+          yearViewStartDay: parseInt(yearViewStartDay) || 1
+        }
       });
     } else {
       settings = await prisma.systemSetting.create({
-        data: { allowPublicSignup }
+        data: {
+          allowPublicSignup,
+          yearViewStartMonth: parseInt(yearViewStartMonth) || 4,
+          yearViewStartDay: parseInt(yearViewStartDay) || 1
+        }
       });
     }
     res.json(settings);
@@ -630,7 +644,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
           // サブ講師の変更チェック (簡易的)
           (subTeacherIds && (
             subTeacherIds.length !== currentLesson.subTeachers.length ||
-            !subTeacherIds.every(id => currentLesson.subTeachers.some(t => t.id === id))
+            !subTeacherIds.every((id: string) => currentLesson.subTeachers.some(t => t.id === id))
           ));
         
         if (isOtherFieldChanged) {

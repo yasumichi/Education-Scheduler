@@ -33,6 +33,13 @@ export interface ResourceLabels {
   subject: string;
 }
 
+export interface SystemSetting {
+  id: string;
+  allowPublicSignup: boolean;
+  yearViewStartMonth: number;
+  yearViewStartDay: number;
+}
+
 export interface CourseSubject {
   id: string;
   name: string;

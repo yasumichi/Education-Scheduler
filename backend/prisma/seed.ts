@@ -91,7 +91,9 @@ async function main() {
 
   await prisma.systemSetting.create({
     data: {
-      allowPublicSignup: true
+      allowPublicSignup: true,
+      yearViewStartMonth: 4,
+      yearViewStartDay: 1
     }
   });
 

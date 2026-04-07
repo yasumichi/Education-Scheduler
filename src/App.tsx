@@ -15,7 +15,7 @@ import { UserManager } from './components/UserManager';
 import { ProfileManager } from './components/ProfileManager';
 import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
-import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod } from './types';
+import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting } from './types';
 import { format, addDays, getYear, getMonth, parseISO } from 'date-fns';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -27,6 +27,7 @@ export function App() {
   const currentDate = useSignal<Date>(new Date());
   const holidays = useSignal<Holiday[]>([]);
   const periods = useSignal<TimePeriod[]>([]);
+  const systemSettings = useSignal<SystemSetting | null>(null);
   const isHolidayMode = useSignal<boolean>(false);
   const showPeriodManager = useSignal<boolean>(false);
   const showLabelManager = useSignal<boolean>(false);
@@ -94,7 +95,8 @@ export function App() {
         fetch(`${BACKEND_URL}/events`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/holidays`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/periods`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/labels`, { credentials: 'include' })
+        fetch(`${BACKEND_URL}/labels`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/settings`, { credentials: 'include' })
       ]);
 
       const failed = responses.find(r => !r.ok);
@@ -108,16 +110,17 @@ export function App() {
         return;
       }
 
-      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels] = responses;
+      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels, resSettings] = responses;
 
       // すべてのJSONパースを並列で行う
-      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels] = await Promise.all([
+      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels, dataSettings] = await Promise.all([
         resResources.json(),
         resLessons.json(),
         resEvents.json(),
         resHolidays.json(),
         resPeriods.json(),
-        resLabels.json()
+        resLabels.json(),
+        resSettings.json()
       ]);
 
       resources.value = dataResources;
@@ -126,6 +129,7 @@ export function App() {
       holidays.value = dataHolidays;
       periods.value = dataPeriods;
       resourceLabels.value = dataLabels || resourceLabels.value;
+      systemSettings.value = dataSettings;
 
       console.log('Successfully fetched all data from backend');
     } catch (err) {
@@ -201,8 +205,18 @@ export function App() {
   const handleViewTypeChange = (type: ViewType) => {
     viewType.value = type;
     if (type === 'year') {
-      const year = getMonth(currentDate.value) < 3 ? getYear(currentDate.value) - 1 : getYear(currentDate.value);
-      currentDate.value = new Date(year, 3, 1);
+      const month = systemSettings.value?.yearViewStartMonth ?? 4;
+      const day = systemSettings.value?.yearViewStartDay ?? 1;
+      
+      const currentMonth = getMonth(currentDate.value) + 1;
+      const currentDay = currentDate.value.getDate();
+      
+      let year = getYear(currentDate.value);
+      // 開始月日より前なら前年を開始年とする
+      if (currentMonth < month || (currentMonth === month && currentDay < day)) {
+        year -= 1;
+      }
+      currentDate.value = new Date(year, month - 1, day);
     }
   };
 
@@ -390,6 +404,7 @@ export function App() {
           baseDate={currentDate.value}
           holidays={holidays.value}
           labels={resourceLabels.value}
+          systemSettings={systemSettings.value}
           onEventClick={(event) => {
             editingEvent.value = event;
             showEventManager.value = true;
