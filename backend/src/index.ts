@@ -813,6 +813,108 @@ app.get('/api/events', verifyToken, async (req, res) => {
   }
 });
 
+// iCalendar (.ics) エクスポート
+app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const { id } = req.params;
+  const { start, end } = req.query;
+
+  try {
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      include: { user: true }
+    });
+
+    if (!resource) return res.status(404).json({ error: 'Resource not found' });
+
+    // 権限チェック: ADMIN または 紐付けられたユーザー本人
+    if (req.user.role !== UserRole.ADMIN && resource.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+
+    // 期間内の授業とイベントを取得
+    const whereClause: any = {};
+    if (start && end) {
+      whereClause.startDate = { gte: String(start) };
+      whereClause.endDate = { lte: String(end) };
+    }
+
+    const [lessons, events, periods] = await Promise.all([
+      prisma.lesson.findMany({
+        where: { 
+          ...whereClause,
+          OR: [
+            { teacherId: id },
+            { subTeachers: { some: { id } } }
+          ]
+        },
+        include: { course: true }
+      }),
+      prisma.scheduleEvent.findMany({
+        where: {
+          ...whereClause,
+          resources: { some: { id } }
+        }
+      }),
+      prisma.timePeriod.findMany({ orderBy: { order: 'asc' } })
+    ]);
+
+    // ics ファイルの生成
+    let ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//ScholaTile//NONSGML v1.0//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:ScholaTile Schedule',
+      'X-WR-TIMEZONE:Asia/Tokyo'
+    ];
+
+    const formatICSDate = (dateStr: string, periodId: string, isEnd: boolean) => {
+      const period = periods.find(p => p.id === periodId);
+      const time = isEnd ? (period?.endTime || '23:59') : (period?.startTime || '00:00');
+      // YYYY-MM-DD と HH:mm を結合して YYYYMMDDTHHmmSS 形式にする
+      const d = dateStr.replace(/-/g, '');
+      const t = time.replace(/:/g, '') + '00';
+      return `${d}T${t}`;
+    };
+
+    // 授業の追加
+    lessons.forEach(l => {
+      ics.push('BEGIN:VEVENT');
+      ics.push(`UID:lesson-${l.id}@scholatile`);
+      ics.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
+      ics.push(`DTSTART;TZID=Asia/Tokyo:${formatICSDate(l.startDate, l.startPeriodId, false)}`);
+      ics.push(`DTEND;TZID=Asia/Tokyo:${formatICSDate(l.endDate, l.endPeriodId, true)}`);
+      ics.push(`SUMMARY:${l.subject} (${l.course.name})`);
+      if (l.location) ics.push(`LOCATION:${l.location}`);
+      ics.push('END:VEVENT');
+    });
+
+    // イベントの追加
+    events.forEach(e => {
+      ics.push('BEGIN:VEVENT');
+      ics.push(`UID:event-${e.id}@scholatile`);
+      ics.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
+      ics.push(`DTSTART;TZID=Asia/Tokyo:${formatICSDate(e.startDate, e.startPeriodId, false)}`);
+      ics.push(`DTEND;TZID=Asia/Tokyo:${formatICSDate(e.endDate, e.endPeriodId, true)}`);
+      ics.push(`SUMMARY:${e.name}`);
+      if (e.location) ics.push(`LOCATION:${e.location}`);
+      ics.push('END:VEVENT');
+    });
+
+    ics.push('END:VCALENDAR');
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="schedule-${id}.ics"`);
+    res.send(ics.join('\r\n'));
+
+  } catch (error) {
+    console.error('Failed to export iCalendar:', error);
+    res.status(500).json({ error: 'Failed to export iCalendar' });
+  }
+});
+
 // 行事の作成・更新 (ADMIN/TEACHER権限)
 app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.TEACHER) {

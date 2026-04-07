@@ -63,6 +63,45 @@
   color: #646cff;
 }
 
+.ical-export-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px dashed #444;
+}
+
+.ical-export-section h3 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  font-size: 1.1rem;
+  color: #10b981;
+}
+
+.section-desc {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-bottom: 15px;
+}
+
+.ical-download-button {
+  width: 100%;
+  background-color: #065f46;
+  color: #a7f3d0;
+  border: 1px solid #064e3b;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.ical-download-button:hover {
+  background-color: #064e3b;
+}
+
 .profile-manager-footer {
   display: flex;
   justify-content: flex-end;
@@ -76,4 +115,15 @@
   .user-info-section { background-color: #f5f5f5; }
   .profile-manager-header, .profile-manager-footer { border-color: #eee; }
   .password-change-section h3 { color: #646cff; }
+  .ical-export-section { border-top-color: #eee; }
+  .ical-export-section h3 { color: #059669; }
+  .section-desc { color: #666; }
+  .ical-download-button {
+    background-color: #dcfce7;
+    color: #065f46;
+    border-color: #bbf7d0;
+  }
+  .ical-download-button:hover {
+    background-color: #bbf7d0;
+  }
 }
