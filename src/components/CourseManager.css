@@ -219,9 +219,50 @@
   cursor: pointer;
   font-weight: bold;
 }
+.duplicate-lessons-dialog {
+  background-color: #333;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #646cff;
+}
+
+.duplicate-lessons-dialog h3 {
+  font-size: 0.95rem;
+  margin: 0 0 15px 0;
+  color: #646cff;
+}
+
+.duplicate-lessons-dialog .dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.confirm-button {
+  background-color: #646cff;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.duplicate-lessons-btn {
+  background-color: #335;
+  color: #88f;
+  border: 1px solid #447;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
 @media (prefers-color-scheme: light) {
   .course-manager-box { background-color: #fff; color: #333; }
+  .duplicate-lessons-dialog { background-color: #f0f0ff; border-color: #646cff; }
+  .duplicate-lessons-btn { background-color: #f0f0ff; color: #646cff; border-color: #646cff; }
   .course-selector select, .form-group input, .subject-row input { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .course-manager-header, .course-manager-footer, .course-selector { border-color: #eee; }
   .remove-btn { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }

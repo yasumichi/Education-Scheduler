@@ -563,6 +563,97 @@ app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res
   }
 });
 
+// 講座間での授業複製 (ADMIN / Course Chief or Assistant Teacher)
+app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const { id: destinationCourseId } = req.params;
+  const { sourceCourseId, startDate, endDate } = req.body;
+
+  try {
+    // 権限チェック (複製先の講座に対して)
+    const hasPermission = await canManageCourseLessons(req.user.id, destinationCourseId);
+    if (!hasPermission) return res.status(403).json({ error: 'Access denied to destination course.' });
+
+    // 複製先の講座情報を取得
+    const destinationCourse = await prisma.resource.findUnique({
+      where: { id: destinationCourseId }
+    });
+    if (!destinationCourse || destinationCourse.type !== ResourceType.course) {
+      return res.status(404).json({ error: 'Destination course not found.' });
+    }
+
+    // 日付範囲バリデーション
+    if (destinationCourse.startDate && startDate < destinationCourse.startDate) {
+      return res.status(400).json({ error: `Start date cannot be before ${destinationCourse.startDate}` });
+    }
+    if (destinationCourse.endDate && endDate > destinationCourse.endDate) {
+      return res.status(400).json({ error: `End date cannot be after ${destinationCourse.endDate}` });
+    }
+
+    // 全ての時限を取得 (絶対時間計算用)
+    const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
+    const getAbsTime = (date: string, pId: string) => {
+      const pIdx = periods.findIndex(p => p.id === pId);
+      return `${date}-${pIdx.toString().padStart(3, '0')}`;
+    };
+
+    // 複製元の授業を取得
+    const sourceLessons = await prisma.lesson.findMany({
+      where: {
+        courseId: sourceCourseId,
+        startDate: { gte: startDate },
+        endDate: { lte: endDate }
+      },
+      include: { deliveryMethods: { select: { id: true } } }
+    });
+
+    // 複製先の既存の授業を取得 (重複チェック用)
+    const existingLessons = await prisma.lesson.findMany({
+      where: { courseId: destinationCourseId }
+    });
+
+    let count = 0;
+    for (const sL of sourceLessons) {
+      const sStart = getAbsTime(sL.startDate, sL.startPeriodId);
+      const sEnd = getAbsTime(sL.endDate, sL.endPeriodId);
+
+      // 重複チェック
+      const isOverlapping = existingLessons.some(eL => {
+        const eStart = getAbsTime(eL.startDate, eL.startPeriodId);
+        const eEnd = getAbsTime(eL.endDate, eL.endPeriodId);
+        return sStart <= eEnd && eStart <= sEnd;
+      });
+
+      if (!isOverlapping) {
+        await prisma.lesson.create({
+          data: {
+            subject: sL.subject,
+            startDate: sL.startDate,
+            startPeriodId: sL.startPeriodId,
+            endDate: sL.endDate,
+            endPeriodId: sL.endPeriodId,
+            location: sL.location,
+            remarks: sL.remarks,
+            externalTeacher: sL.externalTeacher,
+            externalSubTeachers: sL.externalSubTeachers,
+            course: { connect: { id: destinationCourseId } },
+            room: destinationCourse.mainRoomId ? { connect: { id: destinationCourse.mainRoomId } } : undefined,
+            deliveryMethods: {
+              connect: sL.deliveryMethods.map(m => ({ id: m.id }))
+            }
+          }
+        });
+        count++;
+      }
+    }
+
+    res.json({ message: `Successfully duplicated ${count} lessons.`, count });
+  } catch (error) {
+    console.error('Failed to duplicate lessons:', error);
+    res.status(500).json({ error: 'Failed to duplicate lessons' });
+  }
+});
+
 // 授業一覧取得 (認証必須)
 app.get('/api/lessons', verifyToken, async (req, res) => {
   try {

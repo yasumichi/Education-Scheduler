@@ -15,6 +15,12 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   const { t } = useTranslation();
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [showDuplicateLessons, setShowDuplicateLessons] = useState(false);
+  const [duplicationData, setDuplicationData] = useState({
+    sourceCourseId: '',
+    startDate: '',
+    endDate: ''
+  });
   const [formData, setFormData] = useState<{
     name: string;
     order: number;
@@ -229,6 +235,51 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
   };
 
+  const handleDuplicateLessons = async () => {
+    if (!selectedCourseId || !duplicationData.sourceCourseId || !duplicationData.startDate || !duplicationData.endDate) {
+      alert(t('Please select source course and date range'));
+      return;
+    }
+
+    // バリデーション: 複製先の講座の範囲内か
+    const destinationCourse = courses.find(c => c.id === selectedCourseId);
+    if (destinationCourse) {
+      if (destinationCourse.startDate && duplicationData.startDate < destinationCourse.startDate) {
+        alert(`${t('Start date cannot be before')} ${destinationCourse.startDate}`);
+        return;
+      }
+      if (destinationCourse.endDate && duplicationData.endDate > destinationCourse.endDate) {
+        alert(`${t('End date cannot be after')} ${destinationCourse.endDate}`);
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch(`${backendUrl}/courses/${selectedCourseId}/duplicate-lessons`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(duplicationData)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStatusMessage(t('Successfully duplicated {{count}} lessons', { count: data.count }));
+        setShowDuplicateLessons(false);
+        setDuplicationData({ sourceCourseId: '', startDate: '', endDate: '' });
+        await onUpdate();
+        setTimeout(() => setStatusMessage(null), 3000);
+      } else {
+        const errData = await res.json();
+        alert(errData.error || t('Failed to duplicate lessons'));
+      }
+    } catch (err) {
+      console.error('Error duplicating lessons:', err);
+      alert(t('Error duplicating lessons'));
+    }
+  };
+
   return (
     <div className="course-manager-overlay">
       <div className="course-manager-box">
@@ -256,6 +307,46 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
               ))}
             </select>
           </div>
+
+          {showDuplicateLessons && (
+            <div className="duplicate-lessons-dialog">
+              <h3>{t('Duplicate Lessons from Another Course')}</h3>
+              <div className="form-group">
+                <label>{t('Source Course')}</label>
+                <select 
+                  value={duplicationData.sourceCourseId}
+                  onChange={(e) => setDuplicationData({ ...duplicationData, sourceCourseId: e.currentTarget.value })}
+                >
+                  <option value="">{t('Select Course')}</option>
+                  {courses.filter(c => c.id !== selectedCourseId).map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{t('Start Date')}</label>
+                  <input 
+                    type="date" 
+                    value={duplicationData.startDate}
+                    onInput={(e) => setDuplicationData({ ...duplicationData, startDate: e.currentTarget.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('End Date')}</label>
+                  <input 
+                    type="date" 
+                    value={duplicationData.endDate}
+                    onInput={(e) => setDuplicationData({ ...duplicationData, endDate: e.currentTarget.value })}
+                  />
+                </div>
+              </div>
+              <div className="dialog-actions">
+                <button className="cancel-button" onClick={() => setShowDuplicateLessons(false)}>{t('Cancel')}</button>
+                <button className="confirm-button" onClick={handleDuplicateLessons}>{t('Duplicate Now')}</button>
+              </div>
+            </div>
+          )}
 
           <div className="course-form">
             <div className="form-group">
@@ -392,7 +483,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           {selectedCourseId && (
             <div className="footer-left">
               <button className="delete-button" onClick={handleDelete}>{t('Delete')}</button>
-              <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate')}</button>
+              <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate Course')}</button>
+              <button className="duplicate-lessons-btn" onClick={() => setShowDuplicateLessons(true)}>{t('Duplicate Lessons')}</button>
             </div>
           )}
           <div className="footer-right">
