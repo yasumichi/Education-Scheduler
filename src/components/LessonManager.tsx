@@ -33,6 +33,9 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     startPeriodId: string;
     endDate: string;
     endPeriodId: string;
+    remarks: string;
+    externalTeacher: string;
+    externalSubTeachers: string;
   }>({
     id: initialLesson?.id,
     subject: initialLesson?.subject || '',
@@ -46,6 +49,9 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     startPeriodId: initialLesson?.startPeriodId || periods[0]?.id || 'p1',
     endDate: initialLesson?.endDate || initialLesson?.startDate || '',
     endPeriodId: initialLesson?.endPeriodId || initialLesson?.startPeriodId || periods[0]?.id || 'p1',
+    remarks: initialLesson?.remarks || '',
+    externalTeacher: initialLesson?.externalTeacher || '',
+    externalSubTeachers: initialLesson?.externalSubTeachers || '',
   });
 
   useEffect(() => {
@@ -221,6 +227,9 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           teacherId: formData.teacherId || null,
           roomId: formData.roomId || null,
           location: formData.location || null,
+          remarks: formData.remarks || null,
+          externalTeacher: formData.externalTeacher || null,
+          externalSubTeachers: formData.externalSubTeachers || null,
           deliveryMethodIds: formData.deliveryMethodIds
         })
       });
@@ -413,51 +422,93 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           <div className="form-group">
             <label>{mainTeacherLabel}</label>
             {canManage ? (
-              <select 
-                value={formData.teacherId} 
-                onChange={(e) => {
-                  const newTeacherId = e.currentTarget.value;
-                  setFormData({ 
-                    ...formData, 
-                    teacherId: newTeacherId,
-                    subTeacherIds: formData.subTeacherIds.filter(id => id !== newTeacherId)
-                  });
-                }}
-                disabled={!canManage}
-              >
-                <option value="">{t('Select Teacher')}</option>
-                {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
+              <div className="teacher-selection">
+                <select 
+                  value={formData.teacherId} 
+                  onChange={(e) => {
+                    const newTeacherId = e.currentTarget.value;
+                    setFormData({ 
+                      ...formData, 
+                      teacherId: newTeacherId,
+                      subTeacherIds: formData.subTeacherIds.filter(id => id !== newTeacherId)
+                    });
+                  }}
+                  disabled={!canManage}
+                >
+                  <option value="">{t('Select Teacher')}</option>
+                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+                <input 
+                  type="text" 
+                  value={formData.externalTeacher} 
+                  onInput={(e) => setFormData({ ...formData, externalTeacher: e.currentTarget.value })}
+                  placeholder={t('External Teacher (if not managed)')}
+                  disabled={!canManage}
+                  style={{ marginTop: '5px' }}
+                />
+              </div>
             ) : (
-              <span className="readonly-value">{teachers.find(t => t.id === formData.teacherId)?.name || '-'}</span>
+              <div className="readonly-teacher">
+                <span className="readonly-value">{teachers.find(t => t.id === formData.teacherId)?.name || '-'}</span>
+                {formData.externalTeacher && <span className="readonly-value"> ({formData.externalTeacher})</span>}
+              </div>
             )}
           </div>
 
           <div className="form-group">
             <label>{subTeacherLabel}</label>
             {canManage ? (
-              <div className="sub-teacher-list">
-                {(() => {
-                  const list = teachers.filter(t => t.id !== formData.teacherId);
-                  const selected = list.filter(t => formData.subTeacherIds.includes(t.id));
-                  const unselected = list.filter(t => !formData.subTeacherIds.includes(t.id));
-                  return [...selected, ...unselected].map(t => (
-                    <label key={t.id} className={`sub-teacher-item ${formData.subTeacherIds.includes(t.id) ? 'selected' : ''} ${!canManage ? 'disabled' : ''}`}>
-                      <input 
-                        type="checkbox" 
-                        checked={formData.subTeacherIds.includes(t.id)}
-                        onChange={() => toggleSubTeacher(t.id)}
-                        disabled={!canManage}
-                      />
-                      {t.name}
-                    </label>
-                  ));
-                })()}
+              <div className="sub-teacher-container">
+                <div className="sub-teacher-list">
+                  {(() => {
+                    const list = teachers.filter(t => t.id !== formData.teacherId);
+                    const selected = list.filter(t => formData.subTeacherIds.includes(t.id));
+                    const unselected = list.filter(t => !formData.subTeacherIds.includes(t.id));
+                    return [...selected, ...unselected].map(t => (
+                      <label key={t.id} className={`sub-teacher-item ${formData.subTeacherIds.includes(t.id) ? 'selected' : ''} ${!canManage ? 'disabled' : ''}`}>
+                        <input 
+                          type="checkbox" 
+                          checked={formData.subTeacherIds.includes(t.id)}
+                          onChange={() => toggleSubTeacher(t.id)}
+                          disabled={!canManage}
+                        />
+                        {t.name}
+                      </label>
+                    ));
+                  })()}
+                </div>
+                <input 
+                  type="text" 
+                  value={formData.externalSubTeachers} 
+                  onInput={(e) => setFormData({ ...formData, externalSubTeachers: e.currentTarget.value })}
+                  placeholder={t('External Sub Teachers (comma separated)')}
+                  disabled={!canManage}
+                  style={{ marginTop: '5px' }}
+                />
               </div>
             ) : (
-              <span className="readonly-value">
-                {teachers.filter(t => formData.subTeacherIds.includes(t.id)).map(t => t.name).join(', ') || '-'}
-              </span>
+              <div className="readonly-sub-teachers">
+                <span className="readonly-value">
+                  {teachers.filter(t => formData.subTeacherIds.includes(t.id)).map(t => t.name).join(', ') || '-'}
+                </span>
+                {formData.externalSubTeachers && <span className="readonly-value"> ({formData.externalSubTeachers})</span>}
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>{t('Remarks')}</label>
+            {canManage ? (
+              <textarea 
+                value={formData.remarks} 
+                onInput={(e) => setFormData({ ...formData, remarks: e.currentTarget.value })}
+                placeholder={t('Notes, special instructions, etc.')}
+                disabled={!canManage}
+                rows={3}
+                style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+              />
+            ) : (
+              <div className="readonly-value remarks-value" style={{ whiteSpace: 'pre-wrap' }}>{formData.remarks || '-'}</div>
             )}
           </div>
 

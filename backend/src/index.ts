@@ -586,7 +586,7 @@ app.get('/api/lessons', verifyToken, async (req, res) => {
 app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   
-  const { id, subject, teacherId, subTeacherIds, roomId, courseId, location, startDate, startPeriodId, endDate, endPeriodId, deliveryMethodIds } = req.body;
+  const { id, subject, teacherId, subTeacherIds, roomId, courseId, location, startDate, startPeriodId, endDate, endPeriodId, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers } = req.body;
 
   try {
     // 権限チェック
@@ -641,6 +641,9 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
           startPeriodId !== currentLesson.startPeriodId ||
           endDate !== currentLesson.endDate ||
           endPeriodId !== currentLesson.endPeriodId ||
+          remarks !== currentLesson.remarks ||
+          externalTeacher !== currentLesson.externalTeacher ||
+          externalSubTeachers !== currentLesson.externalSubTeachers ||
           // サブ講師の変更チェック (簡易的)
           (subTeacherIds && (
             subTeacherIds.length !== currentLesson.subTeachers.length ||
@@ -669,6 +672,9 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
       startPeriodId,
       endDate,
       endPeriodId,
+      remarks: remarks || null,
+      externalTeacher: externalTeacher || null,
+      externalSubTeachers: externalSubTeachers || null,
     };
 
     if (id) {
@@ -900,8 +906,22 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
       ics.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
       ics.push(`DTSTART;TZID=Asia/Tokyo:${formatICSDate(l.startDate, l.startPeriodId, false)}`);
       ics.push(`DTEND;TZID=Asia/Tokyo:${formatICSDate(l.endDate, l.endPeriodId, true)}`);
-      ics.push(`SUMMARY:${l.subject} (${l.course.name})`);
+      
+      let summary = `${l.subject} (${l.course.name})`;
+      if (l.externalTeacher) {
+        summary += ` - ${l.externalTeacher}`;
+      }
+      ics.push(`SUMMARY:${summary}`);
+      
       if (l.location) ics.push(`LOCATION:${l.location}`);
+      
+      let description = [];
+      if (l.externalSubTeachers) description.push(`Sub Teachers (Ext): ${l.externalSubTeachers}`);
+      if (l.remarks) description.push(`Remarks: ${l.remarks}`);
+      if (description.length > 0) {
+        ics.push(`DESCRIPTION:${description.join('\\n')}`);
+      }
+      
       ics.push('END:VEVENT');
     });
 

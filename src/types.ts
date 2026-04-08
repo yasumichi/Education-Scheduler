@@ -93,6 +93,9 @@ export interface Lesson {
   roomId?: string;
   courseId: string;
   location?: string;
+  remarks?: string;
+  externalTeacher?: string;
+  externalSubTeachers?: string;
   deliveryMethodIds?: string[]; // 授業方式
   deliveryMethods?: { id: string, name: string, color?: string }[]; // バックエンドからのリレーション
   startDate: string;   // 開始日 "2026-03-26"

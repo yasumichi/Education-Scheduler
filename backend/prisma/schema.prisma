@@ -66,6 +66,9 @@ model Lesson {
   teacherId       String?
   courseId        String
   location        String?
+  remarks         String?
+  externalTeacher String?
+  externalSubTeachers String?
   course          Resource         @relation("CourseLessons", fields: [courseId], references: [id])
   room            Resource?        @relation("RoomLessons", fields: [roomId], references: [id])
   teacher         Resource?        @relation("TeacherLessons", fields: [teacherId], references: [id])

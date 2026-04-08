@@ -108,7 +108,7 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 
 ### Main Entities
 - **Resource:** `id, name, type, order, userId, startDate, endDate, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel`
-- **Lesson:** `id, subject, startDate, startPeriodId, endDate, endPeriodId, roomId, teacherId, courseId, location, subTeacherIds, deliveryMethodIds`
+- **Lesson:** `id, subject, startDate, startPeriodId, endDate, endPeriodId, roomId, teacherId, courseId, location, subTeacherIds, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers`
 - **ScheduleEvent:** `id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, showInEventRow, resourceIds`
 - **DeliveryMethod:** `id, name, color, order`
 - **TimePeriod:** `id, name, startTime, endTime, order` (IDは `p1`, `p2` ... 形式を維持)

@@ -335,35 +335,40 @@ export function Timetable({
         const roomValue = l.roomId ? getResourceName(l.roomId) : (l.location || t('No room'));
         if (viewMode !== 'room') infoItems.push({ label: labels.room, value: roomValue });
 
-        const mainTeacherName = l.teacherId ? getResourceName(l.teacherId) : t('No main teacher');
+        const mainTeacherName = l.teacherId ? getResourceName(l.teacherId) : (l.externalTeacher || t('No main teacher'));
         const subIds = [...(l.subTeacherIds || []), ...(l.subTeachers || []).map(t => t.id)];
         const subTeacherNames = subIds.map(id => getResourceName(id));
+        if (l.externalSubTeachers) subTeacherNames.push(l.externalSubTeachers);
 
         if (viewMode !== 'teacher') {
-          if (l.teacherId) infoItems.push({ label: labels.mainTeacher, value: mainTeacherName });
+          if (l.teacherId || l.externalTeacher) infoItems.push({ label: labels.mainTeacher, value: mainTeacherName });
           if (subTeacherNames.length > 0) infoItems.push({ label: labels.subTeacher, value: subTeacherNames.join(', ') });
         } else {
-          if (l.teacherId) infoItems.push({ label: labels.mainTeacher, value: mainTeacherName });
+          if (l.teacherId || l.externalTeacher) infoItems.push({ label: labels.mainTeacher, value: mainTeacherName });
           if (subTeacherNames.length > 0) infoItems.push({ label: labels.subTeacher, value: subTeacherNames.join(', ') });
         }
         if (viewMode !== 'course') infoItems.push({ label: labels.course, value: getResourceName(l.courseId) });
 
         const translatedSubject = t(l.subject);
         const methodNames = (l.deliveryMethods || []).map(m => m.name).join(', ');
-        const tooltipText = `${translatedSubject}\n` + 
+        let tooltipText = `${translatedSubject}\n` + 
                            (l.location ? `${t('Location')}: ${l.location}\n` : '') +
                            (methodNames ? `${labels.deliveryMethod}: ${methodNames}\n` : '') +
                            infoItems.map(item => `${item.label}: ${item.value}`).join('\n');
+        
+        if (l.remarks) {
+          tooltipText += `\n\n${t('Remarks')}:\n${l.remarks}`;
+        }
 
         resourceRowItems.push(
           <div 
             key={layout.id} 
-            className={`lesson-card ${!l.teacherId ? 'no-main-teacher' : ''}`}
+            className={`lesson-card ${(!l.teacherId && !l.externalTeacher) ? 'no-main-teacher' : ''}`}
             style={{
               gridColumn: `${layout.start} / ${layout.end + 1}`,
               gridRow: resIdx + 4,
               cursor: 'pointer',
-              backgroundColor: !l.teacherId ? '#e884fa' : undefined,
+              backgroundColor: (!l.teacherId && !l.externalTeacher) ? '#e884fa' : undefined,
               top: `${top}px`,
               height: `${itemHeight}px`,
               position: 'relative'
