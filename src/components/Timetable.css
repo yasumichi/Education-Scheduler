@@ -24,6 +24,39 @@
   position: relative; /* Sticky context */
 }
 
+.excel-export-btn {
+  position: absolute;
+  top: 5px;
+  right: 25px;
+  z-index: 101; /* grid-corner(100) より上 */
+  background: #252;
+  color: #8f8;
+  border: 1px solid #474;
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.excel-export-btn:hover {
+  background: #363;
+  color: #aff;
+}
+
+@media (prefers-color-scheme: light) {
+  .excel-export-btn {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+  .excel-export-btn:hover {
+    background: #bbf7d0;
+  }
+}
+
 .timetable-container {
   background-color: #333;
   display: grid;
