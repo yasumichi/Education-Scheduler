@@ -25,20 +25,17 @@
 }
 
 .excel-export-btn {
-  position: absolute;
-  top: 5px;
-  right: 25px;
-  z-index: 101; /* grid-corner(100) より上 */
   background: #252;
   color: #8f8;
   border: 1px solid #474;
   border-radius: 4px;
-  padding: 4px;
+  padding: 4px 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  margin-left: auto; /* controls の右端に寄せる */
 }
 
 .excel-export-btn:hover {
