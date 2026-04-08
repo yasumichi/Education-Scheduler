@@ -136,6 +136,106 @@ export async function exportTimetableToExcel({
 
   let currentRow = 3;
 
+  // --- Process Global Events (Row 3 equivalent) ---
+  const row3Items: { id: string, start: number, end: number, type: 'holiday' | 'event', data: any }[] = [];
+  displayDates.forEach((date, dIdx) => {
+    const holiday = getHoliday(date);
+    if (!holiday) return;
+    if (holiday.date && isSameDay(date, startOfDay(parseISO(holiday.date)))) {
+      const startCol = dIdx * periods.length + 2;
+      const endCol = dIdx * periods.length + periods.length + 1;
+      row3Items.push({ id: `holiday-${date.toISOString()}`, start: startCol, end: endCol, type: 'holiday', data: holiday });
+    } else if (holiday.start && holiday.end) {
+      const hStart = startOfDay(parseISO(holiday.start));
+      const hEnd = startOfDay(parseISO(holiday.end));
+      if (isSameDay(date, hStart) || (isSameDay(date, displayDates[0]) && isAfter(date, hStart) && isBefore(date, hEnd))) {
+        const actualStart = isAfter(hStart, displayDates[0]) ? hStart : displayDates[0];
+        const actualEnd = isBefore(hEnd, displayDates[displayDates.length - 1]) ? hEnd : displayDates[displayDates.length - 1];
+        const sIdx = displayDates.findIndex(d => isSameDay(d, actualStart));
+        const eIdx = displayDates.findIndex(d => isSameDay(d, actualEnd));
+        if (sIdx !== -1 && eIdx !== -1 && isSameDay(date, actualStart)) {
+          const startCol = sIdx * periods.length + 2;
+          const endCol = eIdx * periods.length + periods.length + 1;
+          row3Items.push({ id: `holiday-range-${holiday.name}-${date.toISOString()}`, start: startCol, end: endCol, type: 'holiday', data: holiday });
+        }
+      }
+    }
+  });
+
+  events.forEach(e => {
+    const eStart = startOfDay(parseISO(e.startDate));
+    const eEnd = startOfDay(parseISO(e.endDate));
+    if (isAfter(eStart, currentViewEnd) || isBefore(eEnd, currentViewStart)) return;
+    const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
+    if (e.showInEventRow !== false || resourceIdList.length === 0) {
+      const startDayIdx = displayDates.findIndex(d => isSameDay(d, eStart));
+      const endDayIdx = displayDates.findIndex(d => isSameDay(d, eEnd));
+      const startPeriodIdx = periods.findIndex(p => p.id === e.startPeriodId);
+      const endPeriodIdx = periods.findIndex(p => p.id === e.endPeriodId);
+      const sCol = (startDayIdx === -1) ? 2 : startDayIdx * periods.length + startPeriodIdx + 2;
+      const eCol = (endDayIdx === -1) ? (displayDates.length * periods.length + 1) : endDayIdx * periods.length + endPeriodIdx + 2;
+      row3Items.push({ id: `event-${e.id}`, start: sCol, end: eCol, type: 'event', data: e });
+    }
+  });
+
+  const row3Layouts = calculateLayout(row3Items);
+  const row3MaxLevel = row3Layouts.length > 0 ? Math.max(...row3Layouts.map(l => l.level)) + 1 : 1;
+
+  // Global Event Label
+  const eventLabelCell = worksheet.getCell(currentRow, 1);
+  eventLabelCell.value = labels.event;
+  eventLabelCell.alignment = { vertical: 'middle', horizontal: 'left' };
+  eventLabelCell.font = { bold: true };
+  if (row3MaxLevel > 1) {
+    worksheet.mergeCells(currentRow, 1, currentRow + row3MaxLevel - 1, 1);
+  }
+
+  // Fill background grid for Global Events
+  for (let l = 0; l < row3MaxLevel; l++) {
+    const row = worksheet.getRow(currentRow + l);
+    row.height = 35;
+    displayDates.forEach((date, dIdx) => {
+      const isSun = date.getDay() === 0;
+      const isSat = date.getDay() === 6;
+      const holiday = getHoliday(date);
+      periods.forEach((_, pIdx) => {
+        const cell = worksheet.getCell(currentRow + l, dIdx * periods.length + pIdx + 2);
+        cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
+        if (holiday || isSun) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } };
+        else if (isSat) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F8FF' } };
+      });
+    });
+  }
+
+  // Place Global Event items
+  row3Layouts.forEach(layout => {
+    const item = row3Items.find(i => i.id === layout.id)!;
+    const targetRow = currentRow + layout.level;
+    const startCol = layout.start;
+    const endCol = layout.end;
+    const cell = worksheet.getCell(targetRow, startCol);
+
+    if (item.type === 'holiday') {
+      const h = item.data;
+      cell.value = h.name;
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8B0000' } }; // DarkRed equivalent
+      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+    } else {
+      const e = item.data as ScheduleEvent;
+      cell.value = e.name + (e.location ? ` (${e.location})` : '');
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(e.color || '#fef3c7') } };
+    }
+
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = { bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' }, top: { style: 'medium' } };
+
+    if (endCol > startCol) {
+      worksheet.mergeCells(targetRow, startCol, targetRow, endCol);
+    }
+  });
+
+  currentRow += row3MaxLevel;
+
   // Process Resources
   for (const res of filteredResources) {
     const resItems: { id: string, start: number, end: number, type: 'event' | 'lesson', data: any }[] = [];
