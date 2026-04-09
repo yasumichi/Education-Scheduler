@@ -3,13 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { User } from '../types';
 import './ProfileManager.css';
 
+export type ProfileMode = 'profile' | 'password' | 'export';
+
 interface Props {
   backendUrl: string;
   onClose: () => void;
   user: User;
+  mode: ProfileMode;
 }
 
-export function ProfileManager({ backendUrl, onClose, user }: Props) {
+export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
     currentPassword: '',
@@ -30,7 +33,6 @@ export function ProfileManager({ backendUrl, onClose, user }: Props) {
   const handleExportICal = () => {
     if (!user.resourceId) return;
     const url = `${backendUrl}/resources/${user.resourceId}/icalendar?start=${exportDates.start}&end=${exportDates.end}`;
-    // 新しいタブで開くことでダウンロードを開始させる
     window.open(url, '_blank');
   };
 
@@ -66,51 +68,58 @@ export function ProfileManager({ backendUrl, onClose, user }: Props) {
     }
   };
 
+  const getTitle = () => {
+    if (mode === 'password') return t('Change Password');
+    if (mode === 'export') return t('Export Schedule (iCalendar)');
+    return t('My Profile');
+  };
+
   return (
     <div className="profile-manager-overlay">
       <div className="profile-manager-box">
         <div className="profile-manager-header">
-          <h2>{t('My Profile')}</h2>
+          <h2>{getTitle()}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
         <div className="profile-manager-content">
-          <div className="user-info-section">
-            <p><strong>{t('Email')}:</strong> {user.email}</p>
-            <p><strong>{t('Role')}:</strong> {user.role}</p>
-          </div>
+         {mode === 'profile' && (
+           <div className="user-info-section">
+             <p><strong>{t('Email')}:</strong> {user.email}</p>
+             <p><strong>{t('Role')}:</strong> {user.role}</p>
+           </div>
+         )}
 
-          <div className="password-change-section">
-            <h3>{t('Change Password')}</h3>
-            <div className="form-group">
-              <label>{t('Current Password')}</label>
-              <input 
-                type="password" 
-                value={formData.currentPassword} 
-                onInput={(e) => setFormData({ ...formData, currentPassword: e.currentTarget.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>{t('New Password')}</label>
-              <input 
-                type="password" 
-                value={formData.newPassword} 
-                onInput={(e) => setFormData({ ...formData, newPassword: e.currentTarget.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>{t('Confirm New Password')}</label>
-              <input 
-                type="password" 
-                value={formData.confirmPassword} 
-                onInput={(e) => setFormData({ ...formData, confirmPassword: e.currentTarget.value })}
-              />
-            </div>
+         {mode === 'password' && (
+           <div className="password-change-section">
+             <div className="form-group">
+               <label>{t('Current Password')}</label>
+               <input
+                 type="password"
+                 value={formData.currentPassword}
+                 onInput={(e) => setFormData({ ...formData, currentPassword: e.currentTarget.value })}
+               />
+             </div>
+             <div className="form-group">
+               <label>{t('New Password')}</label>
+               <input
+                 type="password"
+                 value={formData.newPassword}
+                 onInput={(e) => setFormData({ ...formData, newPassword: e.currentTarget.value })}
+               />
+             </div>
+             <div className="form-group">
+               <label>{t('Confirm New Password')}</label>
+               <input
+                 type="password"
+                 value={formData.confirmPassword}
+                 onInput={(e) => setFormData({ ...formData, confirmPassword: e.currentTarget.value })}
+               />
+             </div>
           </div>
-
-          {user.resourceId && (
+          )}
+          {mode === 'export' && user.resourceId && (
             <div className="ical-export-section">
-              <h3>{t('Export Schedule (iCalendar)')}</h3>
               <p className="section-desc">{t('Select period to export')}</p>
               <div className="form-row">
                 <div className="form-group">
@@ -139,8 +148,10 @@ export function ProfileManager({ backendUrl, onClose, user }: Props) {
 
         <div className="profile-manager-footer">
           <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-          <button className="save-button" onClick={handleChangePassword}>{t('Change Password')}</button>
         </div>
+        {mode === 'password' && (
+        <button className="save-button" onClick={handleChangePassword}>{t('Change Password')}</button>
+        )}
       </div>
     </div>
   );

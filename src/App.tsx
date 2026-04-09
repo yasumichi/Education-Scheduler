@@ -12,7 +12,7 @@ import { EventManager } from './components/EventManager';
 import { LessonManager } from './components/LessonManager';
 import { HolidayManager } from './components/HolidayManager';
 import { UserManager } from './components/UserManager';
-import { ProfileManager } from './components/ProfileManager';
+import { ProfileManager, ProfileMode } from './components/ProfileManager';
 import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting } from './types';
@@ -40,11 +40,13 @@ export function App() {
   const showHolidayManager = useSignal<boolean>(false);
   const showUserManager = useSignal<boolean>(false);
   const showProfileManager = useSignal<boolean>(false);
+  const profileMode = useSignal<ProfileMode>('profile');
   const showSystemSettingManager = useSignal<boolean>(false);
   const showDeliveryMethodManager = useSignal<boolean>(false);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const showSettingsDropdown = useSignal<boolean>(false);
+  const showUserDropdown = useSignal<boolean>(false);
   const resources = useSignal<Resource[]>([]);
   const lessons = useSignal<Lesson[]>([]);
   const events = useSignal<ScheduleEvent[]>([]);
@@ -339,11 +341,60 @@ export function App() {
                   )}
                 </div>
               )}
-              <button className="profile-button" onClick={() => showProfileManager.value = true}>
-                {t('My Profile')}
-              </button>
-              <span className="user-email">{user.value.email} ({user.value.role})</span>
-              <button className="logout-button" onClick={handleLogout}>{t('Sign Out')}</button>
+              <div className="user-dropdown-container">
+                <button 
+                  className="user-dropdown-button" 
+                  onClick={() => showUserDropdown.value = !showUserDropdown.value}
+                >
+                  {(() => {
+                    if (user.value?.resourceId) {
+                      const teacher = resources.value.find(r => r.id === user.value?.resourceId);
+                      if (teacher) return t(teacher.name);
+                    }
+                    return user.value?.email;
+                  })()}
+                </button>
+                {showUserDropdown.value && (
+                  <div className="user-dropdown">
+                    <button 
+                      className="dropdown-item" 
+                      onClick={() => {
+                        profileMode.value = 'profile';
+                        showProfileManager.value = true;
+                        showUserDropdown.value = false;
+                      }}
+                    >
+                      {t('My Profile')}
+                    </button>
+                    <button 
+                      className="dropdown-item" 
+                      onClick={() => {
+                        profileMode.value = 'password';
+                        showProfileManager.value = true;
+                        showUserDropdown.value = false;
+                      }}
+                    >
+                      {t('Change Password')}
+                    </button>
+                    {user.value?.resourceId && (
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
+                          profileMode.value = 'export';
+                          showProfileManager.value = true;
+                          showUserDropdown.value = false;
+                        }}
+                      >
+                        {t('Export Schedule (iCalendar)')}
+                      </button>
+                    )}
+                    <div className="dropdown-divider" />
+                    <button className="dropdown-item logout-item" onClick={handleLogout}>
+                      {t('Sign Out')}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -562,6 +613,7 @@ export function App() {
           backendUrl={BACKEND_URL} 
           onClose={() => showProfileManager.value = false}
           user={user.value}
+          mode={profileMode.value}
         />
       )}
 
