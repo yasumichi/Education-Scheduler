@@ -163,7 +163,10 @@ const resources = {
       "Don't have an account?": "Don't have an account?",
       "Already have an account?": "Already have an account?",
       "Signup failed": "Signup failed",
-      "Please fill in all required fields": "Please fill in all required fields"
+      "Please fill in all required fields": "Please fill in all required fields",
+      "Filter": "Filter",
+      "Select All": "Select All",
+      "Deselect All": "Deselect All"
     }
   },
   ja: {
@@ -326,7 +329,10 @@ const resources = {
       "Don't have an account?": "アカウントをお持ちでない場合",
       "Already have an account?": "既にアカウントをお持ちの場合",
       "Signup failed": "サインアップに失敗しました",
-      "Please fill in all required fields": "必須項目をすべて入力してください"
+      "Please fill in all required fields": "必須項目をすべて入力してください",
+      "Filter": "フィルター",
+      "Select All": "すべて選択",
+      "Deselect All": "すべて解除"
     }
   }
 };

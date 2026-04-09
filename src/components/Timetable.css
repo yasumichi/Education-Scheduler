@@ -75,6 +75,123 @@
   min-width: 150px;
   width: 150px;
   justify-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resource-filter-btn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.resource-filter-btn:hover {
+  background: #333;
+  color: #fff;
+  border-color: #666;
+}
+
+.resource-filter-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  z-index: 110;
+  min-width: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: background 0.2s;
+  color: #eee;
+  font-size: 0.85rem;
+}
+
+.filter-item:hover {
+  background: #333;
+}
+
+.filter-item input {
+  cursor: pointer;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #444;
+}
+
+.filter-actions button {
+  background: #333;
+  color: #ccc;
+  border: 1px solid #444;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.filter-actions button:hover {
+  background: #444;
+  color: #fff;
+}
+
+@media (prefers-color-scheme: light) {
+  .resource-filter-btn {
+    border-color: #ccc;
+    color: #666;
+  }
+  .resource-filter-btn:hover {
+    background: #f0f0f0;
+    color: #000;
+  }
+  .resource-filter-popup {
+    background: #fff;
+    border-color: #ccc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .filter-item {
+    color: #333;
+  }
+  .filter-item:hover {
+    background: #f5f5f5;
+  }
+  .filter-actions {
+    border-bottom-color: #eee;
+  }
+  .filter-actions button {
+    background: #f5f5f5;
+    color: #666;
+    border-color: #ccc;
+  }
+  .filter-actions button:hover {
+    background: #eee;
+    color: #000;
+  }
 }
 
 /* 日付ヘッダー (z-index: 35) */

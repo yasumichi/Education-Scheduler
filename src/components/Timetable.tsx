@@ -3,6 +3,7 @@ import { format, addDays, isSameDay, parseISO, getYear, differenceInDays, isWith
 import './Timetable.css';
 import { useTranslation } from 'react-i18next';
 import { JSX } from 'preact';
+import { useSignal } from '@preact/signals';
 
 interface Props {
   periods: TimePeriod[];
@@ -28,6 +29,9 @@ export function Timetable({
   const { t } = useTranslation();
   const locale = navigator.language;
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
+
+  const showFilterPopup = useSignal(false);
+  const hiddenResourceIds = useSignal<Set<string>>(new Set());
 
   const getResourceName = (id: string) => {
     const res = resources.find(r => r.id === id);
@@ -69,9 +73,30 @@ export function Timetable({
   const displayDates = Array.from({ length: dayCount }).map((_, i) => addDays(currentViewStart, i));
   const currentViewEnd = startOfDay(displayDates[displayDates.length - 1]);
 
-  const filteredResources = resources
+  const allResourcesOfMode = resources
     .filter(r => r.type === viewMode)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  const filteredResources = allResourcesOfMode.filter(r => !hiddenResourceIds.value.has(r.id));
+
+  const toggleResource = (id: string) => {
+    const next = new Set(hiddenResourceIds.value);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    hiddenResourceIds.value = next;
+  };
+
+  const showAllResources = () => {
+    const next = new Set(hiddenResourceIds.value);
+    allResourcesOfMode.forEach(r => next.delete(r.id));
+    hiddenResourceIds.value = next;
+  };
+
+  const hideAllResources = () => {
+    const next = new Set(hiddenResourceIds.value);
+    allResourcesOfMode.forEach(r => next.add(r.id));
+    hiddenResourceIds.value = next;
+  };
 
   const isDayView = viewType === 'day';
   const colWidthNum = isDayView ? 60 : 50;
@@ -89,6 +114,38 @@ export function Timetable({
   } as JSX.CSSProperties;
 
   const stickyLeft = { position: 'sticky', left: 0 } as JSX.CSSProperties;
+
+  const filterButton = (
+    <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: "1 / span 2", zIndex: 100 }}>
+      <button 
+        className="resource-filter-btn" 
+        onClick={() => showFilterPopup.value = !showFilterPopup.value}
+        title={t('Filter')}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+      </button>
+      {showFilterPopup.value && (
+        <div className="resource-filter-popup">
+          <div className="filter-actions">
+            <button onClick={showAllResources}>{t('Select All')}</button>
+            <button onClick={hideAllResources}>{t('Deselect All')}</button>
+          </div>
+          {allResourcesOfMode.map(r => (
+            <label key={r.id} className="filter-item">
+              <input 
+                type="checkbox" 
+                checked={!hiddenResourceIds.value.has(r.id)} 
+                onChange={() => toggleResource(r.id)}
+              />
+              {t(r.name)}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   const dateHeaders = displayDates.map((date, dIdx) => {
     const holiday = getHoliday(date);
@@ -416,7 +473,7 @@ export function Timetable({
         className="timetable-container" 
         style={gridStyle}
       >
-        <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: "1 / span 2", zIndex: 100 }} />
+        {filterButton}
         {filteredResources.map((res, rIdx) => 
           displayDates.map((date, dIdx) => {
             const isSun = date.getDay() === 0;
