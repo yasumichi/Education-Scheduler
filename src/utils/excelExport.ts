@@ -80,6 +80,9 @@ export async function exportTimetableToExcel({
     worksheet.getColumn(i + 2).width = 12;
   }
 
+  const locale = navigator.language;
+  const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
+
   // Row 1: Dates
   const dateRow = worksheet.getRow(1);
   dateRow.height = 25;
@@ -87,7 +90,7 @@ export async function exportTimetableToExcel({
     const startCol = dIdx * periods.length + 2;
     const endCol = startCol + periods.length - 1;
     const cell = worksheet.getCell(1, startCol);
-    cell.value = format(date, 'MMM d (eee)');
+    cell.value = dateFormatter.format(date);
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
     cell.font = { bold: true };
     const holiday = getHoliday(date);
