@@ -286,7 +286,7 @@ export function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-top">
-          <h1><img src={logoPath} style="vertical-align: middle;" />ScholaTile</h1>
+          <h1><img src={logoPath} style="vertical-align: middle;" /><span style="color: #18324d">Schola</span><span style="color: #1ec1ca">Tile</span></h1>
           {user.value && (
             <div className="user-info">
               {user.value.role === 'ADMIN' && (
