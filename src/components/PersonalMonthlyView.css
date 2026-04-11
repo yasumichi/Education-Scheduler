@@ -1,0 +1,198 @@
+.personal-monthly-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+.personal-calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #222;
+  border-bottom: 1px solid #444;
+}
+
+.calendar-weekday-label {
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  border-right: 1px solid #444;
+}
+
+.calendar-weekday-label:last-child {
+  border-right: none;
+}
+
+.personal-calendar-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(var(--weeks-count, 5), 1fr);
+  overflow: hidden;
+}
+
+.calendar-day-cell {
+  border-right: 1px solid #444;
+  border-bottom: 1px solid #444;
+  display: flex;
+  flex-direction: column;
+  background-color: #333;
+  min-height: 0; /* Important for grid item shrinking */
+}
+
+.calendar-day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.calendar-day-cell.other-month {
+  background-color: #2a2a2a;
+  color: #666;
+}
+
+.holiday-theme-default .calendar-day-cell.is-weekend,
+.holiday-theme-default .calendar-day-cell.is-holiday {
+  background-color: #3d2b2b;
+}
+
+.holiday-theme-vivid .calendar-day-cell.is-weekend {
+  background-color: #1a3a5a;
+}
+
+.holiday-theme-vivid .calendar-day-cell.is-holiday {
+  background-color: #5a3a1a;
+}
+
+.day-header {
+  padding: 2px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 20px;
+  box-sizing: border-box;
+}
+
+.day-number {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.holiday-name {
+  font-size: 0.6rem;
+  color: #ff8888;
+  max-width: 70%;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-content {
+  flex: 1;
+  padding: 0 4px 2px 4px;
+  overflow: hidden;
+}
+
+.daily-grid-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.personal-lesson-mini-card, .personal-event-mini-card {
+  position: absolute;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+
+.card-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.personal-event-mini-card {
+  color: #333;
+  font-weight: bold;
+  gap: 4px;
+}
+
+.period-tag {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0 3px;
+  border-radius: 2px;
+  font-size: 0.6rem;
+  min-width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.personal-lesson-mini-card {
+  background-color: #646cff;
+  color: white;
+}
+
+.personal-lesson-mini-card:hover {
+  filter: brightness(1.1);
+}
+
+.mini-subject, .item-name {
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Light mode support */
+@media (prefers-color-scheme: light) {
+  .personal-monthly-container {
+    background-color: #fff;
+    color: #333;
+    border-color: #ccc;
+  }
+  .personal-calendar-header {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+  }
+  .calendar-weekday-label {
+    border-color: #ccc;
+  }
+  .calendar-day-cell {
+    background-color: #fff;
+    border-color: #eee;
+  }
+  .calendar-day-cell.other-month {
+    background-color: #f9f9f9;
+    color: #ccc;
+  }
+  .holiday-theme-default .calendar-day-cell.is-weekend,
+  .holiday-theme-default .calendar-day-cell.is-holiday {
+    background-color: #fff5f5;
+  }
+  .holiday-theme-vivid .calendar-day-cell.is-weekend {
+    background-color: #e8f0fe;
+  }
+  .holiday-theme-vivid .calendar-day-cell.is-holiday {
+    background-color: #fef7e0;
+  }
+  .period-tag {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  .personal-event-mini-card {
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+}

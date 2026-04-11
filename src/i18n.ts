@@ -166,7 +166,9 @@ const resources = {
       "Please fill in all required fields": "Please fill in all required fields",
       "Filter": "Filter",
       "Select All": "Select All",
-      "Deselect All": "Deselect All"
+      "Deselect All": "Deselect All",
+      "Personal Monthly": "Personal Monthly",
+      "My Schedule": "My Schedule"
     }
   },
   ja: {
@@ -332,7 +334,9 @@ const resources = {
       "Please fill in all required fields": "必須項目をすべて入力してください",
       "Filter": "フィルター",
       "Select All": "すべて選択",
-      "Deselect All": "すべて解除"
+      "Deselect All": "すべて解除",
+      "Personal Monthly": "個人月間予定",
+      "My Schedule": "個人の予定"
     }
   }
 };

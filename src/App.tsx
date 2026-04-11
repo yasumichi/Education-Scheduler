@@ -15,9 +15,10 @@ import { UserManager } from './components/UserManager';
 import { ProfileManager, ProfileMode } from './components/ProfileManager';
 import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
+import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting } from './types';
-import { format, addDays, getYear, getMonth, parseISO } from 'date-fns';
-import { exportTimetableToExcel } from './utils/excelExport';
+import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, startOfDay } from 'date-fns';
+import { exportTimetableToExcel, exportPersonalMonthlyToExcel } from './utils/excelExport';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -25,6 +26,7 @@ export function App() {
   const { t } = useTranslation();
   const viewMode = useSignal<ResourceType>('room');
   const viewType = useSignal<ViewType>('day');
+  const showPersonalMonthly = useSignal<boolean>(false);
   const currentDate = useSignal<Date>(new Date());
   const holidays = useSignal<Holiday[]>([]);
   const periods = useSignal<TimePeriod[]>([]);
@@ -239,6 +241,29 @@ export function App() {
     });
   };
 
+  const handlePersonalExport = () => {
+    if (!user.value?.resourceId) return;
+    exportPersonalMonthlyToExcel({
+      userResourceId: user.value.resourceId,
+      periods: periods.value,
+      resources: resources.value,
+      lessons: lessons.value,
+      events: events.value,
+      baseDate: currentDate.value,
+      holidays: holidays.value,
+      labels: resourceLabels.value,
+      t
+    });
+  };
+
+  const handleGlobalExport = () => {
+    if (showPersonalMonthly.value) {
+      handlePersonalExport();
+    } else {
+      handleExport();
+    }
+  };
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -380,6 +405,17 @@ export function App() {
                       <button 
                         className="dropdown-item" 
                         onClick={() => {
+                          showPersonalMonthly.value = true;
+                          showUserDropdown.value = false;
+                        }}
+                      >
+                        {t('Personal Monthly')}
+                      </button>
+                    )}
+                    {user.value?.resourceId && (
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
                           profileMode.value = 'export';
                           showProfileManager.value = true;
                           showUserDropdown.value = false;
@@ -459,7 +495,7 @@ export function App() {
             <button onClick={() => moveDate(1)}>{t('Next')}</button>
           </div>
 
-          <button className="excel-export-btn" onClick={handleExport} title={t('Export to Excel')}>
+          <button className="excel-export-btn" onClick={handleGlobalExport} title={t('Export to Excel')}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
@@ -472,43 +508,64 @@ export function App() {
       </header>
 
       <div className={`timetable-view`}>
-        <Timetable 
-          periods={periods.value}
-          resources={resources.value}
-          lessons={lessons.value}
-          events={events.value}
-          viewMode={viewMode.value}
-          viewType={viewType.value}
-          baseDate={currentDate.value}
-          holidays={holidays.value}
-          labels={resourceLabels.value}
-          systemSettings={systemSettings.value}
-          onEventClick={(event) => {
-            editingEvent.value = event;
-            showEventManager.value = true;
-          }}
-          onEmptyEventClick={(date, periodId) => {
-            editingEvent.value = { startDate: date, startPeriodId: periodId };
-            showEventManager.value = true;
-          }}
-          onLessonClick={(lesson) => {
-            editingLesson.value = lesson;
-            showLessonManager.value = true;
-          }}
-          onEmptyResourceCellClick={(resourceId, date, periodId) => {
-            const initial: Partial<Lesson> = { startDate: date, startPeriodId: periodId, endDate: date, endPeriodId: periodId };
-            if (viewMode.value === 'room') {
-              initial.roomId = resourceId;
-              // この教室をメイン教室としている講座があれば、それを初期選択
-              const relatedCourse = resources.value.find(c => c.type === 'course' && c.mainRoomId === resourceId);
-              if (relatedCourse) initial.courseId = relatedCourse.id;
-            }
-            else if (viewMode.value === 'teacher') initial.teacherId = resourceId;
-            else if (viewMode.value === 'course') initial.courseId = resourceId;
-            editingLesson.value = initial;
-            showLessonManager.value = true;
-          }}
-        />
+        {showPersonalMonthly.value && user.value?.resourceId ? (
+          <PersonalMonthlyView 
+            userResourceId={user.value.resourceId}
+            resources={resources.value}
+            lessons={lessons.value}
+            events={events.value}
+            periods={periods.value}
+            baseDate={currentDate.value}
+            holidays={holidays.value}
+            labels={resourceLabels.value}
+            onLessonClick={(lesson) => {
+              editingLesson.value = lesson;
+              showLessonManager.value = true;
+            }}
+            onEventClick={(event) => {
+              editingEvent.value = event;
+              showEventManager.value = true;
+            }}
+          />
+        ) : (
+          <Timetable 
+            periods={periods.value}
+            resources={resources.value}
+            lessons={lessons.value}
+            events={events.value}
+            viewMode={viewMode.value}
+            viewType={viewType.value}
+            baseDate={currentDate.value}
+            holidays={holidays.value}
+            labels={resourceLabels.value}
+            systemSettings={systemSettings.value}
+            onEventClick={(event) => {
+              editingEvent.value = event;
+              showEventManager.value = true;
+            }}
+            onEmptyEventClick={(date, periodId) => {
+              editingEvent.value = { startDate: date, startPeriodId: periodId };
+              showEventManager.value = true;
+            }}
+            onLessonClick={(lesson) => {
+              editingLesson.value = lesson;
+              showLessonManager.value = true;
+            }}
+            onEmptyResourceCellClick={(resourceId, date, periodId) => {
+              const initial: Partial<Lesson> = { startDate: date, startPeriodId: periodId, endDate: date, endPeriodId: periodId };
+              if (viewMode.value === 'room') {
+                initial.roomId = resourceId;
+                // この教室をメイン教室としている講座があれば、それを初期選択
+                const relatedCourse = resources.value.find(c => c.type === 'course' && c.mainRoomId === resourceId);
+                if (relatedCourse) initial.courseId = relatedCourse.id;
+              }
+              else if (viewMode.value === 'teacher') initial.teacherId = resourceId;
+              else if (viewMode.value === 'course') initial.courseId = resourceId;
+              editingLesson.value = initial;
+              showLessonManager.value = true;
+            }}
+          />
+        )}
       </div>
 
       {showPeriodManager.value && (
