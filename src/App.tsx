@@ -280,11 +280,13 @@ export function App() {
     }
   };
 
+  const logoPath = `${import.meta.env.BASE_URL}ScholaTile_28x28.png`;
+
   return (
     <div className="app-container">
       <header className="app-header">
         <div className="header-top">
-          <h1>ScholaTile</h1>
+          <h1><img src={logoPath} style="vertical-align: middle;" />ScholaTile</h1>
           {user.value && (
             <div className="user-info">
               {user.value.role === 'ADMIN' && (
