@@ -131,6 +131,8 @@ model SystemSetting {
   allowPublicSignup  Boolean @default(true)
   yearViewStartMonth Int     @default(4)
   yearViewStartDay   Int     @default(1)
+  weekendDays        String  @default("0,6") // Comma-separated day indices (0=Sun, 6=Sat)
+  holidayTheme       String  @default("default")
 }
 
 enum ResourceType {

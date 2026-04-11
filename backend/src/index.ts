@@ -280,7 +280,9 @@ app.get('/api/settings', async (req, res) => {
         data: { 
           allowPublicSignup: true,
           yearViewStartMonth: 4,
-          yearViewStartDay: 1
+          yearViewStartDay: 1,
+          weekendDays: "0,6",
+          holidayTheme: "default"
         } 
       });
     }
@@ -295,25 +297,25 @@ app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { allowPublicSignup, yearViewStartMonth, yearViewStartDay } = req.body;
+  const { allowPublicSignup, yearViewStartMonth, yearViewStartDay, weekendDays, holidayTheme } = req.body;
   try {
     let settings = await prisma.systemSetting.findFirst();
+    const data = {
+      allowPublicSignup,
+      yearViewStartMonth: parseInt(yearViewStartMonth) || 4,
+      yearViewStartDay: parseInt(yearViewStartDay) || 1,
+      weekendDays: weekendDays || "0,6",
+      holidayTheme: holidayTheme || "default"
+    };
+
     if (settings) {
       settings = await prisma.systemSetting.update({
         where: { id: settings.id },
-        data: {
-          allowPublicSignup,
-          yearViewStartMonth: parseInt(yearViewStartMonth) || 4,
-          yearViewStartDay: parseInt(yearViewStartDay) || 1
-        }
+        data
       });
     } else {
       settings = await prisma.systemSetting.create({
-        data: {
-          allowPublicSignup,
-          yearViewStartMonth: parseInt(yearViewStartMonth) || 4,
-          yearViewStartDay: parseInt(yearViewStartDay) || 1
-        }
+        data
       });
     }
     res.json(settings);
