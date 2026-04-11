@@ -1,6 +1,9 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { format, startOfDay, parseISO, isSameDay, isAfter, isBefore, addDays, getYear, differenceInDays } from 'date-fns';
+import { 
+  format, startOfDay, parseISO, isSameDay, isAfter, isBefore, addDays, addMonths, getYear, differenceInDays,
+  startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth
+} from 'date-fns';
 import { TimePeriod, Resource, Lesson, ScheduleEvent, ResourceLabels, SystemSetting, ViewType, ResourceType, Holiday } from '../types';
 
 interface ExportParams {
@@ -17,6 +20,19 @@ interface ExportParams {
   t: (key: string, options?: any) => string;
 }
 
+// Helper to convert hex to ARGB
+const hexToARGB = (hex?: string) => {
+  if (!hex) return 'FFFFFFFF';
+  const cleanHex = hex.replace('#', '');
+  if (cleanHex.length === 3) {
+    const r = cleanHex[0] + cleanHex[0];
+    const g = cleanHex[1] + cleanHex[1];
+    const b = cleanHex[2] + cleanHex[2];
+    return `FF${r}${g}${b}`.toUpperCase();
+  }
+  return `FF${cleanHex}`.toUpperCase();
+};
+
 export async function exportTimetableToExcel({
   periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings, t
 }: ExportParams) {
@@ -24,11 +40,19 @@ export async function exportTimetableToExcel({
   const worksheet = workbook.addWorksheet('Timetable');
 
   const currentViewStart = startOfDay(baseDate);
+
+  const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
+  const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
+  const holidayTheme = systemSettings?.holidayTheme || 'default';
   
   const getDayCount = () => {
     if (viewType === 'day') return 1;
     if (viewType === 'week') return 7;
     if (viewType === 'month') return 30;
+    if (viewType === '3month' || viewType === '6month') {
+      const months = viewType === '3month' ? 3 : 6;
+      return differenceInDays(addMonths(currentViewStart, months), currentViewStart);
+    }
     if (viewType === 'year') {
       const month = systemSettings?.yearViewStartMonth ?? 4;
       const day = systemSettings?.yearViewStartDay ?? 1;
@@ -46,19 +70,6 @@ export async function exportTimetableToExcel({
   const filteredResources = resources
     .filter(r => r.type === viewMode)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-  // Helper to convert hex to ARGB
-  const hexToARGB = (hex?: string) => {
-    if (!hex) return 'FFFFFFFF';
-    const cleanHex = hex.replace('#', '');
-    if (cleanHex.length === 3) {
-      const r = cleanHex[0] + cleanHex[0];
-      const g = cleanHex[1] + cleanHex[1];
-      const b = cleanHex[2] + cleanHex[2];
-      return `FF${r}${g}${b}`.toUpperCase();
-    }
-    return `FF${cleanHex}`.toUpperCase();
-  };
 
   const getHoliday = (date: Date) => {
     const target = startOfDay(date);
@@ -94,12 +105,18 @@ export async function exportTimetableToExcel({
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
     cell.font = { bold: true };
     const holiday = getHoliday(date);
-    const isSun = date.getDay() === 0;
-    const isSat = date.getDay() === 6;
-    if (holiday || isSun) {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE4E1' } }; // MistyRose
-    } else if (isSat) {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3FF' } }; // LightBlue
+    const isWknd = isWeekend(date);
+
+    let bgColor = 'FFFFFFFF';
+    if (holidayTheme === 'vivid') {
+      if (holiday) bgColor = 'FFFEEFC3'; // light orange
+      else if (isWknd) bgColor = 'FFE8F0FE'; // light blue
+    } else {
+      if (holiday || isWknd) bgColor = 'FFFFE4E1'; // MistyRose
+    }
+
+    if (bgColor !== 'FFFFFFFF') {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
     }
     if (periods.length > 1) {
       worksheet.mergeCells(1, startCol, 1, endCol);
@@ -198,14 +215,23 @@ export async function exportTimetableToExcel({
     const row = worksheet.getRow(currentRow + l);
     row.height = 35;
     displayDates.forEach((date, dIdx) => {
-      const isSun = date.getDay() === 0;
-      const isSat = date.getDay() === 6;
+      const isWknd = isWeekend(date);
       const holiday = getHoliday(date);
+
+      let bgColor = 'FFFFFFFF';
+      if (holidayTheme === 'vivid') {
+        if (holiday) bgColor = 'FFFFF7E0';
+        else if (isWknd) bgColor = 'FFF8FBFF';
+      } else {
+        if (holiday || isWknd) bgColor = 'FFFFF0F0';
+      }
+
       periods.forEach((_, pIdx) => {
         const cell = worksheet.getCell(currentRow + l, dIdx * periods.length + pIdx + 2);
         cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
-        if (holiday || isSun) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } };
-        else if (isSat) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F8FF' } };
+        if (bgColor !== 'FFFFFFFF') {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+        }
       });
     });
   }
@@ -296,14 +322,23 @@ export async function exportTimetableToExcel({
       const row = worksheet.getRow(currentRow + l);
       row.height = 35;
       displayDates.forEach((date, dIdx) => {
-        const isSun = date.getDay() === 0;
-        const isSat = date.getDay() === 6;
+        const isWknd = isWeekend(date);
         const holiday = getHoliday(date);
+
+        let bgColor = 'FFFFFFFF';
+        if (holidayTheme === 'vivid') {
+          if (holiday) bgColor = 'FFFFF7E0';
+          else if (isWknd) bgColor = 'FFF8FBFF';
+        } else {
+          if (holiday || isWknd) bgColor = 'FFFFF0F0';
+        }
+
         periods.forEach((_, pIdx) => {
           const cell = worksheet.getCell(currentRow + l, dIdx * periods.length + pIdx + 2);
           cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
-          if (holiday || isSun) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } };
-          else if (isSat) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F8FF' } };
+          if (bgColor !== 'FFFFFFFF') {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+          }
         });
       });
     }
@@ -345,4 +380,205 @@ export async function exportTimetableToExcel({
   const buffer = await workbook.xlsx.writeBuffer();
   const fileName = `ScholaTile_${viewMode}_${format(baseDate, 'yyyyMMdd')}.xlsx`;
   saveAs(new Blob([buffer]), fileName);
+}
+
+interface PersonalExportParams {
+  userResourceId: string;
+  periods: TimePeriod[];
+  resources: Resource[];
+  lessons: Lesson[];
+  events: ScheduleEvent[];
+  baseDate: Date;
+  holidays: Holiday[];
+  labels: ResourceLabels;
+  systemSettings: SystemSetting | null;
+  t: (key: string, options?: any) => string;
+}
+
+export async function exportPersonalMonthlyToExcel({
+  userResourceId, periods, resources, lessons, events, baseDate, holidays, labels, systemSettings, t
+}: PersonalExportParams) {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('My Schedule');
+
+    const monthStart = startOfMonth(baseDate);
+    const monthEnd = endOfMonth(monthStart);
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+    const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+    const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
+    const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
+    const holidayTheme = systemSettings?.holidayTheme || 'default';
+
+    const getHoliday = (date: Date) => {
+      if (!date) return null;
+      const dateStr = format(date, 'yyyy-MM-dd');
+      return holidays.find(h => {
+        if (h.date === dateStr) return true;
+        if (h.start && h.end) return dateStr >= h.start && dateStr <= h.end;
+        return false;
+      });
+    };
+
+    // Columns Width
+    for (let i = 1; i <= 7; i++) {
+      worksheet.getColumn(i).width = 25;
+    }
+
+    // Weekday Header
+    const weekdayFormatter = new Intl.DateTimeFormat(navigator.language, { weekday: 'short' });
+    const headerRow = worksheet.getRow(1);
+    headerRow.height = 30;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(2021, 0, 3 + i);
+      const cell = worksheet.getCell(1, i + 1);
+      cell.value = weekdayFormatter.format(d);
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+      cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
+    }
+
+    const mergedRanges = new Set<string>();
+    const isMerged = (row: number, col: number) => mergedRanges.has(`${row},${col}`);
+
+    const weeksCount = Math.ceil(days.length / 7);
+    for (let w = 0; w < weeksCount; w++) {
+      const baseRow = 2 + w * 9;
+      
+      for (let d = 0; d < 7; d++) {
+        const dayIdx = w * 7 + d;
+        const day = days[dayIdx];
+        if (!day) continue;
+
+        const colIdx = d + 1;
+        const cell = worksheet.getCell(baseRow, colIdx);
+        
+        const holiday = getHoliday(day);
+        const isWknd = isWeekend(day);
+        const isCurrMonth = isSameMonth(day, monthStart);
+
+        cell.value = `${format(day, 'd')}${holiday ? ` (${holiday.name})` : ''}`;
+        cell.font = { bold: true, size: 10 };
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+        let bgColor = 'FFFFFFFF';
+        if (holidayTheme === 'vivid') {
+          if (holiday) bgColor = 'FFFEEFC3';
+          else if (isWknd) bgColor = 'FFE8F0FE';
+        } else {
+          if (holiday || isWknd) bgColor = 'FFFFE4E1';
+        }
+        if (!isCurrMonth) bgColor = 'FFF0F0F0';
+
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+        cell.border = { left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' }, bottom: { style: 'thin' } };
+
+        for (let p = 1; p <= 8; p++) {
+          const pCell = worksheet.getCell(baseRow + p, colIdx);
+          pCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+          pCell.border = { left: { style: 'thin' }, right: { style: 'thin' }, bottom: p === 8 ? { style: 'thin' } : undefined };
+          worksheet.getRow(baseRow + p).height = 25;
+        }
+
+        const dateStr = format(day, 'yyyy-MM-dd');
+        const dayLessons = lessons.filter(l => {
+          const isTeacher = l.teacherId === userResourceId || l.subTeacherIds?.includes(userResourceId);
+          return isTeacher && dateStr >= l.startDate && dateStr <= l.endDate;
+        });
+        const dayEvents = events.filter(e => {
+          const isRelevant = e.showInEventRow || (e.resourceIds && e.resourceIds.includes(userResourceId));
+          return isRelevant && dateStr >= e.startDate && dateStr <= e.endDate;
+        });
+
+        const processedItemIds = new Set<string>();
+
+        periods.slice(0, 8).forEach((period, pIdx) => {
+          const pEvents = dayEvents.filter(e => {
+            if (e.startDate === e.endDate) return (period.id || '') >= e.startPeriodId && (period.id || '') <= e.endPeriodId;
+            if (dateStr === e.startDate) return (period.id || '') >= e.startPeriodId;
+            if (dateStr === e.endDate) return (period.id || '') <= e.endPeriodId;
+            return true;
+          });
+          const pLessons = dayLessons.filter(l => {
+            if (l.startDate === l.endDate) return (period.id || '') >= l.startPeriodId && (period.id || '') <= l.endPeriodId;
+            if (dateStr === l.startDate) return (period.id || '') >= l.startPeriodId;
+            if (dateStr === l.endDate) return (period.id || '') <= l.endPeriodId;
+            return true;
+          });
+
+          const allItems = [
+            ...pEvents.map(e => ({ type: 'event', data: e })),
+            ...pLessons.map(l => ({ type: 'lesson', data: l }))
+          ];
+
+          allItems.forEach(item => {
+            const id = `${item.type}-${item.data.id}`;
+            if (processedItemIds.has(id)) return;
+            
+            const startRow = baseRow + 1 + pIdx;
+            if (isMerged(startRow, colIdx)) return;
+
+            processedItemIds.add(id);
+
+            let endIdx = pIdx;
+            if (item.type === 'event') {
+              const e = item.data as ScheduleEvent;
+              const eEndId = e.endPeriodId || 'p1';
+              const eEnd = parseInt(eEndId.replace('p', '')) - 1;
+              if (dateStr === e.endDate) endIdx = eEnd;
+              else if (dateStr < e.endDate) endIdx = 7;
+            } else {
+              const l = item.data as Lesson;
+              const lEndId = l.endPeriodId || 'p1';
+              const lEnd = parseInt(lEndId.replace('p', '')) - 1;
+              if (dateStr === l.endDate) endIdx = lEnd;
+              else if (dateStr < l.endDate) endIdx = 7;
+            }
+            const span = Math.max(1, endIdx - pIdx + 1);
+            const endRow = baseRow + 1 + pIdx + span - 1;
+
+            const periodLabel = span > 1 ? `${pIdx + 1}-${endIdx + 1}` : `${pIdx + 1}`;
+            const cell = worksheet.getCell(startRow, colIdx);
+
+            if (item.type === 'event') {
+              const e = item.data as ScheduleEvent;
+              cell.value = `[${periodLabel}] ${e.name}${e.location ? ` (${e.location})` : ''}`;
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(e.color || '#fef3c7') } };
+            } else {
+              const l = item.data as Lesson;
+              const room = resources.find(r => r.id === l.roomId);
+              const roomLabel = room?.name || l.location || '';
+              cell.value = `[${periodLabel}] ${l.subject}${roomLabel ? ` (${roomLabel})` : ''}`;
+              const color = (!l.teacherId && !l.externalTeacher) ? '#e884fa' : (l.deliveryMethods?.[0]?.color || '#646cff');
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(color) } };
+              cell.font = { color: { argb: 'FFFFFFFF' } };
+            }
+
+            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
+
+            if (endRow > startRow) {
+              try {
+                worksheet.mergeCells(startRow, colIdx, endRow, colIdx);
+                for (let r = startRow; r <= endRow; r++) mergedRanges.add(`${r},${colIdx}`);
+              } catch (e) {
+                console.warn('Merge failed:', e);
+              }
+            } else {
+              mergedRanges.add(`${startRow},${colIdx}`);
+            }
+          });
+        });
+      }
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const fileName = `PersonalSchedule_${format(baseDate, 'yyyyMM')}.xlsx`;
+    saveAs(new Blob([buffer]), fileName);
+  } catch (err) {
+    console.error('Personal Export Error:', err);
+  }
 }
