@@ -38,6 +38,8 @@ export interface SystemSetting {
   allowPublicSignup: boolean;
   yearViewStartMonth: number;
   yearViewStartDay: number;
+  weekendDays: string; // "0,6"
+  holidayTheme: string; // "default"
 }
 
 export interface CourseSubject {
@@ -104,7 +106,7 @@ export interface Lesson {
   endPeriodId: string;   // 終了時限 "p4"
 }
 
-export type ViewType = 'day' | 'week' | 'month' | 'year';
+export type ViewType = 'day' | 'week' | 'month' | '3month' | '6month' | 'year';
 
 export interface Holiday {
   id: string;
