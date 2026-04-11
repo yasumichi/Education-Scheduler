@@ -71,6 +71,29 @@
   color: #aaa;
 }
 
+.weekend-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.weekend-selector .checkbox-label {
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+
+.theme-select {
+  width: 100%;
+  background: #333;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
 .system-setting-footer {
   display: flex;
   justify-content: flex-end;
@@ -84,4 +107,9 @@
   .setting-item { background-color: #f5f5f5; }
   .system-setting-header, .system-setting-footer { border-color: #eee; }
   .setting-description { color: #666; }
+  .theme-select {
+    background-color: #fff;
+    color: #333;
+    border-color: #ccc;
+  }
 }

@@ -12,6 +12,8 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
   const [allowPublicSignup, setAllowPublicSignup] = useState(true);
   const [yearViewStartMonth, setYearViewStartMonth] = useState(4);
   const [yearViewStartDay, setYearViewStartDay] = useState(1);
+  const [weekendDays, setWeekendDays] = useState("0,6");
+  const [holidayTheme, setHolidayTheme] = useState("default");
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -22,6 +24,8 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
           setAllowPublicSignup(data.allowPublicSignup);
           setYearViewStartMonth(data.yearViewStartMonth || 4);
           setYearViewStartDay(data.yearViewStartDay || 1);
+          setWeekendDays(data.weekendDays || "0,6");
+          setHolidayTheme(data.holidayTheme || "default");
         }
       } catch (err) {
         console.error('Failed to fetch settings:', err);
@@ -29,6 +33,15 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
     };
     fetchSettings();
   }, []);
+
+  const toggleWeekendDay = (day: number) => {
+    const days = weekendDays ? weekendDays.split(',').map(Number) : [];
+    if (days.includes(day)) {
+      setWeekendDays(days.filter(d => d !== day).sort().join(','));
+    } else {
+      setWeekendDays([...days, day].sort().join(','));
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -39,7 +52,9 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
         body: JSON.stringify({ 
           allowPublicSignup,
           yearViewStartMonth,
-          yearViewStartDay
+          yearViewStartDay,
+          weekendDays,
+          holidayTheme
         })
       });
       if (res.ok) {
@@ -106,6 +121,40 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
             </div>
             <p className="setting-description">
               {t('Used as the start date for the "1 year" view.')}
+            </p>
+          </div>
+
+          <div className="setting-item">
+            <label className="field-label">{t('Weekend Days')}</label>
+            <div className="weekend-selector">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
+                <label key={i} className="checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    checked={weekendDays.split(',').includes(i.toString())}
+                    onChange={() => toggleWeekendDay(i)}
+                  />
+                  {t(day)}
+                </label>
+              ))}
+            </div>
+            <p className="setting-description">
+              {t('Selected days will be styled as weekends in the calendar.')}
+            </p>
+          </div>
+
+          <div className="setting-item">
+            <label className="field-label">{t('Holiday Theme')}</label>
+            <select 
+              value={holidayTheme}
+              onChange={(e) => setHolidayTheme(e.currentTarget.value)}
+              className="theme-select"
+            >
+              <option value="default">{t('Default')}</option>
+              <option value="vivid">{t('Vivid')}</option>
+            </select>
+            <p className="setting-description">
+              {t('Choose the base theme for holidays and weekends.')}
             </p>
           </div>
         </div>

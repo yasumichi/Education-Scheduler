@@ -268,6 +268,7 @@ export function App() {
       baseDate: currentDate.value,
       holidays: holidays.value,
       labels: resourceLabels.value,
+      systemSettings: systemSettings.value,
       t
     });
   };
@@ -559,6 +560,7 @@ export function App() {
             baseDate={currentDate.value}
             holidays={holidays.value}
             labels={resourceLabels.value}
+            systemSettings={systemSettings.value}
             onLessonClick={(lesson) => {
               editingLesson.value = lesson;
               showLessonManager.value = true;
