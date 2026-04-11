@@ -61,7 +61,9 @@ export function Timetable({
   const getDayCount = () => {
     if (viewType === 'day') return 1;
     if (viewType === 'week') return 7;
-    if (viewType === 'month') return 30;
+    if (viewType === 'month') {
+      return differenceInDays(addMonths(currentViewStart, 1), currentViewStart);
+    }
     if (viewType === '3month' || viewType === '6month') {
       const months = viewType === '3month' ? 3 : 6;
       return differenceInDays(addMonths(currentViewStart, months), currentViewStart);

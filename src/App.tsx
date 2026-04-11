@@ -25,7 +25,7 @@ const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 export function App() {
   const { t } = useTranslation();
   const viewMode = useSignal<ResourceType>('room');
-  const viewType = useSignal<ViewType>('day');
+  const viewType = useSignal<ViewType>('month');
   const showPersonalMonthly = useSignal<boolean>(false);
   const currentDate = useSignal<Date>(new Date());
   const holidays = useSignal<Holiday[]>([]);
@@ -149,6 +149,13 @@ export function App() {
     }
   }, [user.value]);
 
+  // 設定読み込み後に日付を整列させる
+  useEffect(() => {
+    if (systemSettings.value && (viewType.value === 'year' || viewType.value === '3month' || viewType.value === '6month' || viewType.value === 'month')) {
+      handleViewTypeChange(viewType.value);
+    }
+  }, [systemSettings.value]);
+
   const handleLogin = async (email: string, pass: string) => {
     authError.value = undefined;
     try {
@@ -202,7 +209,7 @@ export function App() {
     }
     if (viewType.value === 'day') currentDate.value = addDays(currentDate.value, amount);
     if (viewType.value === 'week') currentDate.value = addDays(currentDate.value, amount * 7);
-    if (viewType.value === 'month') currentDate.value = addDays(currentDate.value, amount * 30);
+    if (viewType.value === 'month') currentDate.value = addMonths(currentDate.value, amount);
     if (viewType.value === '3month') currentDate.value = addMonths(currentDate.value, amount * 3);
     if (viewType.value === '6month') currentDate.value = addMonths(currentDate.value, amount * 6);
     if (viewType.value === 'year') currentDate.value = addMonths(currentDate.value, amount * 12);
@@ -217,7 +224,7 @@ export function App() {
 
   const handleViewTypeChange = (type: ViewType) => {
     viewType.value = type;
-    if (type === 'year' || type === '3month' || type === '6month') {
+    if (type === 'year' || type === '3month' || type === '6month' || type === 'month') {
       const month = systemSettings.value?.yearViewStartMonth ?? 4;
       const day = systemSettings.value?.yearViewStartDay ?? 1;
       
@@ -233,7 +240,7 @@ export function App() {
       if (type === 'year') {
         currentDate.value = yearStart;
       } else {
-        const interval = type === '3month' ? 3 : 6;
+        const interval = type === '3month' ? 3 : (type === '6month' ? 6 : 1);
         const diffMonths = differenceInMonths(targetDate, yearStart);
         const blockIndex = Math.floor(diffMonths / interval);
         currentDate.value = addMonths(yearStart, blockIndex * interval);
