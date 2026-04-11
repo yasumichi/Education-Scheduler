@@ -64,6 +64,21 @@ h1 {
   color: #fff;
 }
 
+.personal-view-title {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-left: 10px;
+  color: #646cff;
+}
+
+@media (prefers-color-scheme: light) {
+  .personal-view-title {
+    color: #4a54ff;
+  }
+}
+
 .user-dropdown-container {
   position: relative;
 }
