@@ -17,7 +17,7 @@ import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting } from './types';
-import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, startOfDay } from 'date-fns';
+import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel } from './utils/excelExport';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -151,7 +151,7 @@ export function App() {
 
   // 設定読み込み後に日付を整列させる
   useEffect(() => {
-    if (systemSettings.value && (viewType.value === 'year' || viewType.value === '3month' || viewType.value === '6month' || viewType.value === 'month')) {
+    if (systemSettings.value && (viewType.value === 'year' || viewType.value === '3month' || viewType.value === '6month' || viewType.value === 'month' || viewType.value === 'week')) {
       handleViewTypeChange(viewType.value);
     }
   }, [systemSettings.value]);
@@ -245,6 +245,8 @@ export function App() {
         const blockIndex = Math.floor(diffMonths / interval);
         currentDate.value = addMonths(yearStart, blockIndex * interval);
       }
+    } else if (type === 'week') {
+      currentDate.value = startOfWeek(new Date(), { weekStartsOn: 0 }); // Sunday from system time
     }
   };
 
