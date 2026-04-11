@@ -451,7 +451,7 @@ export function Timetable({
                  top: `${top}px`, 
                  height: `${itemHeight}px`,
                  position: 'relative',
-                 zIndex: 20,
+                 zIndex: 2,
                  cursor: 'pointer'
                }}>
             <div className="course-card-content">
