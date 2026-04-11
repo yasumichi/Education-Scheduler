@@ -247,6 +247,8 @@ export function App() {
       }
     } else if (type === 'week') {
       currentDate.value = startOfWeek(new Date(), { weekStartsOn: 0 }); // Sunday from system time
+    } else if (type === 'day') {
+      currentDate.value = startOfDay(new Date());
     }
   };
 
