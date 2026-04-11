@@ -441,13 +441,6 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
       chiefTeacherId: chiefTeacherId || null,
       mainTeacherLabel: mainTeacherLabel || null,
       subTeacherLabel: subTeacherLabel || null,
-      subjects: {
-        deleteMany: {},
-        create: subjects.map((s: any) => ({
-          name: s.name,
-          totalPeriods: s.totalPeriods
-        }))
-      }
     };
 
     const subTeachersConnect = assistantTeacherIds?.map((tid: string) => ({ id: tid })) || [];
@@ -458,6 +451,13 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
         where: { id },
         data: {
           ...commonData,
+          subjects: {
+            deleteMany: {},
+            create: subjects.map((s: any) => ({
+              name: s.name,
+              totalPeriods: s.totalPeriods
+            }))
+          },
           assistantTeachers: {
             set: [],
             connect: subTeachersConnect
@@ -470,6 +470,12 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
       course = await prisma.resource.create({
         data: {
           ...commonData,
+          subjects: {
+            create: subjects.map((s: any) => ({
+              name: s.name,
+              totalPeriods: s.totalPeriods
+            }))
+          },
           type: ResourceType.course,
           assistantTeachers: {
             connect: subTeachersConnect
