@@ -194,10 +194,18 @@ export function App() {
   }
 
   const moveDate = (amount: number) => {
+    if (showPersonalMonthly.value) {
+      const nextDate = new Date(currentDate.value);
+      nextDate.setMonth(nextDate.getMonth() + amount);
+      currentDate.value = nextDate;
+      return;
+    }
     if (viewType.value === 'day') currentDate.value = addDays(currentDate.value, amount);
     if (viewType.value === 'week') currentDate.value = addDays(currentDate.value, amount * 7);
     if (viewType.value === 'month') currentDate.value = addDays(currentDate.value, amount * 30);
-    if (viewType.value === 'year') currentDate.value = addDays(currentDate.value, amount * 365);
+    if (viewType.value === '3month') currentDate.value = addMonths(currentDate.value, amount * 3);
+    if (viewType.value === '6month') currentDate.value = addMonths(currentDate.value, amount * 6);
+    if (viewType.value === 'year') currentDate.value = addMonths(currentDate.value, amount * 12);
   };
 
   const handleDateChange = (e: any) => {
@@ -209,19 +217,27 @@ export function App() {
 
   const handleViewTypeChange = (type: ViewType) => {
     viewType.value = type;
-    if (type === 'year') {
+    if (type === 'year' || type === '3month' || type === '6month') {
       const month = systemSettings.value?.yearViewStartMonth ?? 4;
       const day = systemSettings.value?.yearViewStartDay ?? 1;
       
-      const currentMonth = getMonth(currentDate.value) + 1;
-      const currentDay = currentDate.value.getDate();
+      const targetDate = startOfDay(currentDate.value);
+      let year = getYear(targetDate);
+      let yearStart = new Date(year, month - 1, day);
       
-      let year = getYear(currentDate.value);
-      // 開始月日より前なら前年を開始年とする
-      if (currentMonth < month || (currentMonth === month && currentDay < day)) {
+      if (targetDate < yearStart) {
         year -= 1;
+        yearStart = new Date(year, month - 1, day);
       }
-      currentDate.value = new Date(year, month - 1, day);
+      
+      if (type === 'year') {
+        currentDate.value = yearStart;
+      } else {
+        const interval = type === '3month' ? 3 : 6;
+        const diffMonths = differenceInMonths(targetDate, yearStart);
+        const blockIndex = Math.floor(diffMonths / interval);
+        currentDate.value = addMonths(yearStart, blockIndex * interval);
+      }
     }
   };
 
@@ -436,6 +452,15 @@ export function App() {
         </div>
 
         <div className="controls">
+          {showPersonalMonthly.value ? (
+            <div className="control-group">
+              <button onClick={() => showPersonalMonthly.value = false}>
+                {t('Back to Timetable')}
+              </button>
+              <span className="personal-view-title">{t('Personal Monthly')}</span>
+            </div>
+          ) : (
+            <>
           <div className="control-group">
             <button 
               className={viewMode.value === 'room' ? 'active' : ''} 
@@ -476,6 +501,18 @@ export function App() {
             >
               {t('1 month')}
             </button>
+                <button 
+                  className={viewType.value === '3month' ? 'active' : ''} 
+                  onClick={() => handleViewTypeChange('3month')}
+                >
+                  {t('3 months')}
+                </button>
+                <button 
+                  className={viewType.value === '6month' ? 'active' : ''} 
+                  onClick={() => handleViewTypeChange('6month')}
+                >
+                  {t('6 months')}
+                </button>
             <button 
               className={viewType.value === 'year' ? 'active' : ''} 
               onClick={() => handleViewTypeChange('year')}
@@ -483,6 +520,8 @@ export function App() {
               {t('1 year')}
             </button>
           </div>
+            </>
+          )}
 
           <div className="control-group date-nav">
             <button onClick={() => moveDate(-1)}>{t('Prev')}</button>

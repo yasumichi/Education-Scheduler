@@ -1,5 +1,5 @@
 import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday, ResourceLabels, ScheduleEvent, SystemSetting } from '../types';
-import { format, addDays, isSameDay, parseISO, getYear, differenceInDays, isWithinInterval, isBefore, isAfter, startOfDay } from 'date-fns';
+import { format, addDays, addMonths, isSameDay, parseISO, getYear, differenceInDays, isWithinInterval, isBefore, isAfter, startOfDay } from 'date-fns';
 import './Timetable.css';
 import { useTranslation } from 'react-i18next';
 import { JSX } from 'preact';
@@ -40,6 +40,10 @@ export function Timetable({
 
   const currentViewStart = startOfDay(baseDate);
 
+  const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
+  const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
+  const holidayTheme = systemSettings?.holidayTheme || 'default';
+
   const getHoliday = (date: Date) => {
     const target = startOfDay(date);
     return holidays.find(h => {
@@ -58,6 +62,10 @@ export function Timetable({
     if (viewType === 'day') return 1;
     if (viewType === 'week') return 7;
     if (viewType === 'month') return 30;
+    if (viewType === '3month' || viewType === '6month') {
+      const months = viewType === '3month' ? 3 : 6;
+      return differenceInDays(addMonths(currentViewStart, months), currentViewStart);
+    }
     if (viewType === 'year') {
       const month = systemSettings?.yearViewStartMonth ?? 4;
       const day = systemSettings?.yearViewStartDay ?? 1;
@@ -149,13 +157,11 @@ export function Timetable({
 
   const dateHeaders = displayDates.map((date, dIdx) => {
     const holiday = getHoliday(date);
-    const isSun = date.getDay() === 0;
-    const isSat = date.getDay() === 6;
+    const isWknd = isWeekend(date);
     const isFirstOfMonth = date.getDate() === 1;
 
     let className = 'date-header';
-    if (isSun) className += ' is-sunday';
-    if (isSat) className += ' is-saturday';
+    if (isWknd) className += ' is-weekend';
     if (holiday) className += ' is-holiday';
     if (isFirstOfMonth) className += ' month-start';
 
@@ -172,12 +178,10 @@ export function Timetable({
 
     const periodHeaders = displayDates.flatMap((date, dIdx) => 
     periods.map((p, pIdx) => {
-      const isSun = date.getDay() === 0;
-      const isSat = date.getDay() === 6;
+      const isWknd = isWeekend(date);
       const holiday = getHoliday(date);
       let className = 'period-header';
-      if (isSun) className += ' is-sunday';
-      if (isSat) className += ' is-saturday';
+      if (isWknd) className += ' is-weekend';
       if (holiday) className += ' is-holiday';
       return (
         <div key={`period-${date.toISOString()}-${p.id}`} 
@@ -197,11 +201,9 @@ export function Timetable({
 
   const eventCells = displayDates.flatMap((date, dIdx) => {
     const holiday = getHoliday(date);
-    const isSun = date.getDay() === 0;
-    const isSat = date.getDay() === 6;
+    const isWknd = isWeekend(date);
     let className = 'grid-cell event-cell';
-    if (isSun) className += ' is-sunday';
-    if (isSat) className += ' is-saturday';
+    if (isWknd) className += ' is-weekend';
     if (holiday) className += ' is-holiday';
 
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -467,7 +469,7 @@ export function Timetable({
   } as JSX.CSSProperties;
 
   return (
-    <div className="timetable-wrapper" style={wrapperStyle}>
+    <div className={`timetable-wrapper holiday-theme-${holidayTheme}`} style={wrapperStyle}>
       <div 
         key={`grid-${viewType}-${baseDate.getTime()}-${viewMode}-${filteredResources.length}-${totalCols}`}
         className="timetable-container" 
@@ -476,13 +478,11 @@ export function Timetable({
         {filterButton}
         {filteredResources.map((res, rIdx) => 
           displayDates.map((date, dIdx) => {
-            const isSun = date.getDay() === 0;
-            const isSat = date.getDay() === 6;
+            const isWknd = isWeekend(date);
             const holiday = getHoliday(date);
             const dateStr = format(date, 'yyyy-MM-dd');
             let cellClass = 'grid-cell';
-            if (isSun) cellClass += ' is-sunday';
-            if (isSat) cellClass += ' is-saturday';
+            if (isWknd) cellClass += ' is-weekend';
             if (holiday) cellClass += ' is-holiday';
             return periods.map((p, pIdx) => (
               <div key={`cell-${rIdx}-${dIdx}-${pIdx}`} 
