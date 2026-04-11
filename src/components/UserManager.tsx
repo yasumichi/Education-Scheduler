@@ -56,7 +56,6 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
         role: 'STUDENT'
       });
     }
-    setResetPasswordMode(false);
   }, [editingUserId, users]);
 
   const handleSave = async () => {
