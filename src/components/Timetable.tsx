@@ -19,12 +19,13 @@ interface Props {
   onEventClick?: (event: ScheduleEvent) => void;
   onEmptyEventClick?: (date: string, periodId: string) => void;
   onLessonClick?: (lesson: Lesson) => void;
+  onCourseClick?: (course: Resource) => void;
   onEmptyResourceCellClick?: (resourceId: string, date: string, periodId: string) => void;
 }
 
 export function Timetable({ 
   periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings,
-  onEventClick, onEmptyEventClick, onLessonClick, onEmptyResourceCellClick 
+  onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onEmptyResourceCellClick 
 }: Props) {
   const { t } = useTranslation();
   const locale = navigator.language;
@@ -443,13 +444,15 @@ export function Timetable({
         resourceRowItems.push(
           <div key={layout.id} className="course-timeline-card"
                title={tooltip}
+               onDblClick={() => onCourseClick?.(c)}
                style={{ 
                  gridColumn: `${layout.start} / ${layout.end + 1}`, 
                  gridRow: resIdx + resourceBaseRowIdx, 
                  top: `${top}px`, 
                  height: `${itemHeight}px`,
                  position: 'relative',
-                 zIndex: 20
+                 zIndex: 20,
+                 cursor: 'pointer'
                }}>
             <div className="course-card-content">
               <div className="course-card-name">{t(c.name)}</div>

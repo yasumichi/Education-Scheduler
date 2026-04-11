@@ -9,11 +9,18 @@ interface Props {
   onUpdate: () => Promise<void> | void;
   resources: Resource[];
   labels: ResourceLabels;
+  initialCourseId?: string | null;
 }
 
-export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels }: Props) {
+export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels, initialCourseId }: Props) {
   const { t } = useTranslation();
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(initialCourseId || null);
+
+  useEffect(() => {
+    if (initialCourseId) {
+      setSelectedCourseId(initialCourseId);
+    }
+  }, [initialCourseId]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [showDuplicateLessons, setShowDuplicateLessons] = useState(false);
   const [duplicationData, setDuplicationData] = useState({
