@@ -224,7 +224,7 @@ export function App() {
 
   const handleViewTypeChange = (type: ViewType) => {
     viewType.value = type;
-    if (type === 'year' || type === '3month' || type === '6month' || type === 'month') {
+    if (type === 'year' || type === '3month' || type === '6month' || type === 'month' || type === 'course_timeline') {
       const month = systemSettings.value?.yearViewStartMonth ?? 4;
       const day = systemSettings.value?.yearViewStartDay ?? 1;
       
@@ -237,7 +237,7 @@ export function App() {
         yearStart = new Date(year, month - 1, day);
       }
       
-      if (type === 'year') {
+      if (type === 'year' || type === 'course_timeline') {
         currentDate.value = yearStart;
       } else {
         const interval = type === '3month' ? 3 : (type === '6month' ? 6 : 1);
@@ -532,6 +532,12 @@ export function App() {
               onClick={() => handleViewTypeChange('year')}
             >
               {t('1 year')}
+            </button>
+            <button 
+              className={viewType.value === 'course_timeline' ? 'active' : ''} 
+              onClick={() => handleViewTypeChange('course_timeline')}
+            >
+              {t('Course Timeline')}
             </button>
           </div>
             </>

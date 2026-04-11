@@ -106,7 +106,7 @@ export interface Lesson {
   endPeriodId: string;   // 終了時限 "p4"
 }
 
-export type ViewType = 'day' | 'week' | 'month' | '3month' | '6month' | 'year';
+export type ViewType = 'day' | 'week' | 'month' | '3month' | '6month' | 'year' | 'course_timeline';
 
 export interface Holiday {
   id: string;
