@@ -39,6 +39,8 @@ Education Scheduler is designed to streamline the complex scheduling requirement
 
 ### Installation
 
+See also: [Deploy.md](Deploy.md)
+
 1.  Clone the repository:
 
     ```bash
