@@ -129,6 +129,15 @@ h1 {
   color: #ff9999;
 }
 
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid #666;
+  color: #ccc;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 @media (prefers-color-scheme: light) {
   .user-dropdown-button {
     border-color: #ccc;
@@ -154,6 +163,7 @@ h1 {
     background-color: #ffebee;
     color: #b71c1c;
   }
+  .cancel-button { background-color: #f0f0f0; color: black; border-color: #ccc; }
 }
 
 .settings-dropdown {

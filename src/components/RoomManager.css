@@ -197,15 +197,6 @@
   cursor: pointer;
 }
 
-.cancel-button {
-  background-color: #444;
-  color: #eee;
-  border: 1px solid #666;
-  padding: 8px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 .close-button {
   background: none;
   border: none;
@@ -221,6 +212,5 @@
   .move-btn { background-color: #f0f0f0; color: #333; border-color: #ccc; }
   .room-manager-header { border-color: #eee; }
   .edit-btn { background-color: #f0f0f0; color: #333; border-color: #ccc; }
-  .cancel-button { background-color: #f0f0f0; color: #333; border-color: #ccc; }
   .draggable-row:active { background-color: #f9f9f9; }
 }

@@ -187,15 +187,6 @@
   cursor: pointer;
 }
 
-.cancel-button {
-  padding: 8px 16px;
-  background: #4b5563;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 .import-section h4 {
   margin-bottom: 8px;
   border-bottom: 1px solid #444;
@@ -238,7 +229,6 @@
   .form-group label { color: #666; }
   .form-group input { background-color: #fff; border-color: #ccc; color: #333; }
   .form-actions { border-top-color: #eee; }
-  .cancel-button { background-color: #6b7280; }
   .import-section h4 { border-bottom-color: #eee; }
   .import-nager, .import-json { background-color: #f3f4f6; }
   .import-nager button { background-color: #10b981; }
