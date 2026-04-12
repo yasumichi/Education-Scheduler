@@ -29,20 +29,6 @@
   width: 95%;
 }
 
-.user-manager-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #444;
-  padding-bottom: 10px;
-}
-
-.user-manager-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
 .close-button {
   background: none;
   border: none;
@@ -157,18 +143,6 @@
   box-sizing: border-box;
 }
 
-.user-manager-footer {
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid #444;
-  padding-top: 15px;
-}
-
-.footer-right {
-  display: flex;
-  gap: 10px;
-}
-
 .save-button {
   background-color: #646cff;
   color: white;
@@ -203,7 +177,6 @@
   .action-btn:hover { background-color: #d1d5db; }
   .action-btn.delete-btn { background-color: #fee2e2; color: #dc2626; border-color: #fecaca; }
   .action-btn.delete-btn:hover { background-color: #fecaca; }
-  .user-manager-header, .user-manager-footer { border-color: #eee; }
   .user-form h3 { border-bottom-color: #eee; }
   .form-group input, .form-group select { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .close-button { color: #666; }

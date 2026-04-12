@@ -290,7 +290,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   return (
     <div className="course-manager-overlay">
       <div className="course-manager-box">
-        <div className="course-manager-header">
+        <div className="dialog-header">
           <h2>{t('Manage {{resource}}', { resource: labels.course })}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
@@ -486,7 +486,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           </div>
         </div>
 
-        <div className="course-manager-footer">
+        <div className="dialog-footer">
           {selectedCourseId && (
             <div className="footer-left">
               <button className="delete-button" onClick={handleDelete}>{t('Delete')}</button>
