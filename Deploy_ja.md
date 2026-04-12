@@ -178,3 +178,50 @@ server {
     }
 }
 ```
+
+## 9. systemd によるバックエンドの自動起動設定 (Backend Auto-start)
+
+Linuxサーバー上でバックエンドをサービスとして常駐させ、OS起動時に自動実行するための設定例です。
+
+### 1. サービスファイルの作成
+`/etc/systemd/system/scholatile-backend.service` を作成し、以下の内容を記述します。
+（パスやユーザー名は実際の環境に合わせて適宜変更してください）
+
+```ini
+[Unit]
+Description=ScholaTile Backend Service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=yasumichi
+WorkingDirectory=/home/yasumichi/projects/Education-Scheduler/backend
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+# 環境変数は .env から読み込まれますが、必要に応じてここでも指定可能です
+# Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 2. サービスの有効化と起動
+```bash
+# 設定の読み込み
+sudo systemctl daemon-reload
+
+# 自動起動の有効化
+sudo systemctl enable scholatile-backend
+
+# サービスの起動
+sudo systemctl start scholatile-backend
+
+# ステータスの確認
+sudo systemctl status scholatile-backend
+```
+
+### 3. ログの確認
+```bash
+sudo journalctl -u scholatile-backend -f
+```
+
