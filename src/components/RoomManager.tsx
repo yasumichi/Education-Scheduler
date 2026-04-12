@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { Resource, ResourceLabels } from '../types';
 import './RoomManager.css';
@@ -13,7 +13,8 @@ interface Props {
 
 export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }: Props) {
   const { t } = useTranslation();
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+  const [roomsList, setRoomsList] = useState<Resource[]>([]);
   const [formData, setFormData] = useState<{
     name: string;
     order: number;
@@ -22,11 +23,19 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
     order: 0
   });
 
-  const rooms = resources.filter(r => r.type === 'room');
+  // ドラッグ&ドロップ用の参照
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+
+  const rooms = resources.filter(r => r.type === 'room').sort((a, b) => (a.order || 0) - (b.order || 0));
 
   useEffect(() => {
-    if (selectedRoomId) {
-      const room = rooms.find(r => r.id === selectedRoomId);
+    setRoomsList(rooms);
+  }, [resources]);
+
+  useEffect(() => {
+    if (editingRoomId && editingRoomId !== 'new') {
+      const room = rooms.find(r => r.id === editingRoomId);
       if (room) {
         setFormData({
           name: room.name,
@@ -39,7 +48,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
         order: (rooms.length + 1)
       });
     }
-  }, [selectedRoomId, resources]);
+  }, [editingRoomId, resources]);
 
   const handleSave = async () => {
     if (!formData.name) {
@@ -55,13 +64,13 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
         },
         credentials: 'include',
         body: JSON.stringify({
-          id: selectedRoomId,
+          id: editingRoomId === 'new' ? null : editingRoomId,
           ...formData
         })
       });
       if (res.ok) {
         onUpdate();
-        onClose();
+        setEditingRoomId(null);
       } else {
         alert(t('Failed to save room'));
       }
@@ -70,23 +79,74 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
     }
   };
 
-  const handleDelete = async () => {
-    if (!selectedRoomId) return;
-    if (!confirm(t('Are you sure you want to delete this room?'))) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm(t('Are you sure you want to delete this {{resource}}?', { resource: labels.room }))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/rooms/${selectedRoomId}`, {
+      const res = await fetch(`${backendUrl}/rooms/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
       if (res.ok) {
         onUpdate();
-        onClose();
+        if (editingRoomId === id) setEditingRoomId(null);
       } else {
         alert(t('Failed to delete room'));
       }
     } catch (err) {
       console.error('Error deleting room:', err);
+    }
+  };
+
+  // 上下ボタンによる移動
+  const moveItem = (index: number, direction: 'up' | 'down') => {
+    const newRooms = [...roomsList];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newRooms.length) return;
+
+    const [movedItem] = newRooms.splice(index, 1);
+    newRooms.splice(targetIndex, 0, movedItem);
+    setRoomsList(newRooms);
+  };
+
+  // ドラッグ&ドロップの処理
+  const handleDragStart = (index: number) => {
+    dragItem.current = index;
+  };
+
+  const handleDragEnter = (index: number) => {
+    dragOverItem.current = index;
+  };
+
+  const handleDragEnd = () => {
+    if (dragItem.current === null || dragOverItem.current === null) return;
+    const newRooms = [...roomsList];
+    const [movedItem] = newRooms.splice(dragItem.current, 1);
+    newRooms.splice(dragOverItem.current, 0, movedItem);
+    dragItem.current = null;
+    dragOverItem.current = null;
+    setRoomsList(newRooms);
+  };
+
+  const handleSaveOrder = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/rooms/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          // 配列の現在の並び順（インデックス）を新しい order として保存
+          orders: roomsList.map((r, idx) => ({ id: r.id, order: idx + 1 }))
+        })
+      });
+      if (res.ok) {
+        onUpdate();
+        alert(t('Settings saved successfully'));
+      } else {
+        alert(t('Failed to save settings'));
+      }
+    } catch (err) {
+      console.error('Error saving room order:', err);
     }
   };
 
@@ -99,47 +159,87 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
         </div>
 
         <div className="room-manager-content">
-          <div className="room-selector">
-            <label>{t('Select {{resource}} to Edit', { resource: labels.room })}</label>
-            <select 
-              value={selectedRoomId || ''} 
-              onChange={(e) => setSelectedRoomId(e.currentTarget.value || null)}
-            >
-              <option value="">{t('Add New {{resource}}', { resource: labels.room })}</option>
-              {rooms.map(r => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="room-form">
-            <div className="form-group">
-              <label>{t('{{resource}} Name', { resource: labels.room })}</label>
-              <input 
-                type="text" 
-                value={formData.name} 
-                onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
-              />
+          {!editingRoomId ? (
+            <>
+              <div className="header-actions">
+                <button className="add-button" onClick={() => setEditingRoomId('new')}>
+                  {t('Add New {{resource}}', { resource: labels.room })}
+                </button>
+              </div>
+              <div className="room-list">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '40px' }}></th>
+                      <th style={{ width: '80px' }}>{t('Move')}</th>
+                      <th>{t('Name')}</th>
+                      <th style={{ width: '120px' }}>{t('Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roomsList.map((r, idx) => (
+                      <tr key={r.id}
+                          draggable
+                          onDragStart={() => handleDragStart(idx)}
+                          onDragEnter={() => handleDragEnter(idx)}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={(e) => e.preventDefault()}
+                          className="draggable-row"
+                      >
+                        <td className="drag-handle">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="5" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="9" cy="19" r="1" />
+                            <circle cx="15" cy="5" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="15" cy="19" r="1" />
+                          </svg>
+                        </td>
+                        <td>
+                          <div className="move-buttons">
+                            <button className="move-btn" onClick={() => moveItem(idx, 'up')} disabled={idx === 0}>↑</button>
+                            <button className="move-btn" onClick={() => moveItem(idx, 'down')} disabled={idx === roomsList.length - 1}>↓</button>
+                          </div>
+                        </td>
+                        <td>{r.name}</td>
+                        <td>
+                          <div className="action-buttons">
+                            <button className="edit-btn" onClick={() => setEditingRoomId(r.id)}>{t('Edit')}</button>
+                            <button className="delete-btn" onClick={() => handleDelete(r.id)}>{t('Delete')}</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>
+              <div className="list-footer">
+                <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
+              </div>
+            </>
+          ) : (
+            <div className="room-form">
+              <h3>{editingRoomId === 'new' ? t('Add New {{resource}}', { resource: labels.room }) : t('Edit')}</h3>
+              <div className="form-group">
+                <label>{t('{{resource}} Name', { resource: labels.room })}</label>
+                <input 
+                  type="text" 
+                  value={formData.name} 
+                  onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('Order')}</label>
+                <input 
+                  type="number" 
+                  value={formData.order} 
+                  onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
+                />
+              </div>
+              <div className="form-actions">
+                <button className="cancel-button" onClick={() => setEditingRoomId(null)}>{t('Cancel')}</button>
+                <button className="save-button" onClick={handleSave}>{t('Save')}</button>
+              </div>
             </div>
-            <div className="form-group">
-              <label>{t('Order')}</label>
-              <input 
-                type="number" 
-                value={formData.order} 
-                onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="room-manager-footer">
-          {selectedRoomId && (
-            <button className="delete-button" onClick={handleDelete}>{t('Delete')}</button>
           )}
-          <div className="footer-right">
-            <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-            <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
-          </div>
         </div>
       </div>
     </div>

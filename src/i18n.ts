@@ -184,6 +184,9 @@ const resources = {
       "Filter": "Filter",
       "Select All": "Select All",
       "Deselect All": "Deselect All",
+      "Save Order": "Save Order",
+      "Move": "Move",
+      "Drag and drop rows or use arrows to change order": "Drag and drop rows or use arrows to change order",
       "Personal Monthly": "Personal Monthly",
       "My Schedule": "My Schedule"
     }
@@ -369,7 +372,10 @@ const resources = {
       "Filter": "フィルター",
       "Select All": "すべて選択",
       "Deselect All": "すべて解除",
-      "Personal Monthly": "個人月間予定",
+      "Save Order": "順序を保存",
+      "Move": "移動",
+      "Drag and drop rows or use arrows to change order": "行をドラッグ&ドロップするか、矢印ボタンで順序を変更できます",
+      "Personal Monthly": "個人の月間予定",
       "My Schedule": "個人の予定"
     }
   }

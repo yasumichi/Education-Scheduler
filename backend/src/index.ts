@@ -356,6 +356,28 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
+// 教室の順序更新 (ADMIN権限)
+app.post('/api/rooms/reorder', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { orders } = req.body; // Array of { id, order }
+  try {
+    await prisma.$transaction(
+      orders.map((o: any) => 
+        prisma.resource.update({
+          where: { id: o.id },
+          data: { order: o.order }
+        })
+      )
+    );
+    res.json({ message: 'Order updated successfully' });
+  } catch (error) {
+    console.error('Failed to update room order:', error);
+    res.status(500).json({ error: 'Failed to update order' });
+  }
+});
+
 // 教室の削除 (ADMIN権限)
 app.delete('/api/rooms/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
