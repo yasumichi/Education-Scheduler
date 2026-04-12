@@ -102,7 +102,7 @@ Education Scheduler は、教育施設におけるリソース（教室・講師
 
 ## 📄 ライセンス
 
-[MIT License](https://www.google.com/search?q=LICENSE)
+[MIT License](LICENSE)
 
 ## 👤 開発者
 
