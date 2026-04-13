@@ -4,6 +4,7 @@ import {
   format, startOfDay, parseISO, isSameDay, isAfter, isBefore, addDays, addMonths, getYear, differenceInDays,
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth
 } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import { TimePeriod, Resource, Lesson, ScheduleEvent, ResourceLabels, SystemSetting, ViewType, ResourceType, Holiday } from '../types';
 
 interface ExportParams {
@@ -678,3 +679,193 @@ export async function exportPersonalMonthlyToExcel({
     console.error('Personal Export Error:', err);
   }
 }
+
+export async function exportCourseWeeklyToExcel({
+  courseId, periods, resources, lessons, baseDate, labels, t
+}: {
+  courseId: string;
+  periods: TimePeriod[];
+  resources: Resource[];
+  lessons: Lesson[];
+  baseDate: Date;
+  labels: ResourceLabels;
+  t: (key: string, options?: any) => string;
+}) {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Weekly Schedule');
+
+    const course = resources.find(r => r.id === courseId);
+    if (!course) return;
+
+    // 1. Course Name in Row 1
+    worksheet.mergeCells(1, 1, 1, 7);
+    const titleCell = worksheet.getCell(1, 1);
+    titleCell.value = t(course.name);
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: 'center' };
+
+    // Row 2, 3 are empty
+
+    // 4. Headers in Row 4
+    const headers = [
+      t('Date'),
+      t('Period'),
+      labels.subject,
+      labels.deliveryMethod,
+      labels.room,
+      labels.mainTeacher,
+      t('Remarks')
+    ];
+    const headerRow = worksheet.getRow(4);
+    headers.forEach((h, i) => {
+      const cell = headerRow.getCell(i + 1);
+      cell.value = h;
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    });
+
+    // Columns width
+    worksheet.getColumn(1).width = 15; // Date
+    worksheet.getColumn(2).width = 10; // Period
+    worksheet.getColumn(3).width = 50; // Subject
+    worksheet.getColumn(4).width = 20; // Delivery Method
+    worksheet.getColumn(5).width = 20; // Room
+    worksheet.getColumn(6).width = 20; // Main Teacher
+    worksheet.getColumn(7).width = 15; // Remarks
+
+    // 5. Data from Row 5
+    const weekStart = startOfWeek(baseDate, { weekStartsOn: 0 });
+    const weekEnd = addDays(weekStart, 6);
+    const displayDates = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+    let currentRowIdx = 5;
+
+    displayDates.forEach(date => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const dayLessons = lessons.filter(l => l.courseId === courseId && dateStr >= l.startDate && dateStr <= l.endDate);
+      
+      const startRowForDay = currentRowIdx;
+      const processedLessonIds = new Set<string>();
+      const processedEmptyStartIndices = new Set<number>();
+
+      periods.forEach((period, pIdx) => {
+        const row = worksheet.getRow(currentRowIdx);
+        
+        // Date
+        row.getCell(1).value = format(date, t('date_format'), { locale: t('locale') === 'ja' ? ja : undefined });
+        
+        // Period (Numeric only)
+        row.getCell(2).value = period.name.replace(/\D/g, '');
+        
+        const l = dayLessons.find(dl => {
+          if (dateStr === dl.startDate && dateStr === dl.endDate) {
+            return period.id >= dl.startPeriodId && period.id <= dl.endPeriodId;
+          }
+          if (dateStr === dl.startDate) return period.id >= dl.startPeriodId;
+          if (dateStr === dl.endDate) return period.id <= dl.endPeriodId;
+          return dateStr > dl.startDate && dateStr < dl.endDate;
+        });
+
+        if (l) {
+          if (!processedLessonIds.has(l.id)) {
+            processedLessonIds.add(l.id);
+            
+            // Calculate span for this lesson today
+            let span = 1;
+            for (let nextPIdx = pIdx + 1; nextPIdx < periods.length; nextPIdx++) {
+              const nextPeriod = periods[nextPIdx];
+              const isSame = dayLessons.some(dl => dl.id === l.id && (() => {
+                if (dateStr === dl.startDate && dateStr === dl.endDate) {
+                  return nextPeriod.id >= dl.startPeriodId && nextPeriod.id <= dl.endPeriodId;
+                }
+                if (dateStr === dl.startDate) return nextPeriod.id >= dl.startPeriodId;
+                if (dateStr === dl.endDate) return nextPeriod.id <= dl.endPeriodId;
+                return dateStr > dl.startDate && dateStr < dl.endDate;
+              })());
+              if (isSame) span++;
+              else break;
+            }
+
+            // Subject, Method, Room, Teacher, Remarks
+            row.getCell(3).value = t(l.subject);
+            row.getCell(4).value = (l.deliveryMethods || []).map(m => m.name).join(', ');
+            row.getCell(5).value = l.roomId ? (resources.find(r => r.id === l.roomId)?.name || '') : (l.location || '');
+            row.getCell(6).value = l.teacherId ? (resources.find(r => r.id === l.teacherId)?.name || '') : (l.externalTeacher || '');
+            row.getCell(7).value = l.remarks || '';
+
+            if (span > 1) {
+              for (let col = 3; col <= 7; col++) {
+                worksheet.mergeCells(currentRowIdx, col, currentRowIdx + span - 1, col);
+              }
+            }
+          }
+        } else {
+          // Empty period merging
+          const isAlreadyProcessed = Array.from(processedEmptyStartIndices).some(startIdx => {
+            // Find the span of the empty block starting at startIdx
+            let emptySpan = 0;
+            for (let i = startIdx; i < periods.length; i++) {
+              const hasLesson = dayLessons.some(dl => {
+                const p = periods[i];
+                if (dateStr === dl.startDate && dateStr === dl.endDate) return p.id >= dl.startPeriodId && p.id <= dl.endPeriodId;
+                if (dateStr === dl.startDate) return p.id >= dl.startPeriodId;
+                if (dateStr === dl.endDate) return p.id <= dl.endPeriodId;
+                return dateStr > dl.startDate && dateStr < dl.endDate;
+              });
+              if (!hasLesson) emptySpan++;
+              else break;
+            }
+            return pIdx >= startIdx && pIdx < startIdx + emptySpan;
+          });
+
+          if (!isAlreadyProcessed) {
+            let emptySpan = 1;
+            for (let nextPIdx = pIdx + 1; nextPIdx < periods.length; nextPIdx++) {
+              const nextPeriod = periods[nextPIdx];
+              const nextLesson = dayLessons.find(dl => {
+                if (dateStr === dl.startDate && dateStr === dl.endDate) return nextPeriod.id >= dl.startPeriodId && nextPeriod.id <= dl.endPeriodId;
+                if (dateStr === dl.startDate) return nextPeriod.id >= dl.startPeriodId;
+                if (dateStr === dl.endDate) return nextPeriod.id <= dl.endPeriodId;
+                return dateStr > dl.startDate && dateStr < dl.endDate;
+              });
+              if (!nextLesson) emptySpan++;
+              else break;
+            }
+
+            for (let i = 3; i <= 7; i++) row.getCell(i).value = '';
+            
+            if (emptySpan > 1) {
+              for (let col = 3; col <= 7; col++) {
+                worksheet.mergeCells(currentRowIdx, col, currentRowIdx + emptySpan - 1, col);
+              }
+            }
+            processedEmptyStartIndices.add(pIdx);
+          }
+        }
+
+        // Alignment and Borders
+        for (let i = 1; i <= 7; i++) {
+          const cell = row.getCell(i);
+          cell.alignment = { vertical: 'middle', horizontal: i <= 2 ? 'center' : 'left', wrapText: true };
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        }
+
+        currentRowIdx++;
+      });
+
+      // Merge Date cells for the day
+      if (periods.length > 1) {
+        worksheet.mergeCells(startRowForDay, 1, currentRowIdx - 1, 1);
+      }
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const fileName = `WeeklySchedule_${t(course.name)}_${format(weekStart, 'yyyyMMdd')}.xlsx`;
+    saveAs(new Blob([buffer]), fileName);
+  } catch (err) {
+    console.error('Course Weekly Export Error:', err);
+  }
+}
+

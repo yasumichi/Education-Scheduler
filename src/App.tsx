@@ -16,9 +16,10 @@ import { ProfileManager, ProfileMode } from './components/ProfileManager';
 import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
+import { CourseWeeklyView } from './components/CourseWeeklyView';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting } from './types';
 import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, startOfDay, startOfWeek } from 'date-fns';
-import { exportTimetableToExcel, exportPersonalMonthlyToExcel } from './utils/excelExport';
+import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -27,6 +28,8 @@ export function App() {
   const viewMode = useSignal<ResourceType>('room');
   const viewType = useSignal<ViewType>('month');
   const showPersonalMonthly = useSignal<boolean>(false);
+  const showCourseWeekly = useSignal<boolean>(false);
+  const selectedCourseIdForWeekly = useSignal<string | null>(null);
   const currentDate = useSignal<Date>(new Date());
   const holidays = useSignal<Holiday[]>([]);
   const periods = useSignal<TimePeriod[]>([]);
@@ -202,9 +205,13 @@ export function App() {
   }
 
   const moveDate = (amount: number) => {
-    if (showPersonalMonthly.value) {
+    if (showPersonalMonthly.value || showCourseWeekly.value) {
       const nextDate = new Date(currentDate.value);
-      nextDate.setMonth(nextDate.getMonth() + amount);
+      if (showPersonalMonthly.value) {
+        nextDate.setMonth(nextDate.getMonth() + amount);
+      } else {
+        nextDate.setDate(nextDate.getDate() + amount * 7);
+      }
       currentDate.value = nextDate;
       return;
     }
@@ -288,6 +295,16 @@ export function App() {
   const handleGlobalExport = () => {
     if (showPersonalMonthly.value) {
       handlePersonalExport();
+    } else if (showCourseWeekly.value && selectedCourseIdForWeekly.value) {
+      exportCourseWeeklyToExcel({
+        courseId: selectedCourseIdForWeekly.value,
+        periods: periods.value,
+        resources: resources.value,
+        lessons: lessons.value,
+        baseDate: currentDate.value,
+        labels: resourceLabels.value,
+        t
+      });
     } else {
       handleExport();
     }
@@ -467,12 +484,15 @@ export function App() {
         </div>
 
         <div className="controls">
-          {showPersonalMonthly.value ? (
+          {showPersonalMonthly.value || showCourseWeekly.value ? (
             <div className="control-group">
-              <button onClick={() => showPersonalMonthly.value = false}>
+              <button onClick={() => {
+                showPersonalMonthly.value = false;
+                showCourseWeekly.value = false;
+              }}>
                 {t('Back to Timetable')}
               </button>
-              <span className="personal-view-title">{t('Personal Monthly')}</span>
+              <span className="personal-view-title">{showPersonalMonthly.value ? t('Personal Monthly') : t('Weekly Schedule')}</span>
             </div>
           ) : (
             <>
@@ -588,6 +608,19 @@ export function App() {
               showEventManager.value = true;
             }}
           />
+        ) : showCourseWeekly.value && selectedCourseIdForWeekly.value ? (
+          <CourseWeeklyView 
+            courseId={selectedCourseIdForWeekly.value}
+            resources={resources.value}
+            lessons={lessons.value}
+            periods={periods.value}
+            baseDate={currentDate.value}
+            labels={resourceLabels.value}
+            onLessonClick={(lesson) => {
+              editingLesson.value = lesson;
+              showLessonManager.value = true;
+            }}
+          />
         ) : (
           <Timetable 
             periods={periods.value}
@@ -615,6 +648,11 @@ export function App() {
             onCourseClick={(course) => {
               editingCourseId.value = course.id;
               showCourseManager.value = true;
+            }}
+            onViewWeekly={(courseId) => {
+              selectedCourseIdForWeekly.value = courseId;
+              showCourseWeekly.value = true;
+              showPersonalMonthly.value = false;
             }}
             onEmptyResourceCellClick={(resourceId, date, periodId) => {
               const initial: Partial<Lesson> = { startDate: date, startPeriodId: periodId, endDate: date, endPeriodId: periodId };

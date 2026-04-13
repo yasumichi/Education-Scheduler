@@ -303,8 +303,9 @@
   background-color: #444;
   color: #fff;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  padding: 0 10px;
   font-weight: bold;
   border-right: 1px solid #666;
   border-bottom: 1px solid #555;
@@ -316,6 +317,41 @@
   height: 80px;
   box-sizing: border-box;
   justify-self: start;
+}
+
+.label-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weekly-view-btn {
+  background: #3b2b00;
+  color: #fbd38d;
+  border: 1px solid #744210;
+  border-radius: 4px;
+  padding: 4px;
+  margin-left: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.weekly-view-btn:hover {
+  background: #5a4a00;
+  color: #fff;
+}
+
+@media (prefers-color-scheme: light) {
+  .weekly-view-btn {
+    background-color: #fffaf0;
+    color: #9c4221;
+    border-color: #fbd38d;
+  }
 }
 
 /* 土日祝日の色設定 (ダークモード) */

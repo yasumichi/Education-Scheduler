@@ -181,6 +181,9 @@ const resources = {
       "Already have an account?": "Already have an account?",
       "Signup failed": "Signup failed",
       "Please fill in all required fields": "Please fill in all required fields",
+      "locale": "en",
+      "Date": "Date",
+      "date_format": "MMM d (EEE)",
       "Filter": "Filter",
       "Select All": "Select All",
       "Deselect All": "Deselect All",
@@ -188,6 +191,7 @@ const resources = {
       "Move": "Move",
       "Drag and drop rows or use arrows to change order": "Drag and drop rows or use arrows to change order",
       "Personal Monthly": "Personal Monthly",
+      "Weekly Schedule": "Weekly Schedule",
       "My Schedule": "My Schedule"
     }
   },
@@ -369,6 +373,9 @@ const resources = {
       "Already have an account?": "既にアカウントをお持ちの場合",
       "Signup failed": "サインアップに失敗しました",
       "Please fill in all required fields": "必須項目をすべて入力してください",
+      "locale": "ja",
+      "Date": "月日",
+      "date_format": "M月d日(E)",
       "Filter": "フィルター",
       "Select All": "すべて選択",
       "Deselect All": "すべて解除",
@@ -376,6 +383,7 @@ const resources = {
       "Move": "移動",
       "Drag and drop rows or use arrows to change order": "行をドラッグ&ドロップするか、矢印ボタンで順序を変更できます",
       "Personal Monthly": "個人の月間予定",
+      "Weekly Schedule": "週間予定表",
       "My Schedule": "個人の予定"
     }
   }

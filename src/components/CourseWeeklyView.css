@@ -1,0 +1,158 @@
+.course-weekly-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  background-color: #242424;
+  color: #fff;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.course-weekly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-shrink: 0;
+}
+
+.course-title {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #93c5fd;
+}
+
+.course-weekly-table-wrapper {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #2a2a2a;
+  padding-bottom: 20px; /* Space for the last row's border and rounding */
+}
+
+.course-weekly-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9rem;
+  table-layout: fixed;
+}
+
+.course-weekly-table th,
+.course-weekly-table td {
+  border-right: 1px solid #444;
+  border-bottom: 1px solid #444;
+  padding: 10px;
+  text-align: left;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+/* Ensure the table has some space at the bottom when scrolled */
+.course-weekly-table tbody tr:last-child td {
+  border-bottom: 1px solid #444;
+}
+
+.course-weekly-table th {
+  background-color: #333;
+  color: #aaa;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.date-cell {
+  background-color: #2a2a2a;
+  font-weight: bold;
+  width: 120px;
+  text-align: center;
+}
+
+.period-cell {
+  width: 80px;
+  text-align: center;
+}
+
+.subject-cell {
+  width: 360px;
+  font-weight: bold;
+}
+
+.method-cell {
+  width: 150px;
+}
+
+.method-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  color: #fff;
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+
+.room-cell, .teacher-cell {
+  width: 150px;
+}
+
+.remarks-cell {
+  width: 150px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clickable-row:hover {
+  background-color: #333;
+}
+
+.no-data-cell {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: light) {
+  .course-weekly-container {
+    background-color: #f9f9f9;
+    color: #333;
+  }
+  .course-title {
+    color: #1d4ed8;
+  }
+  .course-weekly-table-wrapper {
+    background-color: #fff;
+    border-color: #ccc;
+  }
+  .course-weekly-table th {
+    background-color: #eee;
+    color: #666;
+    border-color: #ccc;
+  }
+  .course-weekly-table td {
+    border-color: #eee;
+    color: #333;
+  }
+  .course-weekly-table th,
+  .course-weekly-table td {
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+  }
+  .date-cell {
+    background-color: #f5f5f5;
+    color: #333;
+  }
+  .clickable-row:hover {
+    background-color: #f0f7ff;
+  }
+}

@@ -20,12 +20,13 @@ interface Props {
   onEmptyEventClick?: (date: string, periodId: string) => void;
   onLessonClick?: (lesson: Lesson) => void;
   onCourseClick?: (course: Resource) => void;
+  onViewWeekly?: (courseId: string) => void;
   onEmptyResourceCellClick?: (resourceId: string, date: string, periodId: string) => void;
 }
 
 export function Timetable({ 
   periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings,
-  onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onEmptyResourceCellClick 
+  onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onViewWeekly, onEmptyResourceCellClick 
 }: Props) {
   const { t } = useTranslation();
   const locale = navigator.language;
@@ -611,7 +612,29 @@ export function Timetable({
 
   const resourceLabels = filteredResources.map((r, idx) => (
     <div key={`label-${r.id}`} className="grid-label" style={{ ...stickyLeft, gridColumn: 1, gridRow: idx + resourceBaseRowIdx, height: isCourseTimeline ? '120px' : '80px' }}>
-      {t(r.name)}
+      <span className="label-name" 
+            onClick={() => onCourseClick?.(r)} 
+            style={{ cursor: r.type === 'course' ? 'pointer' : 'default' }}
+            title={t(r.name)}>
+        {t(r.name)}
+      </span>
+      {viewMode === 'course' && (
+        <button 
+          className="weekly-view-btn" 
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewWeekly?.(r.id);
+          }}
+          title={t('Weekly Schedule')}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        </button>
+      )}
     </div>
   ));
 
