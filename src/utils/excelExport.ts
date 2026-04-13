@@ -586,8 +586,7 @@ export async function exportPersonalMonthlyToExcel({
         const dayEvents = events.filter(e => {
           const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
           const isAssigned = resourceIdList.includes(userResourceId);
-          const isGlobal = e.showInEventRow !== false || resourceIdList.length === 0;
-          return (isAssigned || isGlobal) && dateStr >= e.startDate && dateStr <= e.endDate;
+          return isAssigned && dateStr >= e.startDate && dateStr <= e.endDate;
         });
 
         const processedItemIds = new Set<string>();

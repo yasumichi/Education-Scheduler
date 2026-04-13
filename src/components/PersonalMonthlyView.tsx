@@ -89,12 +89,9 @@ export function PersonalMonthlyView({
     const dateStr = format(date, 'yyyy-MM-dd');
     return events.filter(e => {
       const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
-      // 1. この教官に割り当てられたイベント (教官行に表示されるもの)
+      // この教官に割り当てられたイベントのみを表示
       const isAssigned = resourceIdList.includes(userResourceId);
-      // 2. イベント行に表示されるグローバルイベント
-      const isGlobal = e.showInEventRow !== false || resourceIdList.length === 0;
-
-      if (!isAssigned && !isGlobal) return false;
+      if (!isAssigned) return false;
       
       return dateStr >= e.startDate && dateStr <= e.endDate;
     });
@@ -103,95 +100,72 @@ export function PersonalMonthlyView({
   const renderDayItems = (date: Date, dayLessons: Lesson[], dayEvents: ScheduleEvent[]) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     
-    // 全ての時限アイテムを収集
-    const items: { type: 'lesson' | 'event', data: any, periodId: string }[] = [];
+    // この日のアイテムを整形して抽出
+    const dayItems = [
+      ...dayLessons.map(l => {
+        let startIdx = 0;
+        let endIdx = 7;
+        if (dateStr === l.startDate) startIdx = parseInt(l.startPeriodId.replace('p', '')) - 1;
+        if (dateStr === l.endDate) endIdx = parseInt(l.endPeriodId.replace('p', '')) - 1;
+        return { type: 'lesson' as const, data: l, startIdx, endIdx };
+      }),
+      ...dayEvents.map(e => {
+        let startIdx = 0;
+        let endIdx = 7;
+        if (dateStr === e.startDate) startIdx = parseInt(e.startPeriodId.replace('p', '')) - 1;
+        if (dateStr === e.endDate) endIdx = parseInt(e.endPeriodId.replace('p', '')) - 1;
+        return { type: 'event' as const, data: e, startIdx, endIdx };
+      })
+    ];
 
-    periods.slice(0, 8).forEach(p => {
-      // この時限のイベント
-      dayEvents.filter(e => {
-        if (e.startDate === e.endDate) return p.id >= e.startPeriodId && p.id <= e.endPeriodId;
-        if (dateStr === e.startDate) return p.id >= e.startPeriodId;
-        if (dateStr === e.endDate) return p.id <= e.endPeriodId;
-        return true;
-      }).forEach(e => {
-        if (!items.find(item => item.type === 'event' && item.data.id === e.id)) {
-          items.push({ type: 'event', data: e, periodId: p.id });
-        }
-      });
+    if (dayItems.length === 0) return null;
 
-      // この時限の授業
-      dayLessons.filter(l => {
-        if (l.startDate === l.endDate) return p.id >= l.startPeriodId && p.id <= l.endPeriodId;
-        if (dateStr === l.startDate) return p.id >= l.startPeriodId;
-        if (dateStr === l.endDate) return p.id <= l.endPeriodId;
-        return true;
-      }).forEach(l => {
-        if (!items.find(item => item.type === 'lesson' && item.data.id === l.id)) {
-          items.push({ type: 'lesson', data: l, periodId: p.id });
-        }
-      });
+    // 重なりを計算して列（level）を割り当てる
+    const placements: { item: any, level: number, maxLevelInGroup: number }[] = [];
+    const sortedItems = [...dayItems].sort((a, b) => a.startIdx - b.startIdx || (b.endIdx - b.startIdx) - (a.endIdx - a.startIdx));
+    
+    sortedItems.forEach(item => {
+      let level = 0;
+      while (placements.some(p => p.level === level && !(item.endIdx < p.item.startIdx || item.startIdx > p.item.endIdx))) {
+        level++;
+      }
+      placements.push({ item, level, maxLevelInGroup: 0 });
     });
 
-    // 時限順にソート (p1, p2...)
-    items.sort((a, b) => {
-      const aNum = parseInt(a.periodId.replace('p', ''));
-      const bNum = parseInt(b.periodId.replace('p', ''));
-      return aNum - bNum;
+    // 同じグループ（重なり合う一群）内での最大列数を計算
+    placements.forEach(p => {
+      const overlapping = placements.filter(other => !(p.item.endIdx < other.item.startIdx || p.item.startIdx > other.item.endIdx));
+      p.maxLevelInGroup = Math.max(...overlapping.map(o => o.level)) + 1;
     });
-
-    // 重なり（同一開始時限）のカウント用
-    const overlapCount: Record<string, number> = {};
 
     return (
       <div className="daily-grid-container">
-        {items.map(item => {
-          const startIdx = parseInt(item.periodId.replace('p', '')) - 1;
-          let endIdx = startIdx;
-          let data = item.data;
-          
-          if (item.type === 'event') {
-            const e = data as ScheduleEvent;
-            const eEnd = parseInt(e.endPeriodId.replace('p', '')) - 1;
-            // この日の中での終了位置を計算
-            if (dateStr === e.endDate) endIdx = eEnd;
-            else if (dateStr < e.endDate) endIdx = 7; // この日は最後まで
-          } else {
-            const l = data as Lesson;
-            const lEnd = parseInt(l.endPeriodId.replace('p', '')) - 1;
-            if (dateStr === l.endDate) endIdx = lEnd;
-            else if (dateStr < l.endDate) endIdx = 7;
-          }
-
-          const span = Math.max(1, endIdx - startIdx + 1);
-          const key = `${item.type}-${data.id}`;
-          
+        {placements.map(p => {
+          const { item, level, maxLevelInGroup } = p;
+          const { type, data, startIdx, endIdx } = item;
+          const span = endIdx - startIdx + 1;
           const periodLabel = span > 1 ? `${startIdx + 1}-${endIdx + 1}` : `${startIdx + 1}`;
-
-          // シンプルな重なり回避（左からのオフセット）
-          const slotKey = `${startIdx}`;
-          const offset = overlapCount[slotKey] || 0;
-          overlapCount[slotKey] = offset + 1;
-
+          
           const style = {
             top: `${(startIdx / 8) * 100}%`,
             height: `${(span / 8) * 100}%`,
-            left: `${offset * 5}px`,
-            width: `calc(100% - ${offset * 5}px)`,
-            zIndex: 10 + offset
+            left: `${(level / maxLevelInGroup) * 100}%`,
+            width: `${(1 / maxLevelInGroup) * 100}%`,
+            zIndex: 10 + level
           };
 
-          if (item.type === 'event') {
+          if (type === 'event') {
             const event = data as ScheduleEvent;
             return (
               <div 
                 className="personal-event-mini-card" 
                 style={{ ...style, backgroundColor: event.color || '#fef3c7' }}
                 onClick={() => onEventClick?.(event)}
-                key={key}
+                key={`event-${event.id}`}
                 title={`${event.name}${event.location ? ` (${event.location})` : ''}`}
               >
                 <span className="period-tag">{periodLabel}</span>
-                <span className="item-name">{event.name}{event.location ? ` (${event.location})` : ''}</span>
+                <span className="item-name">{event.name}</span>
               </div>
             );
           } else {
@@ -203,12 +177,12 @@ export function PersonalMonthlyView({
                 className="personal-lesson-mini-card"
                 style={style}
                 onClick={() => onLessonClick?.(lesson)}
-                key={key}
+                key={`lesson-${lesson.id}`}
                 title={`${lesson.subject} (${roomLabel})`}
               >
                 <div className="card-content-wrapper">
                   <span className="period-tag">{periodLabel}</span>
-                  <span className="mini-subject">{lesson.subject} {roomLabel ? `(${roomLabel})` : ''}</span>
+                  <span className="mini-subject">{lesson.subject}</span>
                 </div>
               </div>
             );

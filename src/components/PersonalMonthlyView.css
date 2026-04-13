@@ -105,7 +105,7 @@
 
 .personal-lesson-mini-card, .personal-event-mini-card {
   position: absolute;
-  padding: 1px 4px;
+  padding: 1px 2px;
   border-radius: 3px;
   font-size: 0.65rem;
   cursor: pointer;
@@ -114,6 +114,7 @@
   box-sizing: border-box;
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   overflow: hidden;
+  border-right: 1px solid rgba(0,0,0,0.1);
 }
 
 .card-content-wrapper {
