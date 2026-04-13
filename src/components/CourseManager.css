@@ -24,7 +24,7 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-.course-manager-header {
+.dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -33,8 +33,36 @@
   padding-bottom: 10px;
 }
 
-.course-manager-header h2 {
+.dialog-header h2 {
   margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-button:hover {
+  color: #fff;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #444;
+}
+
+.footer-left, .footer-right {
+  display: flex;
+  gap: 10px;
 }
 
 .status-message-banner {
@@ -192,6 +220,42 @@
   cursor: pointer;
   font-weight: bold;
 }
+
+.sub-teacher-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background-color: #333;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #555;
+}
+
+.sub-teacher-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #444;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.sub-teacher-item:hover {
+  background: #555;
+}
+
+.sub-teacher-item.selected {
+  background: #646cff;
+  border-color: #888;
+}
+
+.sub-teacher-item input {
+  display: none;
+}
+
 .duplicate-lessons-dialog {
   background-color: #333;
   padding: 15px;
@@ -243,4 +307,7 @@
   .add-btn { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
   .import-btn { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
   .duplicate-button { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .sub-teacher-list { background-color: #f5f5f5; border-color: #ccc; }
+  .sub-teacher-item { background: #eee; color: #333; }
+  .sub-teacher-item.selected { background: #646cff; color: #fff; }
 }

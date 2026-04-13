@@ -427,17 +427,22 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
             <div className="form-row">
               <div className="form-group">
                 <label>{labels.subTeacher}</label>
-                <div className="sub-teacher-list" style={{ maxHeight: '100px' }}>
-                  {teachers.filter(t => t.id !== formData.chiefTeacherId).map(t => (
-                    <label key={t.id} className={`sub-teacher-item ${formData.assistantTeacherIds.includes(t.id) ? 'selected' : ''}`}>
-                      <input 
-                        type="checkbox" 
-                        checked={formData.assistantTeacherIds.includes(t.id)}
-                        onChange={() => toggleAssistantTeacher(t.id)}
-                      />
-                      {t.name}
-                    </label>
-                  ))}
+                <div className="sub-teacher-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                  {(() => {
+                    const list = teachers.filter(t => t.id !== formData.chiefTeacherId);
+                    const selected = list.filter(t => formData.assistantTeacherIds.includes(t.id));
+                    const unselected = list.filter(t => !formData.assistantTeacherIds.includes(t.id));
+                    return [...selected, ...unselected].map(t => (
+                      <label key={t.id} className={`sub-teacher-item ${formData.assistantTeacherIds.includes(t.id) ? 'selected' : ''}`}>
+                        <input 
+                          type="checkbox" 
+                          checked={formData.assistantTeacherIds.includes(t.id)}
+                          onChange={() => toggleAssistantTeacher(t.id)}
+                        />
+                        {t.name}
+                      </label>
+                    ));
+                  })()}
                 </div>
               </div>
               <div className="form-group">
