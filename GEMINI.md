@@ -103,7 +103,7 @@
 
 ### Base Types
 ```typescript
-export type ViewType = 'day' | 'week' | 'month' | '3month' | '6month' | 'year';
+export type ViewType = 'day' | 'week' | 'month' | '3month' | '6month' | 'year' | 'course_timeline';
 export type ResourceType = 'room' | 'teacher' | 'course';
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 ```
@@ -122,7 +122,8 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 ## 5. Roadmap & Project Status
 
 ### Implemented Features (Completed)
-- [x] Preact + Signals + CSS Grid によるマルチビュー（1日/1週/1ヶ月/3ヶ月/6ヶ月/1年）・Sticky レイアウト
+- [x] Preact + Signals + CSS Grid によるマルチビュー（1日/1週/1ヶ月/3ヶ月/6ヶ月/1年/講座タイムライン）・Sticky レイアウト
+- [x] 講座単位の週間予定表ビュー (1時限1行、セル結合、Excel 書き出し対応)
 - [x] 個人月間予定ビュー (Responsive な 7曜カレンダー形式、Excel 書き出し対応)
 - [x] リソースのフィルター機能 (grid-corner のチェックボックスによる行の絞り込み)
 - [x] Node.js + Prisma + PostgreSQL バックエンド & JWT 認証 (HttpOnly Cookie)
