@@ -132,8 +132,8 @@ export function Timetable({
   const gridStyle = {
     '--col-width': isDayView ? 'auto' : colWidth,
     display: 'grid',
-    width: (isDayView || isCourseTimeline) ? '100%' : 'fit-content',
-    minWidth: (isDayView || isCourseTimeline) ? '0' : `${totalWidth}px`,
+    width: (isDayView) ? '100%' : 'fit-content',
+    minWidth: (isDayView) ? '0' : `${totalWidth}px`,
     gridTemplateColumns: `150px repeat(${totalCols}, ${colWidth})`,
     gridTemplateRows: gridRows,
   } as JSX.CSSProperties;
