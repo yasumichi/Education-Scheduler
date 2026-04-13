@@ -7,6 +7,9 @@
     "dev:frontend": "vite",
     "dev:backend": "cd backend && npm run dev",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "lint:frontend": "npx eslint .",
+    "lint:backend": "cd backend && npm run lint",
+    "lint": "npm run lint:frontend && npm run lint:backend",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -21,10 +24,16 @@
     "react-i18next": "^17.0.1"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@preact/preset-vite": "^2.8.1",
     "@types/file-saver": "2.0.7",
     "concurrently": "^9.2.1",
+    "eslint": "10.2.0",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "globals": "17.5.0",
     "typescript": "^5.2.2",
+    "typescript-eslint": "8.58.1",
     "vite": "^8.0.3"
   }
 }

@@ -24,8 +24,8 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
   });
 
   // ドラッグ&ドロップ用の参照
-  const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
+  const dragItemRef = useRef<number | null>(null);
+  const dragOverItemRef = useRef<number | null>(null);
 
   const rooms = resources.filter(r => r.type === 'room').sort((a, b) => (a.order || 0) - (b.order || 0));
 
@@ -111,20 +111,20 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
 
   // ドラッグ&ドロップの処理
   const handleDragStart = (index: number) => {
-    dragItem.current = index;
+    dragItemRef.current = index;
   };
 
   const handleDragEnter = (index: number) => {
-    dragOverItem.current = index;
+    dragOverItemRef.current = index;
   };
 
   const handleDragEnd = () => {
-    if (dragItem.current === null || dragOverItem.current === null) return;
+    if (dragItemRef.current === null || dragOverItemRef.current === null) return;
     const newRooms = [...roomsList];
-    const [movedItem] = newRooms.splice(dragItem.current, 1);
-    newRooms.splice(dragOverItem.current, 0, movedItem);
-    dragItem.current = null;
-    dragOverItem.current = null;
+    const [movedItem] = newRooms.splice(dragItemRef.current, 1);
+    newRooms.splice(dragOverItemRef.current, 0, movedItem);
+    dragItemRef.current = null;
+    dragOverItemRef.current = null;
     setRoomsList(newRooms);
   };
 
@@ -187,7 +187,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
                           className="draggable-row"
                       >
                         <td className="drag-handle">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="9" cy="5" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="9" cy="19" r="1" />
                             <circle cx="15" cy="5" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="15" cy="19" r="1" />
                           </svg>

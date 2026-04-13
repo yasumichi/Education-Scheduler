@@ -82,7 +82,7 @@
   - Function/Variable: camelCase
   - API Routes: RESTful (e.g., `GET /api/lessons`, `POST /api/courses`)
 - **State:** グローバルまたは複雑な共有状態には Preact Signals を優先的に使用する。
-- **CSS:** Vanilla CSS を使用。CSS Grid/Flexbox を最大限活用する。Component ごとに `.css` ファイルを分け、import を勝手に削除しないこと。
+- **CSS:** Vanilla CSS を使用。CSS Grid/Flexbox を最大限活用する。Component ごとに `.css` ファイルを分け、import を勝手に削除しないこと。また、ダイアログ（オーバーレイ、ボックス、ヘッダー、フッター等）などの共通的に使用するスタイルは `src/index.css` で定義し、各コンポーネントで独自に定義しないこと。
 
 ### Development Workflow
 - **Specification First:** 仕様変更時はまず `GEMINI.md` を更新し、定義を確定させてから着手する。

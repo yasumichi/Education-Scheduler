@@ -27,10 +27,6 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
 
   const teachers = resources.filter(r => r.type === 'teacher');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${backendUrl}/users`, {
@@ -44,6 +40,10 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
       console.error('Failed to fetch users:', err);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   useEffect(() => {
     if (selectedTeacherId) {
