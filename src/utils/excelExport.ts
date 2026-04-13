@@ -440,9 +440,12 @@ export async function exportTimetableToExcel({
         const subIds = [...(c.assistantTeacherIds || []), ...(c.assistantTeachers || []).map((at: any) => at.id)];
         const assistantNames = subIds.map(id => resources.find(r => r.id === id)?.name).filter(Boolean).map(name => t(name!)).join(', ');
         
+        const mLabel = c.mainTeacherLabel || labels.mainTeacher;
+        const sLabel = c.subTeacherLabel || labels.subTeacher;
+
         cell.value = `${t(c.name)}\n` +
-                     `${labels.mainTeacher}: ${chiefTeacher ? t(chiefTeacher.name) : '-'}\n` +
-                     (assistantNames ? `${labels.subTeacher}: ${assistantNames}\n` : '') +
+                     `${mLabel}: ${chiefTeacher ? t(chiefTeacher.name) : '-'}\n` +
+                     (assistantNames ? `${sLabel}: ${assistantNames}\n` : '') +
                      `${c.startDate} ～ ${c.endDate} (${workDays}${t('days')} / ${workDays * periods.length}${t('periods')})`;
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD0E0FF' } }; // LightBlue equivalent
       } else if (item.type === 'event') {

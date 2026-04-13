@@ -538,7 +538,7 @@ export function App() {
               className={viewType.value === 'course_timeline' ? 'active' : ''} 
               onClick={() => handleViewTypeChange('course_timeline')}
             >
-              {t('Course Timeline')}
+              {t('{{course}} Timeline', { course: resourceLabels.value.course })}
             </button>
           </div>
             </>

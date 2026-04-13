@@ -435,9 +435,12 @@ export function Timetable({
         ];
         const assistantNames = subIds.map(id => resources.find(r => r.id === id)?.name).filter(Boolean).map(name => t(name!)).join(', ');
 
+        const mLabel = c.mainTeacherLabel || labels.mainTeacher;
+        const sLabel = c.subTeacherLabel || labels.subTeacher;
+
         const tooltip = `${t(c.name)}\n` +
-                        `${labels.mainTeacher}: ${chiefTeacher ? t(chiefTeacher.name) : '-'}\n` +
-                        (assistantNames ? `${labels.subTeacher}: ${assistantNames}\n` : '') +
+                        `${mLabel}: ${chiefTeacher ? t(chiefTeacher.name) : '-'}\n` +
+                        (assistantNames ? `${sLabel}: ${assistantNames}\n` : '') +
                         `${c.startDate} ～ ${c.endDate}\n` +
                         `${t('Work Days')}: ${workDays}${t('days')} (${totalPeriods} ${t('periods')})`;
 
@@ -457,8 +460,8 @@ export function Timetable({
             <div className="course-card-content">
               <div className="course-card-name">{t(c.name)}</div>
               <div className="course-card-teachers">
-                <div>{labels.mainTeacher}: {chiefTeacher ? t(chiefTeacher.name) : '-'}</div>
-                {assistantNames && <div>{labels.subTeacher}: {assistantNames}</div>}
+                <div>{mLabel}: {chiefTeacher ? t(chiefTeacher.name) : '-'}</div>
+                {assistantNames && <div>{sLabel}: {assistantNames}</div>}
               </div>
               <div className="course-card-footer">
                 <span className="course-card-dates">{c.startDate} ～ {c.endDate}</span>
