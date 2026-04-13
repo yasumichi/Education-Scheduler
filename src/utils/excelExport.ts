@@ -575,12 +575,15 @@ export async function exportPersonalMonthlyToExcel({
 
         const dateStr = format(day, 'yyyy-MM-dd');
         const dayLessons = lessons.filter(l => {
-          const isTeacher = l.teacherId === userResourceId || l.subTeacherIds?.includes(userResourceId);
+          const subIds = [...(l.subTeacherIds || []), ...(l.subTeachers || []).map(t => t.id)];
+          const isTeacher = l.teacherId === userResourceId || subIds.includes(userResourceId);
           return isTeacher && dateStr >= l.startDate && dateStr <= l.endDate;
         });
         const dayEvents = events.filter(e => {
-          const isRelevant = e.showInEventRow || (e.resourceIds && e.resourceIds.includes(userResourceId));
-          return isRelevant && dateStr >= e.startDate && dateStr <= e.endDate;
+          const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
+          const isAssigned = resourceIdList.includes(userResourceId);
+          const isGlobal = e.showInEventRow !== false || resourceIdList.length === 0;
+          return (isAssigned || isGlobal) && dateStr >= e.startDate && dateStr <= e.endDate;
         });
 
         const processedItemIds = new Set<string>();

@@ -463,7 +463,7 @@ export function Timetable({
               <div className="course-card-footer">
                 <span className="course-card-dates">{c.startDate} ～ {c.endDate}</span>
                 <span className="course-card-stats">
-                  {t('Work Days')}: {workDays}{t('days')} ({totalPeriods} {t('periods')})
+                  {t('Work Days')}: {workDays}{t('days')} (${totalPeriods} ${t('periods')})
                 </span>
               </div>
             </div>

@@ -76,7 +76,8 @@ export function PersonalMonthlyView({
   const getLessonsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return lessons.filter(l => {
-      const isTeacher = l.teacherId === userResourceId || l.subTeacherIds?.includes(userResourceId);
+      const subIds = [...(l.subTeacherIds || []), ...(l.subTeachers || []).map(t => t.id)];
+      const isTeacher = l.teacherId === userResourceId || subIds.includes(userResourceId);
       if (!isTeacher) return false;
       
       // 期間内に入っているかチェック
@@ -87,8 +88,13 @@ export function PersonalMonthlyView({
   const getEventsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return events.filter(e => {
-      const isRelevant = e.showInEventRow || (e.resourceIds && e.resourceIds.includes(userResourceId));
-      if (!isRelevant) return false;
+      const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
+      // 1. この教官に割り当てられたイベント (教官行に表示されるもの)
+      const isAssigned = resourceIdList.includes(userResourceId);
+      // 2. イベント行に表示されるグローバルイベント
+      const isGlobal = e.showInEventRow !== false || resourceIdList.length === 0;
+
+      if (!isAssigned && !isGlobal) return false;
       
       return dateStr >= e.startDate && dateStr <= e.endDate;
     });
