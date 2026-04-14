@@ -607,6 +607,17 @@ export function App() {
               editingEvent.value = event;
               showEventManager.value = true;
             }}
+            onEmptyCellClick={(date) => {
+              editingEvent.value = {
+                startDate: date,
+                endDate: date,
+                startPeriodId: periods.value[0]?.id || 'p1',
+                endPeriodId: periods.value[periods.value.length - 1]?.id || 'p8',
+                resourceIds: [user.value!.resourceId!],
+                showInEventRow: false
+              };
+              showEventManager.value = true;
+            }}
           />
         ) : showCourseWeekly.value && selectedCourseIdForWeekly.value ? (
           <CourseWeeklyView 

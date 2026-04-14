@@ -29,6 +29,7 @@ interface Props {
   systemSettings: SystemSetting | null;
   onLessonClick?: (lesson: Lesson) => void;
   onEventClick?: (event: ScheduleEvent) => void;
+  onEmptyCellClick?: (date: string) => void;
 }
 
 export function PersonalMonthlyView({
@@ -42,7 +43,8 @@ export function PersonalMonthlyView({
   labels,
   systemSettings,
   onLessonClick,
-  onEventClick
+  onEventClick,
+  onEmptyCellClick
 }: Props) {
   const { t } = useTranslation();
   
@@ -234,7 +236,11 @@ export function PersonalMonthlyView({
           if (holiday) dayClasses += " is-holiday";
 
           return (
-            <div className={dayClasses} key={day.getTime()}>
+            <div 
+              className={dayClasses} 
+              key={day.getTime()}
+              onDblClick={() => onEmptyCellClick?.(format(day, 'yyyy-MM-dd'))}
+            >
               <div className="day-header">
                 <span className="day-number">{format(day, 'd')}</span>
                 {holiday && <span className="holiday-name">{holiday.name}</span>}
@@ -249,4 +255,3 @@ export function PersonalMonthlyView({
     </div>
   );
 }
-
