@@ -99,21 +99,34 @@ export function PersonalMonthlyView({
 
   const renderDayItems = (date: Date, dayLessons: Lesson[], dayEvents: ScheduleEvent[]) => {
     const dateStr = format(date, 'yyyy-MM-dd');
+    const totalPeriods = periods.length || 8;
     
     // この日のアイテムを整形して抽出
     const dayItems = [
       ...dayLessons.map(l => {
         let startIdx = 0;
-        let endIdx = 7;
-        if (dateStr === l.startDate) startIdx = parseInt(l.startPeriodId.replace('p', '')) - 1;
-        if (dateStr === l.endDate) endIdx = parseInt(l.endPeriodId.replace('p', '')) - 1;
+        let endIdx = totalPeriods - 1;
+        if (dateStr === l.startDate) {
+          const pIdx = periods.findIndex(p => p.id === l.startPeriodId);
+          startIdx = pIdx !== -1 ? pIdx : 0;
+        }
+        if (dateStr === l.endDate) {
+          const pIdx = periods.findIndex(p => p.id === l.endPeriodId);
+          endIdx = pIdx !== -1 ? pIdx : totalPeriods - 1;
+        }
         return { type: 'lesson' as const, data: l, startIdx, endIdx };
       }),
       ...dayEvents.map(e => {
         let startIdx = 0;
-        let endIdx = 7;
-        if (dateStr === e.startDate) startIdx = parseInt(e.startPeriodId.replace('p', '')) - 1;
-        if (dateStr === e.endDate) endIdx = parseInt(e.endPeriodId.replace('p', '')) - 1;
+        let endIdx = totalPeriods - 1;
+        if (dateStr === e.startDate) {
+          const pIdx = periods.findIndex(p => p.id === e.startPeriodId);
+          startIdx = pIdx !== -1 ? pIdx : 0;
+        }
+        if (dateStr === e.endDate) {
+          const pIdx = periods.findIndex(p => p.id === e.endPeriodId);
+          endIdx = pIdx !== -1 ? pIdx : totalPeriods - 1;
+        }
         return { type: 'event' as const, data: e, startIdx, endIdx };
       })
     ];
@@ -144,11 +157,24 @@ export function PersonalMonthlyView({
           const { item, level, maxLevelInGroup } = p;
           const { type, data, startIdx, endIdx } = item;
           const span = endIdx - startIdx + 1;
-          const periodLabel = span > 1 ? `${startIdx + 1}-${endIdx + 1}` : `${startIdx + 1}`;
+          
+          // 表示用の時限ラベル
+          let periodLabel = "";
+          if (type === 'lesson') {
+            const lesson = data as Lesson;
+            periodLabel = lesson.startPeriodId === lesson.endPeriodId 
+              ? periods.find(p => p.id === lesson.startPeriodId)?.name || ""
+              : `${periods.find(p => p.id === lesson.startPeriodId)?.name || ""}-${periods.find(p => p.id === lesson.endPeriodId)?.name || ""}`;
+          } else {
+            const event = data as ScheduleEvent;
+            periodLabel = event.startPeriodId === event.endPeriodId 
+              ? periods.find(p => p.id === event.startPeriodId)?.name || ""
+              : `${periods.find(p => p.id === event.startPeriodId)?.name || ""}-${periods.find(p => p.id === event.endPeriodId)?.name || ""}`;
+          }
           
           const style = {
-            top: `${(startIdx / 8) * 100}%`,
-            height: `${(span / 8) * 100}%`,
+            top: `${(startIdx / totalPeriods) * 100}%`,
+            height: `${(span / totalPeriods) * 100}%`,
             left: `${(level / maxLevelInGroup) * 100}%`,
             width: `${(1 / maxLevelInGroup) * 100}%`,
             zIndex: 10 + level
