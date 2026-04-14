@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Resource, ResourceLabels } from '../types';
+import { Resource, ResourceLabels, SystemSetting } from '../types';
 import './CourseManager.css';
 
 interface Props {
@@ -9,16 +9,50 @@ interface Props {
   onUpdate: () => Promise<void> | void;
   resources: Resource[];
   labels: ResourceLabels;
+  systemSettings: SystemSetting | null;
   initialCourseId?: string | null;
 }
 
-export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels, initialCourseId }: Props) {
+export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels, systemSettings, initialCourseId }: Props) {
   const { t } = useTranslation();
   const [editingCourseId, setEditingCourseId] = useState<string | null>(initialCourseId || null);
   const [coursesList, setCoursesList] = useState<Resource[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [showDuplicateLessons, setShowDuplicateLessons] = useState(false);
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  
+  // システム設定から開始月日を取得
+  const startMonth = systemSettings?.yearViewStartMonth ?? 4;
+  const startDay = systemSettings?.yearViewStartDay ?? 1;
+
+  // 年度期間を計算 (YYYY-MM-DD 形式)
+  const getYearRange = (year: number) => {
+    const start = new Date(year, startMonth - 1, startDay);
+    const end = new Date(year + 1, startMonth - 1, startDay);
+    end.setDate(end.getDate() - 1);
+    
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return {
+      start: `${year}-${pad(startMonth)}-${pad(startDay)}`,
+      end: `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`
+    };
+  };
+
+  // 指定された日付がどの年度に属するか計算
+  const getAcademicYear = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const threshold = new Date(y, startMonth - 1, startDay);
+    return d < threshold ? y - 1 : y;
+  };
+
+  const getInitialYear = () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const threshold = new Date(y, startMonth - 1, startDay);
+    return now < threshold ? y - 1 : y;
+  };
+
+  const [selectedYear, setSelectedYear] = useState<number>(getInitialYear());
   const [duplicationData, setDuplicationData] = useState({
     sourceCourseId: '',
     startDate: '',
@@ -93,25 +127,25 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
   }, [editingCourseId, resources]);
 
-  // 年の選択肢を生成 (全講座の期間から抽出)
+  // 年度の選択肢を生成
   const availableYears = Array.from(new Set(courses.flatMap(c => {
     const years: number[] = [];
-    if (c.startDate) years.push(new Date(c.startDate).getFullYear());
-    if (c.endDate) years.push(new Date(c.endDate).getFullYear());
+    if (c.startDate) years.push(getAcademicYear(c.startDate));
+    if (c.endDate) years.push(getAcademicYear(c.endDate));
     return years;
   }))).sort((a, b) => b - a);
 
-  // 選択肢がない場合は現在の年を追加
-  if (availableYears.length === 0) {
-    availableYears.push(new Date().getFullYear());
+  const initialYear = getInitialYear();
+  if (!availableYears.includes(initialYear)) {
+    availableYears.push(initialYear);
+    availableYears.sort((a, b) => b - a);
   }
 
-  // 表示する講座のフィルタリング (選択された年に重なるもの)
+  // 表示する講座のフィルタリング (選択された年度に重なるもの)
   const filteredCourses = coursesList.filter(c => {
-    if (!c.startDate || !c.endDate) return true; // 期間未設定は表示
-    const startYear = new Date(c.startDate).getFullYear();
-    const endYear = new Date(c.endDate).getFullYear();
-    return selectedYear >= startYear && selectedYear <= endYear;
+    if (!c.startDate || !c.endDate) return true;
+    const range = getYearRange(selectedYear);
+    return c.startDate <= range.end && c.endDate >= range.start;
   });
 
   const handleAddSubject = () => {
@@ -383,7 +417,16 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 <div className="year-filter">
                   <label>{t('Year')}:</label>
                   <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.currentTarget.value))}>
-                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                    {availableYears.map(y => {
+                      const range = getYearRange(y);
+                      const startLabel = range.start.replace(/-/g, '/');
+                      const endLabel = range.end.replace(/-/g, '/');
+                      return (
+                        <option key={y} value={y}>
+                          {y} ({startLabel} ~ {endLabel})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>

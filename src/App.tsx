@@ -698,6 +698,7 @@ export function App() {
           onUpdate={fetchData}
           resources={resources.value}
           labels={resourceLabels.value}
+          systemSettings={systemSettings.value}
           initialCourseId={editingCourseId.value}
         />
       )}
