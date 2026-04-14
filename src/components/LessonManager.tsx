@@ -87,7 +87,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     return isChief || isAssistant;
   }, [user, selectedCourse]);
 
-  const canEditDeliveryMethod = useMemo(() => {
+  const canLimitedEdit = useMemo(() => {
     if (canManage) return true;
     if (user.role !== 'TEACHER' || !user.resourceId || !formData.id) return false;
 
@@ -284,8 +284,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
         <div className="dialog-header">
           <h2>
             {formData.id ? t('Edit Lesson') : t('Create Lesson')}
-            {!canManage && canEditDeliveryMethod && <span className="readonly-badge limited"> ({t('Limited Edit')})</span>}
-            {!canManage && !canEditDeliveryMethod && <span className="readonly-badge"> ({t('Read-only')})</span>}
+            {!canManage && canLimitedEdit && <span className="readonly-badge limited"> ({t('Limited Edit')})</span>}
+            {!canManage && !canLimitedEdit && <span className="readonly-badge"> ({t('Read-only')})</span>}
           </h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
@@ -498,12 +498,12 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
           <div className="form-group">
             <label>{t('Remarks')}</label>
-            {canManage ? (
+            {canLimitedEdit ? (
               <textarea 
                 value={formData.remarks} 
                 onInput={(e) => setFormData({ ...formData, remarks: e.currentTarget.value })}
                 placeholder={t('Notes, special instructions, etc.')}
-                disabled={!canManage}
+                disabled={!canLimitedEdit}
                 rows={3}
                 style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
               />
@@ -519,12 +519,12 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                 const selected = deliveryMethods.filter(m => formData.deliveryMethodIds.includes(m.id));
                 const unselected = deliveryMethods.filter(m => !formData.deliveryMethodIds.includes(m.id));
                 return [...selected, ...unselected].map(m => (
-                  <label key={m.id} className={`delivery-method-item ${formData.deliveryMethodIds.includes(m.id) ? 'selected' : ''} ${!canEditDeliveryMethod ? 'disabled' : ''}`}>
+                  <label key={m.id} className={`delivery-method-item ${formData.deliveryMethodIds.includes(m.id) ? 'selected' : ''} ${!canLimitedEdit ? 'disabled' : ''}`}>
                     <input 
                       type="checkbox" 
                       checked={formData.deliveryMethodIds.includes(m.id)}
                       onChange={() => toggleDeliveryMethod(m.id)}
-                      disabled={!canEditDeliveryMethod}
+                      disabled={!canLimitedEdit}
                     />
                     {m.name}
                   </label>
@@ -543,7 +543,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           )}
           <div className="footer-right">
             <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-            <button className="save-button" onClick={handleSave} disabled={!canEditDeliveryMethod}>{t('Save Changes')}</button>
+            <button className="save-button" onClick={handleSave} disabled={!canLimitedEdit}>{t('Save Changes')}</button>
           </div>
         </div>
       </div>

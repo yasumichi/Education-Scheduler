@@ -765,8 +765,8 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
       
       const hasPermissionToCurrent = await canManageCourseLessons(req.user.id, currentLesson.courseId);
       
-      // 追加: 授業の担当講師（メインまたはサブ）であれば、授業方式のみ変更可能とするためのフラグ
-      let onlyDeliveryMethodAllowed = false;
+      // 追加: 授業の担当講師（メインまたはサブ）であれば、授業方式と備考のみ変更可能とするためのフラグ
+      let onlyDeliveryMethodAndRemarksAllowed = false;
       if (!hasPermissionToCurrent && req.user.role === UserRole.TEACHER) {
         const user = await prisma.user.findUnique({
           where: { id: req.user.id },
@@ -777,26 +777,26 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
           const isMain = currentLesson.teacherId === teacherResourceId;
           const isSub = currentLesson.subTeachers.some(t => t.id === teacherResourceId);
           if (isMain || isSub) {
-            onlyDeliveryMethodAllowed = true;
+            onlyDeliveryMethodAndRemarksAllowed = true;
           }
         }
       }
 
-      if (!hasPermissionToCurrent && !onlyDeliveryMethodAllowed) {
+      if (!hasPermissionToCurrent && !onlyDeliveryMethodAndRemarksAllowed) {
         return res.status(403).json({ error: 'Access denied.' });
       }
 
       // 講座が変更される場合、変更先への権限もチェック
       if (courseId && courseId !== currentLesson.courseId) {
-        if (onlyDeliveryMethodAllowed) {
-           return res.status(403).json({ error: 'Access denied. You can only change delivery methods for this lesson.' });
+        if (onlyDeliveryMethodAndRemarksAllowed) {
+           return res.status(403).json({ error: 'Access denied. You can only change delivery methods and remarks for this lesson.' });
         }
         const hasPermissionToNew = await canManageCourseLessons(req.user.id, courseId);
         if (!hasPermissionToNew) return res.status(403).json({ error: 'Access denied to new course.' });
       }
 
-      // 権限が「授業方式のみ」の場合、他のフィールドが変更されていないかチェック
-      if (onlyDeliveryMethodAllowed) {
+      // 権限が「授業方式と備考のみ」の場合、他のフィールドが変更されていないかチェック
+      if (onlyDeliveryMethodAndRemarksAllowed) {
         const isOtherFieldChanged = 
           subject !== currentLesson.subject ||
           teacherId !== currentLesson.teacherId ||
@@ -806,7 +806,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
           startPeriodId !== currentLesson.startPeriodId ||
           endDate !== currentLesson.endDate ||
           endPeriodId !== currentLesson.endPeriodId ||
-          remarks !== currentLesson.remarks ||
+          // remarks は許可されているので除外
           externalTeacher !== currentLesson.externalTeacher ||
           externalSubTeachers !== currentLesson.externalSubTeachers ||
           // サブ講師の変更チェック (簡易的)
@@ -816,7 +816,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
           ));
         
         if (isOtherFieldChanged) {
-          return res.status(403).json({ error: 'Access denied. You can only change delivery methods for this lesson.' });
+          return res.status(403).json({ error: 'Access denied. You can only change delivery methods and remarks for this lesson.' });
         }
       }
     } else {
