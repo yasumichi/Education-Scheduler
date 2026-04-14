@@ -88,11 +88,24 @@ export function Timetable({
   const displayDates = Array.from({ length: dayCount }).map((_, i) => addDays(currentViewStart, i));
   const currentViewEnd = startOfDay(displayDates[displayDates.length - 1]);
 
+  const viewStartStr = format(currentViewStart, 'yyyy-MM-dd');
+  const viewEndStr = format(currentViewEnd, 'yyyy-MM-dd');
+
   const allResourcesOfMode = resources
-    .filter(r => r.type === viewMode)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    .filter(r => {
+      if (r.type !== viewMode) return false;
+      // 講座ビューの場合、表示期間内に開催されているもののみを表示
+      if (viewMode === 'course') {
+        if (r.startDate && r.endDate) {
+          return r.startDate <= viewEndStr && r.endDate >= viewStartStr;
+        }
+      }
+      return true;
+    })
+    .sort((a, b) => (a.order ?? 0) - (b.order || 0));
 
   const filteredResources = allResourcesOfMode.filter(r => !hiddenResourceIds.value.has(r.id));
+
 
   const toggleResource = (id: string) => {
     const next = new Set(hiddenResourceIds.value);
