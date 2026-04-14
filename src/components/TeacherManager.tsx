@@ -16,6 +16,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
   const [editingTeacherId, setEditingTeacherId] = useState<string | null>(null);
   const [teachersList, setTeachersList] = useState<Resource[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState<{
     name: string;
     order: number;
@@ -35,6 +36,13 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
   useEffect(() => {
     setTeachersList(teachers);
   }, [resources]);
+
+  // 表示する講師のフィルタリング
+  const filteredTeachers = teachersList.filter(t => 
+    t.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const isFiltering = searchQuery.length > 0;
 
   const fetchUsers = async () => {
     try {
@@ -191,6 +199,15 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
                 <button className="add-button" onClick={() => setEditingTeacherId('new')}>
                   {t('Add New {{resource}}', { resource: labels.teacher })}
                 </button>
+                <div className="search-box">
+                  <input 
+                    type="text" 
+                    placeholder={t('Search by name...')} 
+                    value={searchQuery}
+                    onInput={(e) => setSearchQuery(e.currentTarget.value)}
+                  />
+                  {searchQuery && <button className="clear-search" onClick={() => setSearchQuery('')}>×</button>}
+                </div>
               </div>
               <div className="teacher-list">
                 <table>
@@ -204,38 +221,43 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
                     </tr>
                   </thead>
                   <tbody>
-                    {teachersList.map((teacher, idx) => (
-                      <tr key={teacher.id}
-                          draggable
-                          onDragStart={() => handleDragStart(idx)}
-                          onDragEnter={() => handleDragEnter(idx)}
-                          onDragEnd={handleDragEnd}
-                          onDragOver={(e) => e.preventDefault()}
-                          className="draggable-row"
-                      >
-                        <td className="drag-handle">⋮⋮</td>
-                        <td>
-                          <div className="move-buttons">
-                            <button className="move-btn" onClick={() => moveItem(idx, 'up')} disabled={idx === 0}>↑</button>
-                            <button className="move-btn" onClick={() => moveItem(idx, 'down')} disabled={idx === teachersList.length - 1}>↓</button>
-                          </div>
-                        </td>
-                        <td style={{ fontWeight: 'bold' }}>{teacher.name}</td>
-                        <td>{getUserEmail(teacher.userId)}</td>
-                        <td>
-                          <div className="action-buttons">
-                            <button className="edit-btn" onClick={() => setEditingTeacherId(teacher.id)}>{t('Edit')}</button>
-                            <button className="delete-btn" onClick={() => handleDelete(teacher.id)}>{t('Delete')}</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredTeachers.map((teacher) => {
+                      const listIdx = teachersList.findIndex(item => item.id === teacher.id);
+                      return (
+                        <tr key={teacher.id}
+                            draggable={!isFiltering}
+                            onDragStart={() => !isFiltering && handleDragStart(listIdx)}
+                            onDragEnter={() => !isFiltering && handleDragEnter(listIdx)}
+                            onDragEnd={handleDragEnd}
+                            onDragOver={(e) => !isFiltering && e.preventDefault()}
+                            className={`draggable-row ${isFiltering ? 'non-draggable' : ''}`}
+                        >
+                          <td className="drag-handle">{isFiltering ? '•' : '⋮⋮'}</td>
+                          <td>
+                            <div className="move-buttons">
+                              <button className="move-btn" onClick={() => moveItem(listIdx, 'up')} disabled={isFiltering || listIdx === 0}>↑</button>
+                              <button className="move-btn" onClick={() => moveItem(listIdx, 'down')} disabled={isFiltering || listIdx === teachersList.length - 1}>↓</button>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 'bold' }}>{teacher.name}</td>
+                          <td>{getUserEmail(teacher.userId)}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button className="edit-btn" onClick={() => setEditingTeacherId(teacher.id)}>{t('Edit')}</button>
+                              <button className="delete-btn" onClick={() => handleDelete(teacher.id)}>{t('Delete')}</button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-              <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>
+              <p className="hint-text">
+                {isFiltering ? t('Reordering is disabled during filtering') : t('Drag and drop rows or use arrows to change order')}
+              </p>
               <div className="list-footer">
-                <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
+                <button className="save-order-button" onClick={handleSaveOrder} disabled={isFiltering}>{t('Save Order')}</button>
               </div>
             </>
           ) : (
