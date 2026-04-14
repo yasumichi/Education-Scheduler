@@ -667,19 +667,25 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         </div>
 
         <div className="dialog-footer">
-          {editingCourseId && editingCourseId !== 'new' && (
-            <div className="footer-left">
-              <button className="delete-button" onClick={() => handleDelete(editingCourseId)}>{t('Delete')}</button>
-              <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate Course')}</button>
-              <button className="duplicate-lessons-btn" onClick={() => setShowDuplicateLessons(true)}>{t('Duplicate Lessons')}</button>
+          {editingCourseId ? (
+            <>
+              {editingCourseId !== 'new' && (
+                <div className="footer-left">
+                  <button className="delete-button" onClick={() => handleDelete(editingCourseId)}>{t('Delete')}</button>
+                  <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate Course')}</button>
+                  <button className="duplicate-lessons-btn" onClick={() => setShowDuplicateLessons(true)}>{t('Duplicate Lessons')}</button>
+                </div>
+              )}
+              <div className="footer-right">
+                <button className="cancel-button" onClick={() => setEditingCourseId(null)}>{t('Cancel')}</button>
+                <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+              </div>
+            </>
+          ) : (
+            <div className="footer-right">
+              <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
             </div>
           )}
-          <div className="footer-right">
-            <button className="cancel-button" onClick={() => setEditingCourseId(null)}>{t('Cancel')}</button>
-            {editingCourseId && (
-              <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
-            )}
-          </div>
         </div>
       </div>
     </div>
