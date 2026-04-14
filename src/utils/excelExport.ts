@@ -502,6 +502,7 @@ export async function exportPersonalMonthlyToExcel({
     const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
+    const totalPeriods = periods.length || 8;
     const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
     const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
     const holidayTheme = systemSettings?.holidayTheme || 'default';
@@ -516,9 +517,75 @@ export async function exportPersonalMonthlyToExcel({
       });
     };
 
+    // --- Pre-calculate overlaps for column structure ---
+    let maxOverlaps = 1;
+    const dayPlacementsMap = new Map<number, any[]>();
+
+    days.forEach((day, dayIdx) => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const dayLessons = lessons.filter(l => {
+        const subIds = [...(l.subTeacherIds || []), ...(l.subTeachers || []).map(t => t.id)];
+        return (l.teacherId === userResourceId || subIds.includes(userResourceId)) && 
+               dateStr >= l.startDate && dateStr <= l.endDate;
+      });
+      const dayEvents = events.filter(e => {
+        const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
+        return resourceIdList.includes(userResourceId) && dateStr >= e.startDate && dateStr <= e.endDate;
+      });
+
+      const dayItems = [
+        ...dayLessons.map(l => {
+          let startIdx = 0, endIdx = totalPeriods - 1;
+          if (dateStr === l.startDate) {
+            const pIdx = periods.findIndex(p => p.id === l.startPeriodId);
+            startIdx = pIdx !== -1 ? pIdx : 0;
+          }
+          if (dateStr === l.endDate) {
+            const pIdx = periods.findIndex(p => p.id === l.endPeriodId);
+            endIdx = pIdx !== -1 ? pIdx : totalPeriods - 1;
+          }
+          return { type: 'lesson', data: l, startIdx, endIdx };
+        }),
+        ...dayEvents.map(e => {
+          let startIdx = 0, endIdx = totalPeriods - 1;
+          if (dateStr === e.startDate) {
+            const pIdx = periods.findIndex(p => p.id === e.startPeriodId);
+            startIdx = pIdx !== -1 ? pIdx : 0;
+          }
+          if (dateStr === e.endDate) {
+            const pIdx = periods.findIndex(p => p.id === e.endPeriodId);
+            endIdx = pIdx !== -1 ? pIdx : totalPeriods - 1;
+          }
+          return { type: 'event', data: e, startIdx, endIdx };
+        })
+      ];
+
+      if (dayItems.length > 0) {
+        const placements: any[] = [];
+        const sortedItems = [...dayItems].sort((a, b) => a.startIdx - b.startIdx || (b.endIdx - b.startIdx) - (a.endIdx - a.startIdx));
+        sortedItems.forEach(item => {
+          let level = 0;
+          while (placements.some(p => p.level === level && !(item.endIdx < p.startIdx || item.startIdx > p.endIdx))) {
+            level++;
+          }
+          placements.push({ ...item, level });
+        });
+        
+        placements.forEach(p => {
+          const overlapping = placements.filter(other => !(p.endIdx < other.startIdx || p.startIdx > other.endIdx));
+          p.maxLevelInGroup = Math.max(...overlapping.map(o => o.level)) + 1;
+        });
+
+        const dayMaxLevel = placements.length > 0 ? Math.max(...placements.map(p => p.level)) + 1 : 1;
+        if (dayMaxLevel > maxOverlaps) maxOverlaps = dayMaxLevel;
+        dayPlacementsMap.set(dayIdx, placements);
+      }
+    });
+
     // Columns Width
-    for (let i = 1; i <= 7; i++) {
-      worksheet.getColumn(i).width = 25;
+    const baseColumnWidth = 30;
+    for (let i = 1; i <= 7 * maxOverlaps; i++) {
+      worksheet.getColumn(i).width = baseColumnWidth / maxOverlaps;
     }
 
     // Weekday Header
@@ -527,28 +594,29 @@ export async function exportPersonalMonthlyToExcel({
     headerRow.height = 30;
     for (let i = 0; i < 7; i++) {
       const d = new Date(2021, 0, 3 + i);
-      const cell = worksheet.getCell(1, i + 1);
+      const startCol = i * maxOverlaps + 1;
+      const endCol = startCol + maxOverlaps - 1;
+      const cell = worksheet.getCell(1, startCol);
       cell.value = weekdayFormatter.format(d);
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.font = { bold: true };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
       cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
+      if (endCol > startCol) worksheet.mergeCells(1, startCol, 1, endCol);
     }
-
-    const mergedRanges = new Set<string>();
-    const isMerged = (row: number, col: number) => mergedRanges.has(`${row},${col}`);
 
     const weeksCount = Math.ceil(days.length / 7);
     for (let w = 0; w < weeksCount; w++) {
-      const baseRow = 2 + w * 9;
+      const baseRow = 2 + w * (totalPeriods + 1);
       
       for (let d = 0; d < 7; d++) {
         const dayIdx = w * 7 + d;
         const day = days[dayIdx];
         if (!day) continue;
 
-        const colIdx = d + 1;
-        const cell = worksheet.getCell(baseRow, colIdx);
+        const colStart = (d * maxOverlaps) + 1;
+        const colEnd = colStart + maxOverlaps - 1;
+        const cell = worksheet.getCell(baseRow, colStart);
         
         const holiday = getHoliday(day);
         const isWknd = isWeekend(day);
@@ -569,104 +637,60 @@ export async function exportPersonalMonthlyToExcel({
 
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
         cell.border = { left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' }, bottom: { style: 'thin' } };
+        if (colEnd > colStart) worksheet.mergeCells(baseRow, colStart, baseRow, colEnd);
 
-        for (let p = 1; p <= 8; p++) {
-          const pCell = worksheet.getCell(baseRow + p, colIdx);
-          pCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
-          pCell.border = { left: { style: 'thin' }, right: { style: 'thin' }, bottom: p === 8 ? { style: 'thin' } : undefined };
-          worksheet.getRow(baseRow + p).height = 25;
+        for (let p = 1; p <= totalPeriods; p++) {
+          for (let sc = 0; sc < maxOverlaps; sc++) {
+            const pCell = worksheet.getCell(baseRow + p, colStart + sc);
+            pCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+            pCell.border = { 
+              left: sc === 0 ? { style: 'thin' } : undefined, 
+              right: sc === maxOverlaps - 1 ? { style: 'thin' } : undefined, 
+              bottom: p === totalPeriods ? { style: 'thin' } : undefined 
+            };
+          }
+          worksheet.getRow(baseRow + p).height = 30;
         }
 
-        const dateStr = format(day, 'yyyy-MM-dd');
-        const dayLessons = lessons.filter(l => {
-          const subIds = [...(l.subTeacherIds || []), ...(l.subTeachers || []).map(t => t.id)];
-          const isTeacher = l.teacherId === userResourceId || subIds.includes(userResourceId);
-          return isTeacher && dateStr >= l.startDate && dateStr <= l.endDate;
-        });
-        const dayEvents = events.filter(e => {
-          const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
-          const isAssigned = resourceIdList.includes(userResourceId);
-          return isAssigned && dateStr >= e.startDate && dateStr <= e.endDate;
-        });
+        const placements = dayPlacementsMap.get(dayIdx) || [];
+        placements.forEach(placement => {
+          const { type, data, startIdx, endIdx, level, maxLevelInGroup } = placement;
+          
+          const colsPerLevel = maxOverlaps / maxLevelInGroup;
+          const itemColStart = colStart + Math.floor(level * colsPerLevel);
+          const itemColEnd = colStart + Math.floor((level + 1) * colsPerLevel) - 1;
+          
+          const startRow = baseRow + 1 + startIdx;
+          const span = endIdx - startIdx + 1;
+          const endRow = startRow + span - 1;
+          
+          const cell = worksheet.getCell(startRow, itemColStart);
+          const periodLabel = span > 1 ? `${startIdx + 1}-${endIdx + 1}` : `${startIdx + 1}`;
 
-        const processedItemIds = new Set<string>();
+          if (type === 'event') {
+            const e = data as ScheduleEvent;
+            cell.value = `[${periodLabel}] ${e.name}${e.location ? ` (${e.location})` : ''}`;
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(e.color || '#fef3c7') } };
+          } else {
+            const l = data as Lesson;
+            const room = resources.find(r => r.id === l.roomId);
+            const roomLabel = room?.name || l.location || '';
+            cell.value = `[${periodLabel}] ${l.subject}${roomLabel ? ` (${roomLabel})` : ''}`;
+            const color = (!l.teacherId && !l.externalTeacher) ? '#e884fa' : (l.deliveryMethods?.[0]?.color || '#646cff');
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(color) } };
+            cell.font = { color: { argb: 'FFFFFFFF' } };
+          }
 
-        periods.slice(0, 8).forEach((period, pIdx) => {
-          const pEvents = dayEvents.filter(e => {
-            if (e.startDate === e.endDate) return (period.id || '') >= e.startPeriodId && (period.id || '') <= e.endPeriodId;
-            if (dateStr === e.startDate) return (period.id || '') >= e.startPeriodId;
-            if (dateStr === e.endDate) return (period.id || '') <= e.endPeriodId;
-            return true;
-          });
-          const pLessons = dayLessons.filter(l => {
-            if (l.startDate === l.endDate) return (period.id || '') >= l.startPeriodId && (period.id || '') <= l.endPeriodId;
-            if (dateStr === l.startDate) return (period.id || '') >= l.startPeriodId;
-            if (dateStr === l.endDate) return (period.id || '') <= l.endPeriodId;
-            return true;
-          });
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
 
-          const allItems = [
-            ...pEvents.map(e => ({ type: 'event', data: e })),
-            ...pLessons.map(l => ({ type: 'lesson', data: l }))
-          ];
-
-          allItems.forEach(item => {
-            const id = `${item.type}-${item.data.id}`;
-            if (processedItemIds.has(id)) return;
-            
-            const startRow = baseRow + 1 + pIdx;
-            if (isMerged(startRow, colIdx)) return;
-
-            processedItemIds.add(id);
-
-            let endIdx = pIdx;
-            if (item.type === 'event') {
-              const e = item.data as ScheduleEvent;
-              const eEndId = e.endPeriodId || 'p1';
-              const eEnd = parseInt(eEndId.replace('p', '')) - 1;
-              if (dateStr === e.endDate) endIdx = eEnd;
-              else if (dateStr < e.endDate) endIdx = 7;
-            } else {
-              const l = item.data as Lesson;
-              const lEndId = l.endPeriodId || 'p1';
-              const lEnd = parseInt(lEndId.replace('p', '')) - 1;
-              if (dateStr === l.endDate) endIdx = lEnd;
-              else if (dateStr < l.endDate) endIdx = 7;
+          if (endRow > startRow || itemColEnd > itemColStart) {
+            try {
+              worksheet.mergeCells(startRow, itemColStart, endRow, itemColEnd);
+            } catch (e) {
+              console.warn('Merge failed in Personal Export:', e);
             }
-            const span = Math.max(1, endIdx - pIdx + 1);
-            const endRow = baseRow + 1 + pIdx + span - 1;
-
-            const periodLabel = span > 1 ? `${pIdx + 1}-${endIdx + 1}` : `${pIdx + 1}`;
-            const cell = worksheet.getCell(startRow, colIdx);
-
-            if (item.type === 'event') {
-              const e = item.data as ScheduleEvent;
-              cell.value = `[${periodLabel}] ${e.name}${e.location ? ` (${e.location})` : ''}`;
-              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(e.color || '#fef3c7') } };
-            } else {
-              const l = item.data as Lesson;
-              const room = resources.find(r => r.id === l.roomId);
-              const roomLabel = room?.name || l.location || '';
-              cell.value = `[${periodLabel}] ${l.subject}${roomLabel ? ` (${roomLabel})` : ''}`;
-              const color = (!l.teacherId && !l.externalTeacher) ? '#e884fa' : (l.deliveryMethods?.[0]?.color || '#646cff');
-              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(color) } };
-              cell.font = { color: { argb: 'FFFFFFFF' } };
-            }
-
-            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-            cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
-
-            if (endRow > startRow) {
-              try {
-                worksheet.mergeCells(startRow, colIdx, endRow, colIdx);
-                for (let r = startRow; r <= endRow; r++) mergedRanges.add(`${r},${colIdx}`);
-              } catch (e) {
-                console.warn('Merge failed:', e);
-              }
-            } else {
-              mergedRanges.add(`${startRow},${colIdx}`);
-            }
-          });
+          }
         });
       }
     }
