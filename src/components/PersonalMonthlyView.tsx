@@ -158,20 +158,6 @@ export function PersonalMonthlyView({
           const { type, data, startIdx, endIdx } = item;
           const span = endIdx - startIdx + 1;
           
-          // 表示用の時限ラベル
-          let periodLabel = "";
-          if (type === 'lesson') {
-            const lesson = data as Lesson;
-            periodLabel = lesson.startPeriodId === lesson.endPeriodId 
-              ? periods.find(p => p.id === lesson.startPeriodId)?.name || ""
-              : `${periods.find(p => p.id === lesson.startPeriodId)?.name || ""}-${periods.find(p => p.id === lesson.endPeriodId)?.name || ""}`;
-          } else {
-            const event = data as ScheduleEvent;
-            periodLabel = event.startPeriodId === event.endPeriodId 
-              ? periods.find(p => p.id === event.startPeriodId)?.name || ""
-              : `${periods.find(p => p.id === event.startPeriodId)?.name || ""}-${periods.find(p => p.id === event.endPeriodId)?.name || ""}`;
-          }
-          
           const style = {
             top: `${(startIdx / totalPeriods) * 100}%`,
             height: `${(span / totalPeriods) * 100}%`,
@@ -179,6 +165,9 @@ export function PersonalMonthlyView({
             width: `${(1 / maxLevelInGroup) * 100}%`,
             zIndex: 10 + level
           };
+
+          // 表示用の時限ラベル (単位不要のため番号のみ)
+          const periodLabel = span > 1 ? `${startIdx + 1}-${endIdx + 1}` : `${startIdx + 1}`;
 
           if (type === 'event') {
             const event = data as ScheduleEvent;
