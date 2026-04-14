@@ -220,7 +220,7 @@ export function App() {
     if (viewType.value === 'month') currentDate.value = addMonths(currentDate.value, amount);
     if (viewType.value === '3month') currentDate.value = addMonths(currentDate.value, amount * 3);
     if (viewType.value === '6month') currentDate.value = addMonths(currentDate.value, amount * 6);
-    if (viewType.value === 'year') currentDate.value = addMonths(currentDate.value, amount * 12);
+    if (viewType.value === 'year' || viewType.value === 'course_timeline') currentDate.value = addMonths(currentDate.value, amount * 12);
   };
 
   const handleDateChange = (e: any) => {
