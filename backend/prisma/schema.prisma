@@ -135,6 +135,22 @@ model SystemSetting {
   holidayTheme       String  @default("default")
 }
 
+model ColorTheme {
+  id         String        @id @default(uuid())
+  name       String
+  category   ColorCategory
+  key        String?       // システムデフォルト識別用 (e.g. "default", "no-teacher")
+  background String
+  foreground String
+  order      Int           @default(0)
+}
+
+enum ColorCategory {
+  EVENT
+  LESSON
+  HOLIDAY
+}
+
 enum ResourceType {
   room
   teacher

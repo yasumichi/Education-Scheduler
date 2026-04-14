@@ -1,4 +1,4 @@
-import { PrismaClient, ResourceType, UserRole } from '@prisma/client';
+import { PrismaClient, ResourceType, UserRole, ColorCategory } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
@@ -20,6 +20,7 @@ async function main() {
   await prisma.timePeriod.deleteMany();
   await prisma.resourceLabel.deleteMany();
   await prisma.systemSetting.deleteMany();
+  await prisma.colorTheme.deleteMany();
 
   console.log('Clearing database...');
 
@@ -103,7 +104,7 @@ async function main() {
   // Rooms
   for (let i = 1; i <= 20; i++) {
     await prisma.resource.create({
-      data: { id: `r${i}`, name: `Room ${100 + i}`, type: 'room', order: i }
+      data: { id: `r${i}`, name: `Room ${100 + i}`, type: ResourceType.room, order: i }
     });
   }
   // Teachers
@@ -113,7 +114,7 @@ async function main() {
       data: { 
         id: `t${i}`, 
         name: `Dr. ${surnames[i-1]}`, 
-        type: 'teacher', 
+        type: ResourceType.teacher, 
         order: i,
         // 佐藤先生 (t1) だけユーザーと紐付け
         userId: i === 1 ? userT1.id : undefined
@@ -124,7 +125,7 @@ async function main() {
   const courseNames = ['Advanced Math', 'Practical English', 'Physics Inquiry', 'Japanese History B', 'Modern Writing', 'Basic Chemistry', 'World History A', 'Geography B', 'Biology Special', 'Politics & Economy', 'Classical Literature', 'Informatics I', 'Basic Arts', 'Physical Education', 'English Expression', 'Math IIB', 'Logical Japanese', 'Human Science', 'Career Inquiry', 'Multiculturalism'];
   for (let i = 1; i <= 20; i++) {
     await prisma.resource.create({
-      data: { id: `c${i}`, name: `${courseNames[i-1]} Course`, type: 'course', order: i }
+      data: { id: `c${i}`, name: `${courseNames[i-1]} Course`, type: ResourceType.course, order: i }
     });
   }
 
@@ -246,6 +247,24 @@ async function main() {
       { date: '2026-03-20', name: 'Vernal Equinox Day' },
       { date: '2026-04-29', name: 'Showa Day' },
       { start: '2026-12-29', end: '2027-01-03', name: 'Winter Holidays' }
+    ]
+  });
+
+  // カラーテーマ
+  await prisma.colorTheme.createMany({
+    data: [
+      // イベント
+      { name: 'Default Event', category: ColorCategory.EVENT, key: 'default', background: '#fef3c7', foreground: '#92400e', order: 1 },
+      { name: 'Business Trip', category: ColorCategory.EVENT, background: '#d1fae5', foreground: '#065f46', order: 2 },
+      { name: 'Holiday Event', category: ColorCategory.EVENT, background: '#fee2e2', foreground: '#991b1b', order: 3 },
+      
+      // 授業
+      { name: 'With Main Teacher', category: ColorCategory.LESSON, key: 'with-teacher', background: '#646cff', foreground: '#ffffff', order: 1 },
+      { name: 'No Main Teacher', category: ColorCategory.LESSON, key: 'no-teacher', background: '#e884fa', foreground: '#ffffff', order: 2 },
+      
+      // 休日
+      { name: 'Default Holiday', category: ColorCategory.HOLIDAY, key: 'default', background: '#ffe4e1', foreground: '#333333', order: 1 },
+      { name: 'Vivid Holiday', category: ColorCategory.HOLIDAY, key: 'vivid', background: '#fef7e0', foreground: '#15803d', order: 2 }
     ]
   });
 

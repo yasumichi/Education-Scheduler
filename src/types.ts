@@ -21,7 +21,7 @@ export interface AuthResponse {
   user: User;
 }
 
-export interface ResourceLabels {
+export type ResourceLabels = {
   room: string;
   teacher: string;
   course: string;
@@ -33,7 +33,20 @@ export interface ResourceLabels {
   subject: string;
 }
 
+export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
+
+export interface ColorTheme {
+  id: string;
+  name: string;
+  category: ColorCategory;
+  key?: string | null;
+  background: string;
+  foreground: string;
+  order: number;
+}
+
 export interface SystemSetting {
+
   id: string;
   allowPublicSignup: boolean;
   yearViewStartMonth: number;

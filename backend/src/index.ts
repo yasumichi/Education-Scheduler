@@ -1366,6 +1366,66 @@ app.post('/api/labels', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
+// カラーテーマ一覧取得 (認証必須)
+app.get('/api/color-themes', verifyToken, async (req, res) => {
+  try {
+    const themes = await prisma.colorTheme.findMany({
+      orderBy: [
+        { category: 'asc' },
+        { order: 'asc' }
+      ]
+    });
+    res.json(themes);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch color themes' });
+  }
+});
+
+// カラーテーマの一括更新/作成 (ADMIN権限)
+app.post('/api/color-themes', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { themes } = req.body;
+  try {
+    const results = await prisma.$transaction(
+      themes.map((t: any) => {
+        const { id, ...data } = t;
+        if (id && !id.startsWith('temp-')) {
+          return prisma.colorTheme.update({
+            where: { id },
+            data
+          });
+        } else {
+          return prisma.colorTheme.create({
+            data
+          });
+        }
+      })
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Failed to update color themes:', error);
+    res.status(500).json({ error: 'Failed to update color themes' });
+  }
+});
+
+// カラーテーマ削除 (ADMIN権限)
+app.delete('/api/color-themes/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  const { id } = req.params;
+  try {
+    await prisma.colorTheme.delete({
+      where: { id }
+    });
+    res.json({ message: 'Color theme deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete color theme' });
+  }
+});
+
 app.listen(Number(port), host, () => {
   console.log(`Backend server is running on http://${host}:${port}`);
 });

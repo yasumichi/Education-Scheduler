@@ -14,7 +14,7 @@ import {
   isSaturday,
   addDays
 } from 'date-fns';
-import { TimePeriod, Resource, Lesson, ScheduleEvent, Holiday, ResourceLabels, SystemSetting } from '../types';
+import { TimePeriod, Resource, Lesson, ScheduleEvent, Holiday, ResourceLabels, SystemSetting, ColorTheme, ColorCategory } from '../types';
 import './PersonalMonthlyView.css';
 
 interface Props {
@@ -27,6 +27,7 @@ interface Props {
   holidays: Holiday[];
   labels: ResourceLabels;
   systemSettings: SystemSetting | null;
+  colorThemes: ColorTheme[];
   onLessonClick?: (lesson: Lesson) => void;
   onEventClick?: (event: ScheduleEvent) => void;
   onEmptyCellClick?: (date: string) => void;
@@ -42,6 +43,7 @@ export function PersonalMonthlyView({
   holidays,
   labels,
   systemSettings,
+  colorThemes,
   onLessonClick,
   onEventClick,
   onEmptyCellClick
@@ -63,6 +65,19 @@ export function PersonalMonthlyView({
   const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
   const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
   const holidayTheme = systemSettings?.holidayTheme || 'default';
+
+  // カラーテーマ取得用ヘルパー
+  const getThemeColor = (category: ColorCategory, keyOrName: string) => {
+    const theme = colorThemes.find(t => t.category === category && (t.key === keyOrName || t.name === keyOrName));
+    if (theme) return theme;
+    return colorThemes.find(t => t.category === category && t.key === 'default');
+  };
+
+  // テキスト選択中のクリックを無視するためのチェック
+  const handleIntentionalClick = (callback: () => void) => {
+    if (window.getSelection()?.toString()) return;
+    callback();
+  };
 
   const getHoliday = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -160,7 +175,7 @@ export function PersonalMonthlyView({
           const { type, data, startIdx, endIdx } = item;
           const span = endIdx - startIdx + 1;
           
-          const style = {
+          const style: any = {
             top: `${(startIdx / totalPeriods) * 100}%`,
             height: `${(span / totalPeriods) * 100}%`,
             left: `${(level / maxLevelInGroup) * 100}%`,
@@ -173,32 +188,42 @@ export function PersonalMonthlyView({
 
           if (type === 'event') {
             const event = data as ScheduleEvent;
+            const theme = getThemeColor('EVENT', event.name) || getThemeColor('EVENT', 'default');
+            const bgColor = event.color || theme?.background || '#fef3c7';
+            const textColor = theme?.foreground || 'inherit';
+
             return (
               <div 
                 className="personal-event-mini-card" 
-                style={{ ...style, backgroundColor: event.color || '#fef3c7' }}
-                onClick={() => onEventClick?.(event)}
+                style={{ ...style, backgroundColor: bgColor, color: textColor }}
+                onClick={() => handleIntentionalClick(() => onEventClick?.(event))}
                 key={`event-${event.id}`}
                 title={`${event.name}${event.location ? ` (${event.location})` : ''}`}
               >
-                <span className="period-tag">{periodLabel}</span>
+                <span className="period-tag" style={{ backgroundColor: 'rgba(0,0,0,0.1)', color: 'inherit' }}>{periodLabel}</span>
                 <span className="item-name">{event.name}</span>
               </div>
             );
           } else {
             const lesson = data as Lesson;
+            
+            const hasTeacher = !!(lesson.teacherId || lesson.externalTeacher);
+            const theme = getThemeColor('LESSON', hasTeacher ? 'with-teacher' : 'no-teacher');
+            const bgColor = theme?.background || (hasTeacher ? '#646cff' : '#e884fa');
+            const textColor = theme?.foreground || '#ffffff';
+
             const room = resources.find(r => r.id === lesson.roomId);
             const roomLabel = room?.name || lesson.location || '';
             return (
               <div 
                 className="personal-lesson-mini-card"
-                style={style}
-                onClick={() => onLessonClick?.(lesson)}
+                style={{ ...style, backgroundColor: bgColor, color: textColor }}
+                onClick={() => handleIntentionalClick(() => onLessonClick?.(lesson))}
                 key={`lesson-${lesson.id}`}
                 title={`${lesson.subject} (${roomLabel})`}
               >
                 <div className="card-content-wrapper">
-                  <span className="period-tag">{periodLabel}</span>
+                  <span className="period-tag" style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'inherit' }}>{periodLabel}</span>
                   <span className="mini-subject">{lesson.subject}</span>
                 </div>
               </div>
@@ -235,15 +260,25 @@ export function PersonalMonthlyView({
           if (isWknd) dayClasses += " is-weekend";
           if (holiday) dayClasses += " is-holiday";
 
+          const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+          const cellStyle: any = {};
+          if (holiday || isWknd) {
+            if (hTheme) {
+              cellStyle.backgroundColor = hTheme.background;
+              cellStyle.color = hTheme.foreground;
+            }
+          }
+
           return (
             <div 
               className={dayClasses} 
               key={day.getTime()}
-              onDblClick={() => onEmptyCellClick?.(format(day, 'yyyy-MM-dd'))}
+              style={cellStyle}
+              onDblClick={() => handleIntentionalClick(() => onEmptyCellClick?.(format(day, 'yyyy-MM-dd')))}
             >
               <div className="day-header">
                 <span className="day-number">{format(day, 'd')}</span>
-                {holiday && <span className="holiday-name">{holiday.name}</span>}
+                {holiday && <span className="holiday-name" style={{ color: 'inherit' }}>{holiday.name}</span>}
               </div>
               <div className="day-content">
                 {renderDayItems(day, dayLessons, dayEvents)}

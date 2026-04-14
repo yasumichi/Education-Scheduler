@@ -15,9 +15,10 @@ import { UserManager } from './components/UserManager';
 import { ProfileManager, ProfileMode } from './components/ProfileManager';
 import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
+import { ColorThemeManager } from './components/ColorThemeManager';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
-import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting } from './types';
+import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme } from './types';
 import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
 
@@ -34,6 +35,7 @@ export function App() {
   const holidays = useSignal<Holiday[]>([]);
   const periods = useSignal<TimePeriod[]>([]);
   const systemSettings = useSignal<SystemSetting | null>(null);
+  const colorThemes = useSignal<ColorTheme[]>([]);
   const isHolidayMode = useSignal<boolean>(false);
   const showPeriodManager = useSignal<boolean>(false);
   const showLabelManager = useSignal<boolean>(false);
@@ -48,6 +50,7 @@ export function App() {
   const profileMode = useSignal<ProfileMode>('profile');
   const showSystemSettingManager = useSignal<boolean>(false);
   const showDeliveryMethodManager = useSignal<boolean>(false);
+  const showColorThemeManager = useSignal<boolean>(false);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const editingCourseId = useSignal<string | null>(null);
@@ -105,7 +108,8 @@ export function App() {
         fetch(`${BACKEND_URL}/holidays`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/periods`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/labels`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/settings`, { credentials: 'include' })
+        fetch(`${BACKEND_URL}/settings`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/color-themes`, { credentials: 'include' })
       ]);
 
       const failed = responses.find(r => !r.ok);
@@ -119,17 +123,18 @@ export function App() {
         return;
       }
 
-      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels, resSettings] = responses;
+      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels, resSettings, resThemes] = responses;
 
       // すべてのJSONパースを並列で行う
-      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels, dataSettings] = await Promise.all([
+      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels, dataSettings, dataThemes] = await Promise.all([
         resResources.json(),
         resLessons.json(),
         resEvents.json(),
         resHolidays.json(),
         resPeriods.json(),
         resLabels.json(),
-        resSettings.json()
+        resSettings.json(),
+        resThemes.json()
       ]);
 
       resources.value = dataResources;
@@ -139,6 +144,7 @@ export function App() {
       periods.value = dataPeriods;
       resourceLabels.value = dataLabels || resourceLabels.value;
       systemSettings.value = dataSettings;
+      colorThemes.value = dataThemes;
 
       console.log('Successfully fetched all data from backend');
     } catch (err) {
@@ -272,6 +278,7 @@ export function App() {
       holidays: holidays.value,
       labels: resourceLabels.value,
       systemSettings: systemSettings.value,
+      colorThemes: colorThemes.value,
       t
     });
   };
@@ -288,6 +295,7 @@ export function App() {
       holidays: holidays.value,
       labels: resourceLabels.value,
       systemSettings: systemSettings.value,
+      colorThemes: colorThemes.value,
       t
     });
   };
@@ -391,6 +399,15 @@ export function App() {
                         }}
                       >
                         {t('Manage {{resource}}', { resource: resourceLabels.value.deliveryMethod })}
+                      </button>
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
+                          showColorThemeManager.value = true;
+                          showSettingsDropdown.value = false;
+                        }}
+                      >
+                        {t('Manage Color Themes')}
                       </button>
                       <button 
                         className="dropdown-item" 
@@ -599,6 +616,7 @@ export function App() {
             holidays={holidays.value}
             labels={resourceLabels.value}
             systemSettings={systemSettings.value}
+            colorThemes={colorThemes.value}
             onLessonClick={(lesson) => {
               editingLesson.value = lesson;
               showLessonManager.value = true;
@@ -644,6 +662,7 @@ export function App() {
             holidays={holidays.value}
             labels={resourceLabels.value}
             systemSettings={systemSettings.value}
+            colorThemes={colorThemes.value}
             onEventClick={(event) => {
               editingEvent.value = event;
               showEventManager.value = true;
@@ -805,6 +824,15 @@ export function App() {
           backendUrl={BACKEND_URL} 
           onClose={() => showDeliveryMethodManager.value = false}
           onUpdate={fetchData}
+        />
+      )}
+
+      {showColorThemeManager.value && (
+        <ColorThemeManager
+          backendUrl={BACKEND_URL}
+          onClose={() => showColorThemeManager.value = false}
+          onUpdate={fetchData}
+          themes={colorThemes.value}
         />
       )}
     </div>

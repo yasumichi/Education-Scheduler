@@ -1,4 +1,4 @@
-import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday, ResourceLabels, ScheduleEvent, SystemSetting } from '../types';
+import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday, ResourceLabels, ScheduleEvent, SystemSetting, ColorTheme, ColorCategory } from '../types';
 import { format, addDays, addMonths, isSameDay, parseISO, getYear, differenceInDays, isWithinInterval, isBefore, isAfter, startOfDay, differenceInCalendarDays, eachDayOfInterval } from 'date-fns';
 import './Timetable.css';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,7 @@ interface Props {
   holidays: Holiday[];
   labels: ResourceLabels;
   systemSettings: SystemSetting | null;
+  colorThemes: ColorTheme[];
   onEventClick?: (event: ScheduleEvent) => void;
   onEmptyEventClick?: (date: string, periodId: string) => void;
   onLessonClick?: (lesson: Lesson) => void;
@@ -26,7 +27,7 @@ interface Props {
 
 export function Timetable({ 
   periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings,
-  onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onViewWeekly, onEmptyResourceCellClick 
+  colorThemes, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onViewWeekly, onEmptyResourceCellClick 
 }: Props) {
   const { t } = useTranslation();
   const locale = navigator.language;
@@ -48,6 +49,14 @@ export function Timetable({
   const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
   const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
   const holidayTheme = systemSettings?.holidayTheme || 'default';
+
+  // カラーテーマ取得用ヘルパー
+  const getThemeColor = (category: ColorCategory, keyOrName: string) => {
+    const theme = colorThemes.find(t => t.category === category && (t.key === keyOrName || t.name === keyOrName));
+    if (theme) return theme;
+    // Fallback to default
+    return colorThemes.find(t => t.category === category && t.key === 'default');
+  };
 
   const getHoliday = (date: Date) => {
     const target = startOfDay(date);
@@ -154,6 +163,12 @@ export function Timetable({
 
   const stickyLeft = { position: 'sticky', left: 0 } as JSX.CSSProperties;
 
+  // テキスト選択中のクリックを無視するためのチェック
+  const handleIntentionalClick = (callback: () => void) => {
+    if (window.getSelection()?.toString()) return;
+    callback();
+  };
+
   const filterButton = (
     <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: isCourseTimeline ? "1 / span 3" : "1 / span 2", zIndex: 100 }}>
       <button 
@@ -215,14 +230,24 @@ export function Timetable({
             let baseClass = "date-header";
             if (isWknd) baseClass += " is-weekend";
             if (holiday) baseClass += " is-holiday";
+
+            const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+            const style: any = {};
+            if (holiday || isWknd) {
+              if (hTheme) {
+                style.backgroundColor = hTheme.background;
+                style.color = hTheme.foreground;
+              }
+            }
+
             return (
               <Fragment key={`header-day-${i}`}>
                 <div className={`${baseClass} day-row`} 
-                     style={{ gridColumn: i + 2, gridRow: 2 }}>
+                     style={{ ...style, gridColumn: i + 2, gridRow: 2 }}>
                   {dayFormatter.format(date)}
                 </div>
                 <div className={`${baseClass} weekday-row`} 
-                     style={{ gridColumn: i + 2, gridRow: 3 }}>
+                     style={{ ...style, gridColumn: i + 2, gridRow: 3 }}>
                   {weekdayFormatter.format(date)}
                 </div>
               </Fragment>
@@ -242,10 +267,19 @@ export function Timetable({
       if (holiday) className += ' is-holiday';
       if (isFirstOfMonth) className += ' month-start';
 
+      const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+      const style: any = {};
+      if (holiday || isWknd) {
+        if (hTheme) {
+          style.backgroundColor = hTheme.background;
+          style.color = hTheme.foreground;
+        }
+      }
+
       return (
         <div key={`date-${date.toISOString()}`} 
              className={className} 
-             style={{ gridColumn: `${dIdx * effectivePeriods.length + 2} / span ${effectivePeriods.length}`, gridRow: 1 }}
+             style={{ ...style, gridColumn: `${dIdx * effectivePeriods.length + 2} / span ${effectivePeriods.length}`, gridRow: 1 }}
              title={holiday ? holiday.name : undefined}
         >
           {dateFormatter.format(date)}
@@ -261,10 +295,20 @@ export function Timetable({
       let className = 'period-header';
       if (isWknd) className += ' is-weekend';
       if (holiday) className += ' is-holiday';
+
+      const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+      const style: any = {};
+      if (holiday || isWknd) {
+        if (hTheme) {
+          style.backgroundColor = hTheme.background;
+          style.color = hTheme.foreground;
+        }
+      }
+
       return (
         <div key={`period-${date.toISOString()}-${p.id}`} 
              className={className} 
-             style={{ gridColumn: dIdx * periods.length + pIdx + 2, gridRow: 2 }}>
+             style={{ ...style, gridColumn: dIdx * periods.length + pIdx + 2, gridRow: 2 }}>
           {p.name}
         </div>
       );
@@ -286,11 +330,19 @@ export function Timetable({
 
     const dateStr = format(date, 'yyyy-MM-dd');
 
+    const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+    const style: any = {};
+    if (holiday || isWknd) {
+      if (hTheme) {
+        style.backgroundColor = hTheme.background;
+      }
+    }
+
     return effectivePeriods.map((p, pIdx) => (
       <div key={`event-cell-${dIdx}-${pIdx}`} 
            className={className} 
-           style={{ gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: eventRowIdx, top: `${headerHeight}px` }}
-           onDblClick={() => onEmptyEventClick?.(dateStr, p.id)} />
+           style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: eventRowIdx, top: `${headerHeight}px` }}
+           onDblClick={() => handleIntentionalClick(() => onEmptyEventClick?.(dateStr, p.id))} />
     ));
   });
 
@@ -361,10 +413,23 @@ export function Timetable({
     const unitHeight = (80 - 8) / layout.maxLevelInGroup;
     const itemHeight = unitHeight - 8;
     const top = headerHeight + 4 + (layout.level * unitHeight);
+
+    const theme = getThemeColor('HOLIDAY', holidayTheme);
+    const style: any = {
+      gridColumn: `${layout.start} / ${layout.end + 1}`,
+      gridRow: eventRowIdx,
+      top: `${top}px`,
+      height: `${itemHeight}px`
+    };
+    if (theme) {
+      style.backgroundColor = theme.background;
+      style.color = theme.foreground;
+    }
+
     return (
       <div key={layout.id} className="event-card holiday-card"
            title={h.name}
-           style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: eventRowIdx, top: `${top}px`, height: `${itemHeight}px` }}>
+           style={style}>
         {h.name}
       </div>
     );
@@ -375,6 +440,11 @@ export function Timetable({
     const unitHeight = (80 - 8) / layout.maxLevelInGroup;
     const itemHeight = unitHeight - 8;
     const top = headerHeight + 4 + (layout.level * unitHeight);
+
+    // テーマカラーの取得
+    const theme = getThemeColor('EVENT', e.name) || getThemeColor('EVENT', 'default');
+    const bgColor = e.color || theme?.background || '#fef3c7';
+    const textColor = theme?.foreground || 'inherit';
 
     const startP = periods.find(p => p.id === e.startPeriodId)?.name || e.startPeriodId;
     const endP = periods.find(p => p.id === e.endPeriodId)?.name || e.endPeriodId;
@@ -390,8 +460,16 @@ export function Timetable({
     return (
       <div key={layout.id} className="event-card schedule-event-card"
            title={tooltip}
-           style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: eventRowIdx, backgroundColor: e.color, top: `${top}px`, height: `${itemHeight}px`, cursor: 'pointer' }}
-           onDblClick={() => onEventClick?.(e)}>
+           style={{ 
+             gridColumn: `${layout.start} / ${layout.end + 1}`, 
+             gridRow: eventRowIdx, 
+             backgroundColor: bgColor, 
+             color: textColor,
+             top: `${top}px`, 
+             height: `${itemHeight}px`, 
+             cursor: 'pointer' 
+           }}
+           onDblClick={() => handleIntentionalClick(() => onEventClick?.(e))}>
         {e.name}{e.location && <span className="event-location"> ({e.location})</span>}
       </div>
     );
@@ -461,7 +539,7 @@ export function Timetable({
         resourceRowItems.push(
           <div key={layout.id} className="course-timeline-card"
                title={tooltip}
-               onDblClick={() => onCourseClick?.(c)}
+               onDblClick={() => handleIntentionalClick(() => onCourseClick?.(c))}
                style={{ 
                  gridColumn: `${layout.start} / ${layout.end + 1}`, 
                  gridRow: resIdx + resourceBaseRowIdx, 
@@ -540,6 +618,10 @@ export function Timetable({
 
         if (item.type === 'event') {
           const e = item.data as ScheduleEvent;
+          const theme = getThemeColor('EVENT', e.name) || getThemeColor('EVENT', 'default');
+          const bgColor = e.color || theme?.background || '#fef3c7';
+          const textColor = theme?.foreground || 'inherit';
+
           const startP = periods.find(p => p.id === e.startPeriodId)?.name || e.startPeriodId;
           const endP = periods.find(p => p.id === e.endPeriodId)?.name || e.endPeriodId;
           const tooltip = `${e.name}${e.location ? ` (${e.location})` : ''}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}`;
@@ -547,13 +629,29 @@ export function Timetable({
           resourceRowItems.push(
             <div key={layout.id} className="event-card schedule-event-card resource-event-card"
                  title={tooltip}
-                 style={{ gridColumn: `${layout.start} / ${layout.end + 1}`, gridRow: resIdx + resourceBaseRowIdx, backgroundColor: e.color, top: `${top}px`, height: `${itemHeight}px`, cursor: 'pointer', position: 'relative' }}
-                 onDblClick={() => onEventClick?.(e)}>
+                 style={{ 
+                   gridColumn: `${layout.start} / ${layout.end + 1}`, 
+                   gridRow: resIdx + resourceBaseRowIdx, 
+                   backgroundColor: bgColor, 
+                   color: textColor,
+                   top: `${top}px`, 
+                   height: `${itemHeight}px`, 
+                   cursor: 'pointer', 
+                   position: 'relative' 
+                 }}
+                 onDblClick={() => handleIntentionalClick(() => onEventClick?.(e))}>
               {e.name}{e.location && <span className="event-location"> ({e.location})</span>}
             </div>
           );
         } else {
           const l = item.data as Lesson;
+          
+          // テーマカラーの取得
+          const hasTeacher = !!(l.teacherId || l.externalTeacher);
+          const theme = getThemeColor('LESSON', hasTeacher ? 'with-teacher' : 'no-teacher');
+          const bgColor = theme?.background || (hasTeacher ? '#646cff' : '#e884fa');
+          const textColor = theme?.foreground || '#ffffff';
+
           const infoItems = [];
           const roomValue = l.roomId ? getResourceName(l.roomId) : (l.location || t('No room'));
           if (viewMode !== 'room') infoItems.push({ label: labels.room, value: roomValue });
@@ -591,13 +689,14 @@ export function Timetable({
                 gridColumn: `${layout.start} / ${layout.end + 1}`,
                 gridRow: resIdx + resourceBaseRowIdx,
                 cursor: 'pointer',
-                backgroundColor: (!l.teacherId && !l.externalTeacher) ? '#e884fa' : undefined,
+                backgroundColor: bgColor,
+                color: textColor,
                 top: `${top}px`,
                 height: `${itemHeight}px`,
                 position: 'relative'
               }}
               title={tooltipText}
-              onDblClick={() => onLessonClick?.(l)}
+              onDblClick={() => handleIntentionalClick(() => onLessonClick?.(l))}
             >
               <div className="lesson-subject"><div className="lesson-delivery-methods">{translatedSubject}
               {l.deliveryMethods && l.deliveryMethods.length > 0 && (
@@ -610,7 +709,7 @@ export function Timetable({
               {layout.maxLevelInGroup === 1 && (
                 <div className="lesson-details">
                   {infoItems.map((item, idx) => (
-                    <div key={idx} className="lesson-info">
+                    <div key={idx} className="lesson-info" style={{ color: textColor }}>
                       {item.label}: {item.value}
                     </div>
                   ))}
@@ -626,7 +725,7 @@ export function Timetable({
   const resourceLabels = filteredResources.map((r, idx) => (
     <div key={`label-${r.id}`} className="grid-label" style={{ ...stickyLeft, gridColumn: 1, gridRow: idx + resourceBaseRowIdx, height: isCourseTimeline ? '120px' : '80px' }}>
       <span className="label-name" 
-            onClick={() => onCourseClick?.(r)} 
+            onClick={() => handleIntentionalClick(() => onCourseClick?.(r))} 
             style={{ cursor: r.type === 'course' ? 'pointer' : 'default' }}
             title={t(r.name)}>
         {t(r.name)}
@@ -671,11 +770,20 @@ export function Timetable({
             let cellClass = 'grid-cell';
             if (isWknd) cellClass += ' is-weekend';
             if (holiday) cellClass += ' is-holiday';
+
+            const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+            const style: any = {};
+            if (holiday || isWknd) {
+              if (hTheme) {
+                style.backgroundColor = hTheme.background;
+              }
+            }
+
             return effectivePeriods.map((p, pIdx) => (
               <div key={`cell-${rIdx}-${dIdx}-${pIdx}`} 
                    className={cellClass} 
-                   style={{ gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: rIdx + resourceBaseRowIdx }}
-                   onDblClick={() => !isCourseTimeline && onEmptyResourceCellClick?.(res.id, dateStr, p.id)} />
+                   style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: rIdx + resourceBaseRowIdx }}
+                   onDblClick={() => !isCourseTimeline && handleIntentionalClick(() => onEmptyResourceCellClick?.(res.id, dateStr, p.id))} />
             ));
           })
         )}

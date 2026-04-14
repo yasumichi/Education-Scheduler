@@ -5,7 +5,7 @@ import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { TimePeriod, Resource, Lesson, ScheduleEvent, ResourceLabels, SystemSetting, ViewType, ResourceType, Holiday } from '../types';
+import { TimePeriod, Resource, Lesson, ScheduleEvent, ResourceLabels, SystemSetting, ViewType, ResourceType, Holiday, ColorTheme, ColorCategory } from '../types';
 
 interface ExportParams {
   periods: TimePeriod[];
@@ -18,6 +18,7 @@ interface ExportParams {
   holidays: Holiday[];
   labels: ResourceLabels;
   systemSettings: SystemSetting | null;
+  colorThemes: ColorTheme[];
   t: (key: string, options?: any) => string;
 }
 
@@ -34,8 +35,15 @@ const hexToARGB = (hex?: string) => {
   return `FF${cleanHex}`.toUpperCase();
 };
 
+// Helper to get theme color
+const getThemeColor = (themes: ColorTheme[], category: ColorCategory, keyOrName: string) => {
+  const theme = themes.find(t => t.category === category && (t.key === keyOrName || t.name === keyOrName));
+  if (theme) return theme;
+  return themes.find(t => t.category === category && t.key === 'default');
+};
+
 export async function exportTimetableToExcel({
-  periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings, t
+  periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings, colorThemes, t
 }: ExportParams) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Timetable');
@@ -157,16 +165,13 @@ export async function exportTimetableToExcel({
         c.font = { size: 9 };
         const holiday = getHoliday(date);
         const isWknd = isWeekend(date);
-        let bgColor = 'FFFFFFFF';
-        if (holidayTheme === 'vivid') {
-          if (holiday) bgColor = 'FFFEEFC3';
-          else if (isWknd) bgColor = 'FFE8F0FE';
-        } else {
-          if (holiday || isWknd) bgColor = 'FFFFE4E1';
+        
+        const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+        if ((holiday || isWknd) && hTheme) {
+          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
+          c.font = { ...c.font, color: { argb: hexToARGB(hTheme.foreground) } };
         }
-        if (bgColor !== 'FFFFFFFF') {
-          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
-        }
+        
         c.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
       });
     });
@@ -184,17 +189,12 @@ export async function exportTimetableToExcel({
       const holiday = getHoliday(date);
       const isWknd = isWeekend(date);
 
-      let bgColor = 'FFFFFFFF';
-      if (holidayTheme === 'vivid') {
-        if (holiday) bgColor = 'FFFEEFC3';
-        else if (isWknd) bgColor = 'FFE8F0FE';
-      } else {
-        if (holiday || isWknd) bgColor = 'FFFFE4E1';
+      const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+      if ((holiday || isWknd) && hTheme) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
+        cell.font = { ...cell.font, color: { argb: hexToARGB(hTheme.foreground) } };
       }
 
-      if (bgColor !== 'FFFFFFFF') {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
-      }
       if (periods.length > 1) {
         worksheet.mergeCells(1, startCol, 1, endCol);
       }
@@ -202,11 +202,21 @@ export async function exportTimetableToExcel({
 
     const periodRow = worksheet.getRow(2);
     periodRow.height = 20;
-    displayDates.forEach((_, dIdx) => {
+    displayDates.forEach((date, dIdx) => {
+      const holiday = getHoliday(date);
+      const isWknd = isWeekend(date);
+      const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+
       periods.forEach((p, pIdx) => {
         const cell = worksheet.getCell(2, dIdx * periods.length + pIdx + 2);
         cell.value = p.name;
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        
+        if ((holiday || isWknd) && hTheme) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
+          cell.font = { color: { argb: hexToARGB(hTheme.foreground) } };
+        }
+        
         cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
       });
     });
@@ -293,13 +303,13 @@ export async function exportTimetableToExcel({
     displayDates.forEach((date, dIdx) => {
       const isWknd = isWeekend(date);
       const holiday = getHoliday(date);
+      const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+      
       let bgColor = 'FFFFFFFF';
-      if (holidayTheme === 'vivid') {
-        if (holiday) bgColor = 'FFFFF7E0';
-        else if (isWknd) bgColor = 'FFF8FBFF';
-      } else {
-        if (holiday || isWknd) bgColor = 'FFFFF0F0';
+      if ((holiday || isWknd) && hTheme) {
+        bgColor = hexToARGB(hTheme.background);
       }
+      
       effectivePeriods.forEach((_, pIdx) => {
         const cell = worksheet.getCell(currentRow + l, dIdx * effectivePeriods.length + pIdx + 2);
         cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
@@ -320,12 +330,22 @@ export async function exportTimetableToExcel({
     if (item.type === 'holiday') {
       const h = item.data;
       cell.value = h.name;
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8B0000' } };
-      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+      const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+      if (hTheme) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
+        cell.font = { color: { argb: hexToARGB(hTheme.foreground) }, bold: true };
+      } else {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8B0000' } };
+        cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+      }
     } else {
       const e = item.data as ScheduleEvent;
       cell.value = e.name + (e.location ? ` (${e.location})` : '');
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(e.color || '#fef3c7') } };
+      const theme = getThemeColor(colorThemes, 'EVENT', e.name);
+      const bgColor = e.color || theme?.background || '#fef3c7';
+      const textColor = theme?.foreground || '#000000';
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(bgColor) } };
+      cell.font = { color: { argb: hexToARGB(textColor) } };
     }
     cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     cell.border = { bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' }, top: { style: 'medium' } };
@@ -410,12 +430,10 @@ export async function exportTimetableToExcel({
       displayDates.forEach((date, dIdx) => {
         const isWknd = isWeekend(date);
         const holiday = getHoliday(date);
+        const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
         let bgColor = 'FFFFFFFF';
-        if (holidayTheme === 'vivid') {
-          if (holiday) bgColor = 'FFFFF7E0';
-          else if (isWknd) bgColor = 'FFF8FBFF';
-        } else {
-          if (holiday || isWknd) bgColor = 'FFFFF0F0';
+        if ((holiday || isWknd) && hTheme) {
+          bgColor = hexToARGB(hTheme.background);
         }
         effectivePeriods.forEach((_, pIdx) => {
           const cell = worksheet.getCell(currentRow + l, dIdx * effectivePeriods.length + pIdx + 2);
@@ -452,13 +470,24 @@ export async function exportTimetableToExcel({
       } else if (item.type === 'event') {
         const e = item.data as ScheduleEvent;
         cell.value = e.name + (e.location ? ` (${e.location})` : '');
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(e.color || '#fef3c7') } };
+        const theme = getThemeColor(colorThemes, 'EVENT', e.name);
+        const bgColor = e.color || theme?.background || '#fef3c7';
+        const textColor = theme?.foreground || '#000000';
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(bgColor) } };
+        cell.font = { color: { argb: hexToARGB(textColor) } };
       } else {
         const l = item.data as Lesson;
         const mainTeacherName = l.teacherId ? (resources.find(r => r.id === l.teacherId)?.name || '') : (l.externalTeacher || '');
         const roomName = l.roomId ? (resources.find(r => r.id === l.roomId)?.name || '') : (l.location || '');
         cell.value = `${t(l.subject)}\n${mainTeacherName} / ${roomName}`;
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB((!l.teacherId && !l.externalTeacher) ? '#e884fa' : (l.deliveryMethods?.[0]?.color || '#646cff')) } };
+        
+        const hasTeacher = !!(l.teacherId || l.externalTeacher);
+        const theme = getThemeColor(colorThemes, 'LESSON', hasTeacher ? 'with-teacher' : 'no-teacher');
+        const bgColor = theme?.background || (hasTeacher ? '#646cff' : '#e884fa');
+        const textColor = theme?.foreground || '#ffffff';
+        
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(bgColor) } };
+        cell.font = { color: { argb: hexToARGB(textColor) } };
       }
 
       cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
@@ -486,11 +515,12 @@ interface PersonalExportParams {
   holidays: Holiday[];
   labels: ResourceLabels;
   systemSettings: SystemSetting | null;
+  colorThemes: ColorTheme[];
   t: (key: string, options?: any) => string;
 }
 
 export async function exportPersonalMonthlyToExcel({
-  userResourceId, periods, resources, lessons, events, baseDate, holidays, labels, systemSettings, t
+  userResourceId, periods, resources, lessons, events, baseDate, holidays, labels, systemSettings, colorThemes, t
 }: PersonalExportParams) {
   try {
     const workbook = new ExcelJS.Workbook();
@@ -626,16 +656,17 @@ export async function exportPersonalMonthlyToExcel({
         cell.font = { bold: true, size: 10 };
         cell.alignment = { horizontal: 'left', vertical: 'middle' };
 
+        const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
         let bgColor = 'FFFFFFFF';
-        if (holidayTheme === 'vivid') {
-          if (holiday) bgColor = 'FFFEEFC3';
-          else if (isWknd) bgColor = 'FFE8F0FE';
-        } else {
-          if (holiday || isWknd) bgColor = 'FFFFE4E1';
+        let textColor = 'FF000000';
+        if ((holiday || isWknd) && hTheme) {
+          bgColor = hexToARGB(hTheme.background);
+          textColor = hexToARGB(hTheme.foreground);
         }
-        if (!isCurrMonth) bgColor = 'FFF0F0F0';
+        if (!isCurrMonth && bgColor === 'FFFFFFFF') bgColor = 'FFF0F0F0';
 
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+        cell.font = { ...cell.font, color: { argb: textColor } };
         cell.border = { left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' }, bottom: { style: 'thin' } };
         if (colEnd > colStart) worksheet.mergeCells(baseRow, colStart, baseRow, colEnd);
 
@@ -670,15 +701,24 @@ export async function exportPersonalMonthlyToExcel({
           if (type === 'event') {
             const e = data as ScheduleEvent;
             cell.value = `[${periodLabel}] ${e.name}${e.location ? ` (${e.location})` : ''}`;
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(e.color || '#fef3c7') } };
+            const theme = getThemeColor(colorThemes, 'EVENT', e.name);
+            const bgColor = e.color || theme?.background || '#fef3c7';
+            const textColor = theme?.foreground || '#000000';
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(bgColor) } };
+            cell.font = { color: { argb: hexToARGB(textColor) } };
           } else {
             const l = data as Lesson;
             const room = resources.find(r => r.id === l.roomId);
             const roomLabel = room?.name || l.location || '';
             cell.value = `[${periodLabel}] ${l.subject}${roomLabel ? ` (${roomLabel})` : ''}`;
-            const color = (!l.teacherId && !l.externalTeacher) ? '#e884fa' : (l.deliveryMethods?.[0]?.color || '#646cff');
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(color) } };
-            cell.font = { color: { argb: 'FFFFFFFF' } };
+            
+            const hasTeacher = !!(l.teacherId || l.externalTeacher);
+            const theme = getThemeColor(colorThemes, 'LESSON', hasTeacher ? 'with-teacher' : 'no-teacher');
+            const bgColor = theme?.background || (hasTeacher ? '#646cff' : '#e884fa');
+            const textColor = theme?.foreground || '#ffffff';
+            
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(bgColor) } };
+            cell.font = { color: { argb: hexToARGB(textColor) } };
           }
 
           cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
@@ -891,4 +931,3 @@ export async function exportCourseWeeklyToExcel({
     console.error('Course Weekly Export Error:', err);
   }
 }
-
