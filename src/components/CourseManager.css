@@ -16,8 +16,8 @@
   color: #fff;
   padding: 20px;
   border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
+  width: 95%;
+  max-width: 1000px; /* Increased width */
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -82,242 +82,192 @@
   margin-bottom: 20px;
 }
 
-.course-selector {
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #444;
-}
-
-.course-selector select {
-  width: 100%;
-  padding: 8px;
-  background-color: #444;
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 4px;
-}
-
-.form-group {
+/* List View Styles */
+.header-actions {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
-}
-
-.form-row {
-  display: flex;
   gap: 15px;
 }
 
-.form-row .form-group {
-  flex: 1;
-}
-
-.form-group label {
-  font-size: 0.85rem;
-  color: #aaa;
-}
-
-.form-group input {
-  background-color: #333;
-  border: 1px solid #555;
-  color: #fff;
-  padding: 8px;
-  border-radius: 4px;
-}
-
-.subjects-section {
-  margin-top: 20px;
-}
-
-.subjects-section h3 {
-  font-size: 1rem;
-  margin-bottom: 10px;
-}
-
-.subject-row {
+.year-filter {
   display: flex;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
 }
 
-.subject-row input[type="text"] {
-  flex: 2;
-}
-
-.subject-row input[type="number"] {
-  flex: 1;
-}
-
-.subject-row input {
+.year-filter select {
+  padding: 6px 10px;
   background-color: #333;
-  border: 1px solid #555;
   color: #fff;
-  padding: 6px;
+  border: 1px solid #555;
   border-radius: 4px;
 }
 
-.remove-btn {
-  background: #522;
-  color: #f88;
-  border: 1px solid #744;
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 0 10px;
+.course-list table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
 }
 
-.subjects-actions {
+.course-list th {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 2px solid #444;
+  background-color: #2a2a2a;
+  position: sticky;
+  top: 0;
+}
+
+.course-list td {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  vertical-align: middle;
+}
+
+.draggable-row {
+  cursor: default;
+}
+
+.draggable-row:hover {
+  background-color: #2a2a2a;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: #666;
+  text-align: center;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.move-buttons {
   display: flex;
-  gap: 10px;
-  margin-top: 5px;
+  gap: 4px;
 }
 
-.add-btn {
-  background: #252;
-  color: #8f8;
-  border: 1px solid #474;
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-}
-
-.import-btn {
-  display: inline-block;
-  background: #335;
-  color: #88f;
-  border: 1px solid #447;
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-}
-
-.delete-button {
-  background-color: #522;
-  color: #f88;
-  border: 1px solid #744;
-  padding: 8px 16px;
-  border-radius: 4px;
+.move-btn {
+  padding: 2px 6px;
+  background: #333;
+  border: 1px solid #555;
+  color: #ccc;
+  border-radius: 3px;
   cursor: pointer;
 }
 
-.duplicate-button {
+.move-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn, .delete-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  border: 1px solid transparent;
+}
+
+.edit-btn {
   background-color: #234;
   color: #8af;
-  border: 1px solid #346;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
+  border-color: #346;
 }
 
-.save-button {
-  background-color: #646cff;
-  color: #fff;
-  border: none;
+.delete-btn {
+  background-color: #522;
+  color: #f88;
+  border-color: #744;
+}
+
+.hint-text {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 10px;
+}
+
+.list-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-order-button {
+  background-color: #252;
+  color: #8f8;
+  border: 1px solid #474;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
 }
 
-.sub-teacher-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  background-color: #333;
-  padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #555;
+/* Form Styles */
+.form-group {
+  display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px;
+}
+.form-row { display: flex; gap: 15px; }
+.form-row .form-group { flex: 1; }
+.form-group label { font-size: 0.85rem; color: #aaa; }
+.form-group input, .form-group select {
+  background-color: #333; border: 1px solid #555; color: #fff; padding: 8px; border-radius: 4px;
 }
 
-.sub-teacher-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: #444;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  border: 1px solid transparent;
-}
+.subjects-section { margin-top: 20px; }
+.subjects-section h3 { font-size: 1rem; margin-bottom: 10px; }
+.subject-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.subject-row input[type="text"] { flex: 2; }
+.subject-row input[type="number"] { flex: 1; }
+.subject-row input { background-color: #333; border: 1px solid #555; color: #fff; padding: 6px; border-radius: 4px; }
+.remove-btn { background: #522; color: #f88; border: 1px solid #744; border-radius: 4px; cursor: pointer; padding: 0 10px; }
+.subjects-actions { display: flex; gap: 10px; margin-top: 5px; }
+.add-btn { background: #252; color: #8f8; border: 1px solid #474; border-radius: 4px; cursor: pointer; padding: 6px 12px; font-size: 0.85rem; }
+.import-btn { display: inline-block; background: #335; color: #88f; border: 1px solid #447; border-radius: 4px; cursor: pointer; padding: 6px 12px; font-size: 0.85rem; }
 
-.sub-teacher-item:hover {
-  background: #555;
-}
+.delete-button { background-color: #522; color: #f88; border: 1px solid #744; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.duplicate-button { background-color: #234; color: #8af; border: 1px solid #346; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.save-button { background-color: #646cff; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.cancel-button { background-color: #444; color: #fff; border: 1px solid #555; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
 
-.sub-teacher-item.selected {
-  background: #646cff;
-  border-color: #888;
-}
+.sub-teacher-list { display: flex; flex-wrap: wrap; gap: 8px; background-color: #333; padding: 10px; border-radius: 4px; border: 1px solid #555; }
+.sub-teacher-item { display: flex; align-items: center; gap: 5px; background: #444; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; border: 1px solid transparent; }
+.sub-teacher-item:hover { background: #555; }
+.sub-teacher-item.selected { background: #646cff; border-color: #888; }
+.sub-teacher-item input { display: none; }
 
-.sub-teacher-item input {
-  display: none;
-}
-
-.duplicate-lessons-dialog {
-  background-color: #333;
-  padding: 15px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  border: 1px solid #646cff;
-}
-
-.duplicate-lessons-dialog h3 {
-  font-size: 0.95rem;
-  margin: 0 0 15px 0;
-  color: #646cff;
-}
-
-.duplicate-lessons-dialog .dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.confirm-button {
-  background-color: #646cff;
-  color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.duplicate-lessons-btn {
-  background-color: #335;
-  color: #88f;
-  border: 1px solid #447;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.weekly-schedule-btn {
-  background-color: #3b2b00;
-  color: #fbd38d;
-  border: 1px solid #744210;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
+.duplicate-lessons-dialog { background-color: #333; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #646cff; }
+.duplicate-lessons-dialog h3 { font-size: 0.95rem; margin: 0 0 15px 0; color: #646cff; }
+.duplicate-lessons-dialog .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+.confirm-button { background-color: #646cff; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+.duplicate-lessons-btn { background-color: #335; color: #88f; border: 1px solid #447; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
 
 @media (prefers-color-scheme: light) {
   .course-manager-box { background-color: #fff; color: #333; }
+  .course-list th { background-color: #f5f5f5; border-bottom-color: #ddd; }
+  .course-list td { border-bottom-color: #eee; }
+  .draggable-row:hover { background-color: #f9f9f9; }
+  .move-btn { background: #f0f0f0; border-color: #ccc; color: #666; }
+  .edit-btn { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+  .delete-btn { background-color: #fee2e2; color: #b91c1c; border-color: #fecaca; }
   .duplicate-lessons-dialog { background-color: #f0f0ff; border-color: #646cff; }
   .duplicate-lessons-btn { background-color: #f0f0ff; color: #646cff; border-color: #646cff; }
-  .weekly-schedule-btn { background-color: #fffaf0; color: #9c4221; border-color: #fbd38d; }
-  .course-selector select, .form-group input, .subject-row input { background-color: #f5f5f5; border-color: #ccc; color: #333; }
-  .course-selector { border-color: #eee; }
+  .form-group input, .form-group select, .subject-row input { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .remove-btn { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
   .status-message-banner { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; }
-  .add-btn { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+  .add-btn, .save-order-button { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
   .import-btn { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
   .duplicate-button { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
   .sub-teacher-list { background-color: #f5f5f5; border-color: #ccc; }
   .sub-teacher-item { background: #eee; color: #333; }
   .sub-teacher-item.selected { background: #646cff; color: #fff; }
+  .year-filter select { background-color: #f5f5f5; color: #333; border-color: #ccc; }
+  .cancel-button { background-color: #f5f5f5; color: #333; border-color: #ccc; }
 }

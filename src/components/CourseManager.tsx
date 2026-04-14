@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { Resource, ResourceLabels } from '../types';
 import './CourseManager.css';
@@ -14,15 +14,11 @@ interface Props {
 
 export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels, initialCourseId }: Props) {
   const { t } = useTranslation();
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(initialCourseId || null);
-
-  useEffect(() => {
-    if (initialCourseId) {
-      setSelectedCourseId(initialCourseId);
-    }
-  }, [initialCourseId]);
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(initialCourseId || null);
+  const [coursesList, setCoursesList] = useState<Resource[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [showDuplicateLessons, setShowDuplicateLessons] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [duplicationData, setDuplicationData] = useState({
     sourceCourseId: '',
     startDate: '',
@@ -52,13 +48,21 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     subjects: []
   });
 
-  const courses = resources.filter(r => r.type === 'course');
+  // ドラッグ&ドロップ用の参照
+  const dragItemRef = useRef<number | null>(null);
+  const dragOverItemRef = useRef<number | null>(null);
+
+  const courses = resources.filter(r => r.type === 'course').sort((a, b) => (a.order || 0) - (b.order || 0));
   const rooms = resources.filter(r => r.type === 'room');
   const teachers = resources.filter(r => r.type === 'teacher');
 
   useEffect(() => {
-    if (selectedCourseId) {
-      const course = courses.find(c => c.id === selectedCourseId);
+    setCoursesList(courses);
+  }, [resources]);
+
+  useEffect(() => {
+    if (editingCourseId && editingCourseId !== 'new') {
+      const course = courses.find(c => c.id === editingCourseId);
       if (course) {
         setFormData({
           name: course.name,
@@ -73,7 +77,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           subjects: course.subjects?.map(s => ({ name: s.name, totalPeriods: s.totalPeriods })) || []
         });
       }
-    } else {
+    } else if (editingCourseId === 'new') {
       setFormData({
         name: '',
         order: (courses.length + 1),
@@ -87,7 +91,28 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         subjects: []
       });
     }
-  }, [selectedCourseId]);
+  }, [editingCourseId, resources]);
+
+  // 年の選択肢を生成 (全講座の期間から抽出)
+  const availableYears = Array.from(new Set(courses.flatMap(c => {
+    const years: number[] = [];
+    if (c.startDate) years.push(new Date(c.startDate).getFullYear());
+    if (c.endDate) years.push(new Date(c.endDate).getFullYear());
+    return years;
+  }))).sort((a, b) => b - a);
+
+  // 選択肢がない場合は現在の年を追加
+  if (availableYears.length === 0) {
+    availableYears.push(new Date().getFullYear());
+  }
+
+  // 表示する講座のフィルタリング (選択された年に重なるもの)
+  const filteredCourses = coursesList.filter(c => {
+    if (!c.startDate || !c.endDate) return true; // 期間未設定は表示
+    const startYear = new Date(c.startDate).getFullYear();
+    const endYear = new Date(c.endDate).getFullYear();
+    return selectedYear >= startYear && selectedYear <= endYear;
+  });
 
   const handleAddSubject = () => {
     setFormData({
@@ -125,7 +150,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
       let text = event.target?.result as string;
       if (!text) return;
 
-      // Remove BOM if present
       if (text.charCodeAt(0) === 0xFEFF) {
         text = text.substring(1);
       }
@@ -138,7 +162,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           const trimmedLine = line.trim();
           if (!trimmedLine) return;
 
-          // Simple CSV split that handles quotes
           const parts = trimmedLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => {
             let val = s.trim();
             if (val.startsWith('"') && val.endsWith('"')) {
@@ -152,7 +175,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           const [name, totalPeriodsStr] = parts;
           const totalPeriods = parseInt(totalPeriodsStr);
           
-          // Skip header if it's the first line and totalPeriods is not a number
           if (index === 0 && isNaN(totalPeriods)) return;
 
           if (name && !isNaN(totalPeriods)) {
@@ -169,11 +191,15 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
       }
     };
     reader.readAsText(file);
-    // Reset input
     e.currentTarget.value = '';
   };
 
   const handleSave = async () => {
+    if (!formData.name) {
+      alert(t('Please enter a name'));
+      return;
+    }
+
     try {
       const res = await fetch(`${backendUrl}/courses`, {
         method: 'POST',
@@ -182,13 +208,13 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         },
         credentials: 'include',
         body: JSON.stringify({
-          id: selectedCourseId,
+          id: editingCourseId === 'new' ? null : editingCourseId,
           ...formData
         })
       });
       if (res.ok) {
-        onUpdate();
-        onClose();
+        await onUpdate();
+        setEditingCourseId(null);
       } else {
         alert(t('Failed to save course'));
       }
@@ -197,18 +223,17 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
   };
 
-  const handleDelete = async () => {
-    if (!selectedCourseId) return;
-    if (!confirm(t('Are you sure you want to delete this course?'))) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm(t('Are you sure you want to delete this {{resource}}?', { resource: labels.course }))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/courses/${selectedCourseId}`, {
+      const res = await fetch(`${backendUrl}/courses/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
       if (res.ok) {
-        onUpdate();
-        onClose();
+        await onUpdate();
+        if (editingCourseId === id) setEditingCourseId(null);
       } else {
         alert(t('Failed to delete course'));
       }
@@ -218,21 +243,17 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   };
 
   const handleDuplicate = async () => {
-    if (!selectedCourseId) return;
+    if (!editingCourseId || editingCourseId === 'new') return;
     try {
-      const res = await fetch(`${backendUrl}/courses/${selectedCourseId}/duplicate`, {
+      const res = await fetch(`${backendUrl}/courses/${editingCourseId}/duplicate`, {
         method: 'POST',
         credentials: 'include'
       });
       if (res.ok) {
         const data = await res.json();
-        // データを再取得
         await onUpdate();
-        // 新しい講座を選択状態にする
-        setSelectedCourseId(data.id);
-        // メッセージを表示
+        setEditingCourseId(data.id);
         setStatusMessage(t('Course duplicated successfully'));
-        // 数秒後にメッセージを消す
         setTimeout(() => setStatusMessage(null), 3000);
       } else {
         alert(t('Failed to duplicate {{resource}}', { resource: labels.course }));
@@ -243,13 +264,12 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   };
 
   const handleDuplicateLessons = async () => {
-    if (!selectedCourseId || !duplicationData.sourceCourseId || !duplicationData.startDate || !duplicationData.endDate) {
+    if (!editingCourseId || !duplicationData.sourceCourseId || !duplicationData.startDate || !duplicationData.endDate) {
       alert(t('Please select source course and date range'));
       return;
     }
 
-    // バリデーション: 複製先の講座の範囲内か
-    const destinationCourse = courses.find(c => c.id === selectedCourseId);
+    const destinationCourse = courses.find(c => c.id === editingCourseId);
     if (destinationCourse) {
       if (destinationCourse.startDate && duplicationData.startDate < destinationCourse.startDate) {
         alert(`${t('Start date cannot be before')} ${destinationCourse.startDate}`);
@@ -262,7 +282,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
 
     try {
-      const res = await fetch(`${backendUrl}/courses/${selectedCourseId}/duplicate-lessons`, {
+      const res = await fetch(`${backendUrl}/courses/${editingCourseId}/duplicate-lessons`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -287,6 +307,58 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
   };
 
+  // 順序変更ロジック
+  const moveItem = (index: number, direction: 'up' | 'down') => {
+    const newCourses = [...coursesList];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newCourses.length) return;
+
+    const [movedItem] = newCourses.splice(index, 1);
+    newCourses.splice(targetIndex, 0, movedItem);
+    setCoursesList(newCourses);
+  };
+
+  const handleDragStart = (index: number) => {
+    dragItemRef.current = index;
+  };
+
+  const handleDragEnter = (index: number) => {
+    dragOverItemRef.current = index;
+  };
+
+  const handleDragEnd = () => {
+    if (dragItemRef.current === null || dragOverItemRef.current === null) return;
+    const newCourses = [...coursesList];
+    const [movedItem] = newCourses.splice(dragItemRef.current, 1);
+    newCourses.splice(dragOverItemRef.current, 0, movedItem);
+    dragItemRef.current = null;
+    dragOverItemRef.current = null;
+    setCoursesList(newCourses);
+  };
+
+  const handleSaveOrder = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/courses/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          orders: coursesList.map((c, idx) => ({ id: c.id, order: idx + 1 }))
+        })
+      });
+      if (res.ok) {
+        await onUpdate();
+        alert(t('Settings saved successfully'));
+      } else {
+        alert(t('Failed to save settings'));
+      }
+    } catch (err) {
+      console.error('Error saving course order:', err);
+    }
+  };
+
+  const getTeacherName = (id: string) => teachers.find(t => t.id === id)?.name || id;
+
   return (
     <div className="course-manager-overlay">
       <div className="course-manager-box">
@@ -302,206 +374,268 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         )}
 
         <div className="course-manager-content">
-          <div className="course-selector">
-            <label>{t('Select {{resource}} to Edit', { resource: labels.course })}</label>
-            <select 
-              value={selectedCourseId || ''} 
-              onChange={(e) => setSelectedCourseId(e.currentTarget.value || null)}
-            >
-              <option value="">{t('Add New {{resource}}', { resource: labels.course })}</option>
-              {courses.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+          {!editingCourseId ? (
+            <>
+              <div className="header-actions">
+                <button className="add-button" onClick={() => setEditingCourseId('new')}>
+                  {t('Add New {{resource}}', { resource: labels.course })}
+                </button>
+                <div className="year-filter">
+                  <label>{t('Year')}:</label>
+                  <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.currentTarget.value))}>
+                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="course-list">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '30px' }}></th>
+                      <th style={{ width: '70px' }}>{t('Move')}</th>
+                      <th>{t('Name')}</th>
+                      <th>{t('Period')}</th>
+                      <th>{labels.mainTeacher}</th>
+                      <th>{labels.subTeacher}</th>
+                      <th style={{ width: '120px' }}>{t('Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCourses.map((c, idx) => {
+                      const listIdx = coursesList.findIndex(item => item.id === c.id);
+                      return (
+                        <tr key={c.id}
+                            draggable
+                            onDragStart={() => handleDragStart(listIdx)}
+                            onDragEnter={() => handleDragEnter(listIdx)}
+                            onDragEnd={handleDragEnd}
+                            onDragOver={(e) => e.preventDefault()}
+                            className="draggable-row"
+                        >
+                          <td className="drag-handle">⋮⋮</td>
+                          <td>
+                            <div className="move-buttons">
+                              <button className="move-btn" onClick={() => moveItem(listIdx, 'up')} disabled={listIdx === 0}>↑</button>
+                              <button className="move-btn" onClick={() => moveItem(listIdx, 'down')} disabled={listIdx === coursesList.length - 1}>↓</button>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 'bold' }}>{c.name}</td>
+                          <td>{c.startDate && c.endDate ? `${c.startDate} ~ ${c.endDate}` : '-'}</td>
+                          <td>{c.chiefTeacherId ? getTeacherName(c.chiefTeacherId) : '-'}</td>
+                          <td>
+                            {(c.assistantTeacherIds || (c.assistantTeachers || []).map(t => t.id))
+                              .map(tid => getTeacherName(tid)).join(', ') || '-'}
+                          </td>
+                          <td>
+                            <div className="action-buttons">
+                              <button className="edit-btn" onClick={() => setEditingCourseId(c.id)}>{t('Edit')}</button>
+                              <button className="delete-btn" onClick={() => handleDelete(c.id)}>{t('Delete')}</button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>
+              <div className="list-footer">
+                <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
+              </div>
+            </>
+          ) : (
+            <div className="course-form">
+              <h3>{editingCourseId === 'new' ? t('Add New {{resource}}', { resource: labels.course }) : t('Edit')}</h3>
+              
+              {showDuplicateLessons && (
+                <div className="duplicate-lessons-dialog">
+                  <h3>{t('Duplicate Lessons from Another Course')}</h3>
+                  <div className="form-group">
+                    <label>{t('Source Course')}</label>
+                    <select 
+                      value={duplicationData.sourceCourseId}
+                      onChange={(e) => setDuplicationData({ ...duplicationData, sourceCourseId: e.currentTarget.value })}
+                    >
+                      <option value="">{t('Select Course')}</option>
+                      {courses.filter(c => c.id !== editingCourseId).map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>{t('Start Date')}</label>
+                      <input 
+                        type="date" 
+                        value={duplicationData.startDate}
+                        onInput={(e) => setDuplicationData({ ...duplicationData, startDate: e.currentTarget.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>{t('End Date')}</label>
+                      <input 
+                        type="date" 
+                        value={duplicationData.endDate}
+                        onInput={(e) => setDuplicationData({ ...duplicationData, endDate: e.currentTarget.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="dialog-actions">
+                    <button className="cancel-button" onClick={() => setShowDuplicateLessons(false)}>{t('Cancel')}</button>
+                    <button className="confirm-button" onClick={handleDuplicateLessons}>{t('Duplicate Now')}</button>
+                  </div>
+                </div>
+              )}
 
-          {showDuplicateLessons && (
-            <div className="duplicate-lessons-dialog">
-              <h3>{t('Duplicate Lessons from Another Course')}</h3>
               <div className="form-group">
-                <label>{t('Source Course')}</label>
-                <select 
-                  value={duplicationData.sourceCourseId}
-                  onChange={(e) => setDuplicationData({ ...duplicationData, sourceCourseId: e.currentTarget.value })}
-                >
-                  <option value="">{t('Select Course')}</option>
-                  {courses.filter(c => c.id !== selectedCourseId).map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                <label>{t('{{resource}} Name', { resource: labels.course })}</label>
+                <input 
+                  type="text" 
+                  value={formData.name} 
+                  onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
+                />
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>{t('Start Date')}</label>
                   <input 
                     type="date" 
-                    value={duplicationData.startDate}
-                    onInput={(e) => setDuplicationData({ ...duplicationData, startDate: e.currentTarget.value })}
+                    value={formData.startDate} 
+                    onInput={(e) => setFormData({ ...formData, startDate: e.currentTarget.value })}
                   />
                 </div>
                 <div className="form-group">
                   <label>{t('End Date')}</label>
                   <input 
                     type="date" 
-                    value={duplicationData.endDate}
-                    onInput={(e) => setDuplicationData({ ...duplicationData, endDate: e.currentTarget.value })}
+                    value={formData.endDate} 
+                    onInput={(e) => setFormData({ ...formData, endDate: e.currentTarget.value })}
                   />
                 </div>
               </div>
-              <div className="dialog-actions">
-                <button className="cancel-button" onClick={() => setShowDuplicateLessons(false)}>{t('Cancel')}</button>
-                <button className="confirm-button" onClick={handleDuplicateLessons}>{t('Duplicate Now')}</button>
+              <div className="form-group">
+                <label>{t('Order')}</label>
+                <input 
+                  type="number" 
+                  value={formData.order} 
+                  onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>{labels.mainRoom}</label>
+                <select 
+                  value={formData.mainRoomId} 
+                  onChange={(e) => setFormData({ ...formData, mainRoomId: e.currentTarget.value })}
+                >
+                  <option value="">{t('Select Room')}</option>
+                  {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{labels.mainTeacher}</label>
+                  <select 
+                    value={formData.chiefTeacherId} 
+                    onChange={(e) => setFormData({ ...formData, chiefTeacherId: e.currentTarget.value })}
+                  >
+                    <option value="">{t('Select Teacher')}</option>
+                    {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>{t('Instructor Label (Main)')}</label>
+                  <input 
+                    type="text" 
+                    value={formData.mainTeacherLabel} 
+                    onInput={(e) => setFormData({ ...formData, mainTeacherLabel: e.currentTarget.value })}
+                    placeholder={labels.mainTeacher}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{labels.subTeacher}</label>
+                  <div className="sub-teacher-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                    {(() => {
+                      const list = teachers.filter(t => t.id !== formData.chiefTeacherId);
+                      const selected = list.filter(t => formData.assistantTeacherIds.includes(t.id));
+                      const unselected = list.filter(t => !formData.assistantTeacherIds.includes(t.id));
+                      return [...selected, ...unselected].map(t => (
+                        <label key={t.id} className={`sub-teacher-item ${formData.assistantTeacherIds.includes(t.id) ? 'selected' : ''}`}>
+                          <input 
+                            type="checkbox" 
+                            checked={formData.assistantTeacherIds.includes(t.id)}
+                            onChange={() => toggleAssistantTeacher(t.id)}
+                          />
+                          {t.name}
+                        </label>
+                      ));
+                    })()}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>{t('Instructor Label (Sub)')}</label>
+                  <input 
+                    type="text" 
+                    value={formData.subTeacherLabel} 
+                    onInput={(e) => setFormData({ ...formData, subTeacherLabel: e.currentTarget.value })}
+                    placeholder={labels.subTeacher}
+                  />
+                </div>
+              </div>
+
+              <div className="subjects-section">
+                <h3>{labels.subject}</h3>
+                {formData.subjects.map((s, index) => (
+                  <div key={index} className="subject-row">
+                    <input 
+                      type="text" 
+                      placeholder={t('{{resource}} Name', { resource: labels.subject })}
+                      value={s.name}
+                      onInput={(e) => handleSubjectChange(index, 'name', e.currentTarget.value)}
+                    />
+                    <input 
+                      type="number" 
+                      placeholder={t('Total Periods')}
+                      value={s.totalPeriods}
+                      onInput={(e) => handleSubjectChange(index, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
+                    />
+                    <button className="remove-btn" onClick={() => handleRemoveSubject(index)}>×</button>
+                  </div>
+                ))}
+                <div className="subjects-actions">
+                  <button className="add-btn" onClick={handleAddSubject}>{t('Add {{resource}}', { resource: labels.subject })}</button>
+                  <label className="import-csv-label">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      style={{ display: 'none' }}
+                      onChange={handleImportCSV}
+                    />
+                    <span className="import-btn">{t('Import CSV')}</span>
+                  </label>
+                </div>
               </div>
             </div>
           )}
-
-          <div className="course-form">
-            <div className="form-group">
-              <label>{t('{{resource}} Name', { resource: labels.course })}</label>
-              <input 
-                type="text" 
-                value={formData.name} 
-                onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
-              />
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>{t('Start Date')}</label>
-                <input 
-                  type="date" 
-                  value={formData.startDate} 
-                  onInput={(e) => setFormData({ ...formData, startDate: e.currentTarget.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>{t('End Date')}</label>
-                <input 
-                  type="date" 
-                  value={formData.endDate} 
-                  onInput={(e) => setFormData({ ...formData, endDate: e.currentTarget.value })}
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label>{t('Order')}</label>
-              <input 
-                type="number" 
-                value={formData.order} 
-                onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{labels.mainRoom}</label>
-              <select 
-                value={formData.mainRoomId} 
-                onChange={(e) => setFormData({ ...formData, mainRoomId: e.currentTarget.value })}
-              >
-                <option value="">{t('Select Room')}</option>
-                {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>{labels.mainTeacher}</label>
-                <select 
-                  value={formData.chiefTeacherId} 
-                  onChange={(e) => setFormData({ ...formData, chiefTeacherId: e.currentTarget.value })}
-                >
-                  <option value="">{t('Select Teacher')}</option>
-                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>{t('Instructor Label (Main)')}</label>
-                <input 
-                  type="text" 
-                  value={formData.mainTeacherLabel} 
-                  onInput={(e) => setFormData({ ...formData, mainTeacherLabel: e.currentTarget.value })}
-                  placeholder={labels.mainTeacher}
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>{labels.subTeacher}</label>
-                <div className="sub-teacher-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                  {(() => {
-                    const list = teachers.filter(t => t.id !== formData.chiefTeacherId);
-                    const selected = list.filter(t => formData.assistantTeacherIds.includes(t.id));
-                    const unselected = list.filter(t => !formData.assistantTeacherIds.includes(t.id));
-                    return [...selected, ...unselected].map(t => (
-                      <label key={t.id} className={`sub-teacher-item ${formData.assistantTeacherIds.includes(t.id) ? 'selected' : ''}`}>
-                        <input 
-                          type="checkbox" 
-                          checked={formData.assistantTeacherIds.includes(t.id)}
-                          onChange={() => toggleAssistantTeacher(t.id)}
-                        />
-                        {t.name}
-                      </label>
-                    ));
-                  })()}
-                </div>
-              </div>
-              <div className="form-group">
-                <label>{t('Instructor Label (Sub)')}</label>
-                <input 
-                  type="text" 
-                  value={formData.subTeacherLabel} 
-                  onInput={(e) => setFormData({ ...formData, subTeacherLabel: e.currentTarget.value })}
-                  placeholder={labels.subTeacher}
-                />
-              </div>
-            </div>
-
-            <div className="subjects-section">
-              <h3>{labels.subject}</h3>
-              {formData.subjects.map((s, index) => (
-                <div key={index} className="subject-row">
-                  <input 
-                    type="text" 
-                    placeholder={t('{{resource}} Name', { resource: labels.subject })}
-                    value={s.name}
-                    onInput={(e) => handleSubjectChange(index, 'name', e.currentTarget.value)}
-                  />
-                  <input 
-                    type="number" 
-                    placeholder={t('Total Periods')}
-                    value={s.totalPeriods}
-                    onInput={(e) => handleSubjectChange(index, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
-                  />
-                  <button className="remove-btn" onClick={() => handleRemoveSubject(index)}>×</button>
-                </div>
-              ))}
-              <div className="subjects-actions">
-                <button className="add-btn" onClick={handleAddSubject}>{t('Add {{resource}}', { resource: labels.subject })}</button>
-                <label className="import-csv-label">
-                  <input
-                    type="file"
-                    accept=".csv"
-                    style={{ display: 'none' }}
-                    onChange={handleImportCSV}
-                  />
-                  <span className="import-btn">{t('Import CSV')}</span>
-                </label>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="dialog-footer">
-          {selectedCourseId && (
+          {editingCourseId && editingCourseId !== 'new' && (
             <div className="footer-left">
-              <button className="delete-button" onClick={handleDelete}>{t('Delete')}</button>
+              <button className="delete-button" onClick={() => handleDelete(editingCourseId)}>{t('Delete')}</button>
               <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate Course')}</button>
               <button className="duplicate-lessons-btn" onClick={() => setShowDuplicateLessons(true)}>{t('Duplicate Lessons')}</button>
             </div>
           )}
           <div className="footer-right">
-            <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-            <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+            <button className="cancel-button" onClick={() => setEditingCourseId(null)}>{t('Cancel')}</button>
+            {editingCourseId && (
+              <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+            )}
           </div>
         </div>
       </div>
