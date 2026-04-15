@@ -56,16 +56,17 @@
 - **授業方式（Delivery Method）:** 対面、オンライン、オンデマンド等の方式を定義し、各授業に複数割り当て可能。
 
 ### Administration (管理機能)
-- **CRUD 画面:** 時限、教室、講師、講座、授業、行事、祝日、授業方式、ユーザー、システム設定の各管理画面。
+- **CRUD 画面:** 時限、教室、講師、講座、授業、行事、祝日、授業方式、ユーザー、システム設定、カラーテーマの各管理画面。
   - **視覚的順序変更:** 教室・講師・講座の各管理画面において、ドラッグ＆ドロップまたは矢印ボタンによる表示順序の入れ替えが可能。
   - **講師検索:** 講師管理画面において、名前による動的なフィルタリングが可能。
   - **講座の年度フィルタ:** システム設定の開始月日に基づいた「年度」単位での表示絞り込みに対応。
+  - **カラーテーママネージャー:** イベント、授業（担当講師の有無別）、休日の配色（前景色・背景色）をDBで一括管理。プレビュー機能付き。
 - **インポート機能:** 
   - 祝日: Nager.Date API または JSON ファイルからインポート。
   - 講座課目: CSV からの一括インポート。
 - **エクスポート機能:**
   - スケジュール: 講師本人が自身の予定を iCalendar (.ics) 形式で書き出し可能。
-  - タイムテーブル: 表示中のビュー（個人月間予定を含む）を Excel (.xlsx) 形式でエクスポート可能。個人月間予定では画面上の重なり回避（横並び）状態を Excel 上で再現。
+  - タイムテーブル: 表示中のビュー（個人月間予定を含む）を Excel (.xlsx) 形式でエクスポート可能。個人月間予定では画面上の重なり回避（横並び）状態を Excel 上で再現。配色設定も Excel 上に反映。
 - **講座の複製:** 関連する課目設定を含めた講座の複製が可能。
 - **講座間での授業複製:** 他の講座から指定期間の授業を、講師をクリアし、複製先講座のメイン教室を割り当てた状態で複製可能（重複回避機能付き）。
 - **システム設定:** 一般ユーザーのサインアップ可否や、1年ビューの開始月日のカスタマイズが可能。
@@ -110,6 +111,7 @@
 export type ViewType = 'day' | 'week' | 'month' | '3month' | '6month' | 'year' | 'course_timeline';
 export type ResourceType = 'room' | 'teacher' | 'course';
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 ```
 
 ### Main Entities
@@ -120,6 +122,7 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 - **TimePeriod:** `id, name, startTime, endTime, order` (IDは `p1`, `p2` ... 形式を維持)
 - **Holiday:** `id, name, date, start, end`
 - **ResourceLabels:** `room, teacher, course, event, mainTeacher, subTeacher, mainRoom, deliveryMethod, subject`
+- **ColorTheme:** `id, name, category, key, background, foreground, order`
 
 ---
 
@@ -132,7 +135,7 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 - [x] リソースのフィルター機能 (grid-corner のチェックボックスによる行の絞り込み)
 - [x] Node.js + Prisma + PostgreSQL バックエンド & JWT 認証 (HttpOnly Cookie)
 - [x] 国際化 (i18n) 完全実装 (日・英対応)
-- [x] 全リソースの CRUD 管理画面 (時限, 教室, 講師, 講座, 授業, 行事, 祝日, 授業方式, ユーザー)
+- [x] 全リソースの CRUD 管理画面 (時限, 教室, 講師, 講座, 授業, 行事, 祝日, 授業方式, ユーザー, カラーテーマ)
 - [x] 教室・講師・講座のビジュアル順序変更機能（ドラッグ＆ドロップ対応）
 - [x] イベント行・リソース行の重なり自動回避ロジック
 - [x] 祝日・課目データのインポート機能
@@ -142,6 +145,7 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 - [x] 講座の複製機能 (関連課目含む)
 - [x] 講師によるスケジュールの iCalendar (.ics) エクスポート機能
 - [x] 3ヶ月/6ヶ月/1年ビューの開始月日のカスタマイズ機能
+- [x] カラーテーママネージャーによる配色のカスタマイズ（イベント・授業・休日）
 - [x] ダークテーマ / ライトテーマの完全対応
 
 ### Upcoming Tasks (Next Steps)
