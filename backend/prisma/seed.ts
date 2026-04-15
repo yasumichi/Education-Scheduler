@@ -263,8 +263,8 @@ async function main() {
       { name: 'No Main Teacher', category: ColorCategory.LESSON, key: 'no-teacher', background: '#e884fa', foreground: '#ffffff', order: 2 },
       
       // 休日
-      { name: 'Default Holiday', category: ColorCategory.HOLIDAY, key: 'default', background: '#ffe4e1', foreground: '#333333', order: 1 },
-      { name: 'Vivid Holiday', category: ColorCategory.HOLIDAY, key: 'vivid', background: '#fef7e0', foreground: '#15803d', order: 2 }
+      { name: 'Default Holiday', category: ColorCategory.HOLIDAY, key: 'default', background: '#ff8181', foreground: '#ffffff', order: 1 },
+      { name: 'Weekend', category: ColorCategory.HOLIDAY, key: 'vivid', background: '#1a3a5a', foreground: '#ffffff', order: 2 }
     ]
   });
 
