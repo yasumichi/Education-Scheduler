@@ -46,12 +46,10 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
         return { themeId: bits[1], isWeekend: bits[2] === 'true' };
       }
       if (bits.length === 2) {
-        // Migration from day:themeId
         return { themeId: bits[1], isWeekend: true };
       }
     }
     
-    // Fallback for old comma-separated indices format
     const simpleIndices = weekendDays.split(',').filter(p => !p.includes(':'));
     if (simpleIndices.includes(day.toString())) {
       return { themeId: 'default', isWeekend: true };
@@ -170,15 +168,24 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
                       />
                       {t(day)}
                     </label>
-                    <select 
-                      value={themeId || 'default'}
-                      onChange={(e) => updateDayInfo(i, e.currentTarget.value, isWeekend)}
-                      className="theme-select-mini"
-                    >
-                      {holidayThemes.map(theme => (
-                        <option key={theme.id} value={theme.key || theme.id}>{t(theme.name)}</option>
-                      ))}
-                    </select>
+                    {isWeekend && (
+                      <div className="theme-preview-list">
+                        {holidayThemes.map(theme => {
+                          const isSelected = (theme.key || theme.id) === themeId;
+                          return (
+                            <div 
+                              key={theme.id}
+                              className={`theme-preview-item ${isSelected ? 'selected' : ''}`}
+                              style={{ backgroundColor: theme.background, color: theme.foreground }}
+                              onClick={() => updateDayInfo(i, theme.key || theme.id, isWeekend)}
+                              title={t(theme.name)}
+                            >
+                              Aa
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })}

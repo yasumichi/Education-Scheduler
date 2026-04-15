@@ -89,7 +89,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 0;
+  padding: 6px 0;
   border-bottom: 1px solid #333;
 }
 
@@ -100,16 +100,37 @@
 .weekend-selector-vertical .checkbox-label {
   font-weight: normal;
   font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
-.theme-select-mini {
-  background: #333;
-  color: #fff;
-  border: 1px solid #444;
+.theme-preview-list {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px;
+}
+
+.theme-preview-item {
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.85rem;
-  max-width: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s;
+}
+
+.theme-preview-item:hover {
+  transform: scale(1.1);
+}
+
+.theme-preview-item.selected {
+  border-color: #646cff;
+  box-shadow: 0 0 8px rgba(100, 108, 255, 0.5);
 }
 
 .theme-select {
@@ -141,12 +162,10 @@
     color: #333;
     border-color: #ccc;
   }
-  .theme-select-mini {
-    background-color: #fff;
-    color: #333;
-    border-color: #ccc;
-  }
   .weekend-day-row {
     border-bottom-color: #eee;
+  }
+  .theme-preview-item.selected {
+    border-color: #646cff;
   }
 }
