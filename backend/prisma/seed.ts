@@ -1,7 +1,6 @@
-import { PrismaClient, ResourceType, UserRole, ColorCategory } from '@prisma/client';
+import { PrismaClient, ColorCategory } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,49 +10,13 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // データのクリア
-  await prisma.holiday.deleteMany();
-  await prisma.scheduleEvent.deleteMany();
-  await prisma.lesson.deleteMany();
-  await prisma.resource.deleteMany();
-  await prisma.user.deleteMany();
+  // データのクリア (保持するデータ以外をクリア)
   await prisma.timePeriod.deleteMany();
   await prisma.resourceLabel.deleteMany();
   await prisma.systemSetting.deleteMany();
   await prisma.colorTheme.deleteMany();
 
-  console.log('Clearing database...');
-
-  // ユーザーの生成
-  const adminPassword = await bcrypt.hash('admin123', 10);
-  const teacherPassword = await bcrypt.hash('teacher123', 10);
-  
-  // 佐藤先生のユーザー (t1 に紐付ける)
-  const userT1 = await prisma.user.create({
-    data: {
-      email: 'sato@example.com',
-      password: teacherPassword,
-      role: UserRole.TEACHER
-    }
-  });
-
-  await prisma.user.create({
-    data: {
-      email: 'admin@example.com',
-      password: adminPassword,
-      role: UserRole.ADMIN
-    }
-  });
-
-  await prisma.user.create({
-    data: {
-      email: 'teacher@example.com',
-      password: teacherPassword,
-      role: UserRole.TEACHER
-    }
-  });
-
-  console.log('Seeding users...');
+  console.log('Clearing configuration data...');
 
   // 時限の生成
   const periods = [
@@ -100,175 +63,20 @@ async function main() {
 
   console.log('Seeding system settings...');
 
-  // リソースの生成
-  // Rooms
-  for (let i = 1; i <= 20; i++) {
-    await prisma.resource.create({
-      data: { id: `r${i}`, name: `Room ${100 + i}`, type: ResourceType.room, order: i }
-    });
-  }
-  // Teachers
-  const surnames = ['Sato', 'Suzuki', 'Takahashi', 'Tanaka', 'Watanabe', 'Ito', 'Yamamoto', 'Nakamura', 'Kobayashi', 'Kato', 'Yoshida', 'Yamada', 'Sasaki', 'Yamaguchi', 'Matsumoto', 'Inoue', 'Kimura', 'Hayashi', 'Saito', 'Shimizu'];
-  for (let i = 1; i <= 20; i++) {
-    await prisma.resource.create({
-      data: { 
-        id: `t${i}`, 
-        name: `Dr. ${surnames[i-1]}`, 
-        type: ResourceType.teacher, 
-        order: i,
-        // 佐藤先生 (t1) だけユーザーと紐付け
-        userId: i === 1 ? userT1.id : undefined
-      }
-    });
-  }
-  // Courses
-  const courseNames = ['Advanced Math', 'Practical English', 'Physics Inquiry', 'Japanese History B', 'Modern Writing', 'Basic Chemistry', 'World History A', 'Geography B', 'Biology Special', 'Politics & Economy', 'Classical Literature', 'Informatics I', 'Basic Arts', 'Physical Education', 'English Expression', 'Math IIB', 'Logical Japanese', 'Human Science', 'Career Inquiry', 'Multiculturalism'];
-  for (let i = 1; i <= 20; i++) {
-    await prisma.resource.create({
-      data: { id: `c${i}`, name: `${courseNames[i-1]} Course`, type: ResourceType.course, order: i }
-    });
-  }
-
-  console.log('Seeding resources...');
-
-  // 授業の生成
-  const subjects = ['Math', 'English', 'Physics', 'Japanese', 'Chemistry', 'History', 'Geography', 'Biology', 'Social', 'Info', 'Arts', 'PE'];
-  const baseDate = '2026-03-26';
-
-  for (let i = 1; i <= 20; i++) {
-    const periodNum = (i % 8) + 1;
-    await prisma.lesson.create({
-      data: {
-        subject: subjects[i % subjects.length],
-        teacherId: `t${(i % 20) + 1}`,
-        roomId: `r${(i % 20) + 1}`,
-        courseId: `c${(i % 20) + 1}`,
-        startDate: baseDate,
-        startPeriodId: `p${periodNum}`,
-        endDate: baseDate,
-        endPeriodId: `p${periodNum}`
-      }
-    });
-  }
-
-  // 複数サブ講師のテストデータ
-  await prisma.lesson.create({
-    data: {
-      subject: 'Team Teaching: Research',
-      teacherId: 't1', // Dr. Sato
-      subTeachers: {
-        connect: [{ id: 't2' }, { id: 't3' }] // Dr. Suzuki, Dr. Takahashi
-      },
-      roomId: 'r1',
-      courseId: 'c1',
-      startDate: '2026-03-26',
-      startPeriodId: 'p3',
-      endDate: '2026-03-26',
-      endPeriodId: 'p4'
-    }
-  });
-
-  // 日を跨ぐ集中講義
-  await prisma.lesson.create({
-    data: {
-      subject: 'Special: Multiculturalism',
-      teacherId: 't5',
-      subTeachers: {
-        connect: [{ id: 't1' }, { id: 't2' }]
-      },
-      roomId: 'r5',
-      courseId: 'c20',
-      startDate: '2026-03-26',
-      startPeriodId: 'p1',
-      endDate: '2026-03-27',
-      endPeriodId: 'p4'
-    }
-  });
-
-  console.log('Seeding lessons...');
-
-  // イベント
-  // 全体イベント
-  await prisma.scheduleEvent.create({
-    data: {
-      name: 'Evacuation Drill',
-      startDate: '2026-03-26',
-      startPeriodId: 'p5',
-      endDate: '2026-03-26',
-      endPeriodId: 'p6',
-      color: '#fee2e2',
-      showInEventRow: true
-    }
-  });
-
-  // リソース固有（加藤先生のみ、イベント行なし）
-  await prisma.scheduleEvent.create({
-    data: {
-      name: 'Business Trip',
-      startDate: '2026-03-26',
-      startPeriodId: 'p1',
-      endDate: '2026-03-26',
-      endPeriodId: 'p8',
-      color: '#d1fae5',
-      showInEventRow: false,
-      resources: {
-        connect: [{ id: 't10' }]
-      }
-    }
-  });
-
-  // 両方（田中先生、104号室、イベント行あり）
-  await prisma.scheduleEvent.create({
-    data: {
-      name: 'Open Research Lesson',
-      startDate: '2026-03-26',
-      startPeriodId: 'p2',
-      endDate: '2026-03-26',
-      endPeriodId: 'p3',
-      color: '#fef3c7',
-      showInEventRow: true,
-      resources: {
-        connect: [{ id: 't4' }, { id: 'r4' }]
-      }
-    }
-  });
-
-  // その他既存のイベント
-  await prisma.scheduleEvent.create({
-    data: { name: 'School Cleaning', startDate: '2026-03-26', startPeriodId: 'p7', endDate: '2026-03-26', endPeriodId: 'p8', color: '#e2e8f0', showInEventRow: true }
-  });
-
-  // 祝日
-  await prisma.holiday.createMany({
-    data: [
-      { date: '2026-01-01', name: 'New Year\'s Day' },
-      { date: '2026-02-11', name: 'Foundation Day' },
-      { date: '2026-02-23', name: 'Emperor\'s Birthday' },
-      { date: '2026-03-20', name: 'Vernal Equinox Day' },
-      { date: '2026-04-29', name: 'Showa Day' },
-      { start: '2026-12-29', end: '2027-01-03', name: 'Winter Holidays' }
-    ]
-  });
-
   // カラーテーマ
   await prisma.colorTheme.createMany({
     data: [
-      // イベント
       { name: 'Default Event', category: ColorCategory.EVENT, key: 'default', background: '#fef3c7', foreground: '#92400e', order: 1 },
       { name: 'Business Trip', category: ColorCategory.EVENT, background: '#d1fae5', foreground: '#065f46', order: 2 },
       { name: 'Holiday Event', category: ColorCategory.EVENT, background: '#fee2e2', foreground: '#991b1b', order: 3 },
-      
-      // 授業
       { name: 'With Main Teacher', category: ColorCategory.LESSON, key: 'with-teacher', background: '#646cff', foreground: '#ffffff', order: 1 },
       { name: 'No Main Teacher', category: ColorCategory.LESSON, key: 'no-teacher', background: '#e884fa', foreground: '#ffffff', order: 2 },
-      
-      // 休日
       { name: 'Default Holiday', category: ColorCategory.HOLIDAY, key: 'default', background: '#ff8181', foreground: '#ffffff', order: 1 },
       { name: 'Weekend', category: ColorCategory.HOLIDAY, key: 'vivid', background: '#1a3a5a', foreground: '#ffffff', order: 2 }
     ]
   });
 
-  console.log('Seeding finished.');
+  console.log('Seeding configuration finished.');
 }
 
 main()
@@ -278,4 +86,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });
