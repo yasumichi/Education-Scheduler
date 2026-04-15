@@ -153,7 +153,7 @@ export function CourseWeeklyView({
 
                 return (
                   <tr key={`${dateStr}-${period.id}`} 
-                      onClick={() => lesson && onLessonClick?.(lesson)} 
+                      onDblClick={() => lesson && onLessonClick?.(lesson)} 
                       className={lesson ? 'clickable-row' : ''}>
                     {pIdx === 0 ? (
                       <td rowSpan={periods.length} className="date-cell">

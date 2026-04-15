@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { ScheduleEvent, TimePeriod, Resource, ResourceLabels } from '../types';
+import { ScheduleEvent, TimePeriod, Resource, ResourceLabels, ColorTheme } from '../types';
 import './EventManager.css';
 
 interface Props {
@@ -11,10 +11,13 @@ interface Props {
   resources: Resource[];
   labels: ResourceLabels;
   initialEvent?: Partial<ScheduleEvent>; // 編集時は既存、新規時は日付・時限のみ
+  themes: ColorTheme[];
 }
 
-export function EventManager({ backendUrl, onClose, onUpdate, periods, resources, labels, initialEvent }: Props) {
+export function EventManager({ backendUrl, onClose, onUpdate, periods, resources, labels, initialEvent, themes }: Props) {
   const { t } = useTranslation();
+  const eventThemes = themes.filter(t => t.category === 'EVENT');
+
   const [formData, setFormData] = useState<{
     id?: string;
     name: string;
@@ -33,7 +36,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
     startPeriodId: initialEvent?.startPeriodId || periods[0]?.id || 'p1',
     endDate: initialEvent?.endDate || initialEvent?.startDate || '',
     endPeriodId: initialEvent?.endPeriodId || initialEvent?.startPeriodId || periods[periods.length - 1]?.id || 'p8',
-    color: initialEvent?.color || '#3b82f6',
+    color: initialEvent?.color || eventThemes[0]?.background || '#3b82f6',
     location: initialEvent?.location || '',
     showInEventRow: initialEvent?.showInEventRow ?? true,
     resourceIds: initialEvent?.resourceIds || (initialEvent?.resources || []).map(r => r.id)
@@ -166,11 +169,26 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
             </div>
             <div className="form-group">
               <label>{t('Color')}</label>
-              <input 
-                type="color" 
-                value={formData.color} 
-                onInput={(e) => setFormData({ ...formData, color: e.currentTarget.value })}
-              />
+              <div className="theme-preview-list">
+                {eventThemes.map(theme => (
+                  <div 
+                    key={theme.id}
+                    className={`theme-preview-item ${formData.color === theme.background ? 'selected' : ''}`}
+                    style={{ backgroundColor: theme.background, color: theme.foreground }}
+                    onClick={() => setFormData({ ...formData, color: theme.background })}
+                    title={t(theme.name)}
+                  >
+                    Aa
+                  </div>
+                ))}
+                <input 
+                  type="color" 
+                  value={formData.color} 
+                  onInput={(e) => setFormData({ ...formData, color: e.currentTarget.value })}
+                  className="custom-color-picker"
+                  title={t('Custom Color')}
+                />
+              </div>
             </div>
           </div>
 
@@ -184,6 +202,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
               {t('Show in Global Event Row')}
             </label>
           </div>
+
 
           <div className="form-group">
             <label>{t('Target Resources (Optional)')}</label>

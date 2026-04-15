@@ -103,9 +103,8 @@ export function PersonalMonthlyView({
     return null;
   };
 
-  // テキスト選択中のクリックを無視するためのチェック
+  // 以前はテキスト選択中を無視していたが、ダブルクリックによる編集を優先するため常に実行
   const handleIntentionalClick = (callback: () => void) => {
-    if (window.getSelection()?.toString()) return;
     callback();
   };
 
@@ -226,7 +225,7 @@ export function PersonalMonthlyView({
               <div 
                 className="personal-event-mini-card" 
                 style={{ ...style, backgroundColor: bgColor, color: textColor }}
-                onClick={() => handleIntentionalClick(() => onEventClick?.(event))}
+                onDblClick={() => handleIntentionalClick(() => onEventClick?.(event))}
                 key={`event-${event.id}`}
                 title={`${event.name}${event.location ? ` (${event.location})` : ''}`}
               >
@@ -248,9 +247,9 @@ export function PersonalMonthlyView({
               <div 
                 className="personal-lesson-mini-card"
                 style={{ ...style, backgroundColor: bgColor, color: textColor }}
-                onClick={() => handleIntentionalClick(() => onLessonClick?.(lesson))}
+                onDblClick={() => handleIntentionalClick(() => onLessonClick?.(lesson))}
                 key={`lesson-${lesson.id}`}
-                title={`${lesson.subject} (${roomLabel})`}
+                title={`${lesson.subject}${roomLabel ? ` (${roomLabel})` : ''}`}
               >
                 <div className="card-content-wrapper">
                   <span className="period-tag" style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'inherit' }}>{periodLabel}</span>

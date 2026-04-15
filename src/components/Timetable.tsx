@@ -194,9 +194,8 @@ export function Timetable({
 
   const stickyLeft = { position: 'sticky', left: 0 } as JSX.CSSProperties;
 
-  // テキスト選択中のクリックを無視するためのチェック
+  // 以前はテキスト選択中を無視していたが、ダブルクリックによる編集を優先するため常に実行
   const handleIntentionalClick = (callback: () => void) => {
-    if (window.getSelection()?.toString()) return;
     callback();
   };
 

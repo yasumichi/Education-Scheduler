@@ -765,6 +765,7 @@ export function App() {
           resources={resources.value}
           labels={resourceLabels.value}
           initialEvent={editingEvent.value || {}}
+          themes={colorThemes.value}
         />
       )}
 

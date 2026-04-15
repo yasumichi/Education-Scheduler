@@ -61,14 +61,48 @@
   border-radius: 4px;
 }
 
-.form-group input[type="color"] {
-  width: 100%;
-  height: 40px;
-  padding: 2px;
-  background: #333;
+.theme-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background-color: #333;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #555;
+}
+
+.theme-preview-item {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s;
+}
+
+.theme-preview-item:hover {
+  transform: scale(1.1);
+}
+
+.theme-preview-item.selected {
+  border-color: #646cff;
+  box-shadow: 0 0 8px rgba(100, 108, 255, 0.5);
+}
+
+.custom-color-picker {
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 1px solid #555;
   border-radius: 4px;
   cursor: pointer;
+  background: none;
 }
 
 .checkbox-group label {
@@ -157,8 +191,9 @@
 
 @media (prefers-color-scheme: light) {
   .event-manager-box { background-color: #fff; color: #333; }
-  .form-group input, .form-group select, .resource-selector-list { background-color: #f5f5f5; border-color: #ccc; color: #333; }
+  .form-group input, .form-group select, .resource-selector-list, .theme-preview-list { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .resource-item { background: #eee; color: #333; }
   .resource-item.selected { background: #3b82f6; color: #fff; }
   .delete-button { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+  .custom-color-picker { border-color: #ccc; }
 }
