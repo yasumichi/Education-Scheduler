@@ -46,8 +46,27 @@ export function Timetable({
 
   const currentViewStart = startOfDay(baseDate);
 
-  const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
-  const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
+  const getDayInfo = (day: number) => {
+    const weekendDaysStr = systemSettings?.weekendDays || "0:default:true,1:default:false,2:default:false,3:default:false,4:default:false,5:default:false,6:vivid:true";
+    const parts = weekendDaysStr.split(',').filter(p => p !== '');
+    const part = parts.find(p => p.startsWith(`${day}:`));
+    if (part) {
+      const bits = part.split(':');
+      if (bits.length >= 3) {
+        return { themeId: bits[1], isWeekend: bits[2] === 'true' };
+      }
+      if (bits.length === 2) {
+        return { themeId: bits[1], isWeekend: true };
+      }
+    }
+    const simpleIndices = weekendDaysStr.split(',').filter(p => !p.includes(':'));
+    if (simpleIndices.includes(day.toString())) {
+      return { themeId: 'default', isWeekend: true };
+    }
+    return { themeId: 'default', isWeekend: false };
+  };
+
+  const isWeekend = (date: Date) => getDayInfo(date.getDay()).isWeekend;
   const holidayTheme = systemSettings?.holidayTheme || 'default';
 
   // カラーテーマ取得用ヘルパー
@@ -56,6 +75,18 @@ export function Timetable({
     if (theme) return theme;
     // Fallback to default
     return colorThemes.find(t => t.category === category && t.key === 'default');
+  };
+
+  const getHolidayOrWeekendTheme = (date: Date) => {
+    const holiday = getHoliday(date);
+    const dayInfo = getDayInfo(date.getDay());
+    
+    // Holiday or Weekend uses the day's specific theme
+    if (holiday || dayInfo.isWeekend) {
+      return getThemeColor('HOLIDAY', dayInfo.themeId);
+    }
+    
+    return null;
   };
 
   const getHoliday = (date: Date) => {
@@ -231,13 +262,11 @@ export function Timetable({
             if (isWknd) baseClass += " is-weekend";
             if (holiday) baseClass += " is-holiday";
 
-            const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+            const hTheme = getHolidayOrWeekendTheme(date);
             const style: any = {};
-            if (holiday || isWknd) {
-              if (hTheme) {
-                style.backgroundColor = hTheme.background;
-                style.color = hTheme.foreground;
-              }
+            if (hTheme) {
+              style.backgroundColor = hTheme.background;
+              style.color = hTheme.foreground;
             }
 
             return (
@@ -267,13 +296,11 @@ export function Timetable({
       if (holiday) className += ' is-holiday';
       if (isFirstOfMonth) className += ' month-start';
 
-      const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+      const hTheme = getHolidayOrWeekendTheme(date);
       const style: any = {};
-      if (holiday || isWknd) {
-        if (hTheme) {
-          style.backgroundColor = hTheme.background;
-          style.color = hTheme.foreground;
-        }
+      if (hTheme) {
+        style.backgroundColor = hTheme.background;
+        style.color = hTheme.foreground;
       }
 
       return (
@@ -296,13 +323,11 @@ export function Timetable({
       if (isWknd) className += ' is-weekend';
       if (holiday) className += ' is-holiday';
 
-      const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+      const hTheme = getHolidayOrWeekendTheme(date);
       const style: any = {};
-      if (holiday || isWknd) {
-        if (hTheme) {
-          style.backgroundColor = hTheme.background;
-          style.color = hTheme.foreground;
-        }
+      if (hTheme) {
+        style.backgroundColor = hTheme.background;
+        style.color = hTheme.foreground;
       }
 
       return (
@@ -330,12 +355,10 @@ export function Timetable({
 
     const dateStr = format(date, 'yyyy-MM-dd');
 
-    const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+    const hTheme = getHolidayOrWeekendTheme(date);
     const style: any = {};
-    if (holiday || isWknd) {
-      if (hTheme) {
-        style.backgroundColor = hTheme.background;
-      }
+    if (hTheme) {
+      style.backgroundColor = hTheme.background;
     }
 
     return effectivePeriods.map((p, pIdx) => (
@@ -414,7 +437,8 @@ export function Timetable({
     const itemHeight = unitHeight - 8;
     const top = headerHeight + 4 + (layout.level * unitHeight);
 
-    const theme = getThemeColor('HOLIDAY', holidayTheme);
+    const hDate = parseISO(h.date || h.start);
+    const theme = getHolidayOrWeekendTheme(hDate);
     const style: any = {
       gridColumn: `${layout.start} / ${layout.end + 1}`,
       gridRow: eventRowIdx,
@@ -771,12 +795,10 @@ export function Timetable({
             if (isWknd) cellClass += ' is-weekend';
             if (holiday) cellClass += ' is-holiday';
 
-            const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+            const hTheme = getHolidayOrWeekendTheme(date);
             const style: any = {};
-            if (holiday || isWknd) {
-              if (hTheme) {
-                style.backgroundColor = hTheme.background;
-              }
+            if (hTheme) {
+              style.backgroundColor = hTheme.background;
             }
 
             return effectivePeriods.map((p, pIdx) => (

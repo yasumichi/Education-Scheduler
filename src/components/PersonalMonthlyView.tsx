@@ -62,8 +62,27 @@ export function PersonalMonthlyView({
   
   const weeksCount = days.length / 7;
 
-  const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
-  const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
+  const getDayInfo = (day: number) => {
+    const weekendDaysStr = systemSettings?.weekendDays || "0:default:true,1:default:false,2:default:false,3:default:false,4:default:false,5:default:false,6:vivid:true";
+    const parts = weekendDaysStr.split(',').filter(p => p !== '');
+    const part = parts.find(p => p.startsWith(`${day}:`));
+    if (part) {
+      const bits = part.split(':');
+      if (bits.length >= 3) {
+        return { themeId: bits[1], isWeekend: bits[2] === 'true' };
+      }
+      if (bits.length === 2) {
+        return { themeId: bits[1], isWeekend: true };
+      }
+    }
+    const simpleIndices = weekendDaysStr.split(',').filter(p => !p.includes(':'));
+    if (simpleIndices.includes(day.toString())) {
+      return { themeId: 'default', isWeekend: true };
+    }
+    return { themeId: 'default', isWeekend: false };
+  };
+
+  const isWeekend = (date: Date) => getDayInfo(date.getDay()).isWeekend;
   const holidayTheme = systemSettings?.holidayTheme || 'default';
 
   // カラーテーマ取得用ヘルパー
@@ -71,6 +90,17 @@ export function PersonalMonthlyView({
     const theme = colorThemes.find(t => t.category === category && (t.key === keyOrName || t.name === keyOrName));
     if (theme) return theme;
     return colorThemes.find(t => t.category === category && t.key === 'default');
+  };
+
+  const getHolidayOrWeekendTheme = (date: Date) => {
+    const holiday = getHoliday(date);
+    const dayInfo = getDayInfo(date.getDay());
+    
+    if (holiday || dayInfo.isWeekend) {
+      return getThemeColor('HOLIDAY', dayInfo.themeId);
+    }
+    
+    return null;
   };
 
   // テキスト選択中のクリックを無視するためのチェック
@@ -260,13 +290,11 @@ export function PersonalMonthlyView({
           if (isWknd) dayClasses += " is-weekend";
           if (holiday) dayClasses += " is-holiday";
 
-          const hTheme = getThemeColor('HOLIDAY', holidayTheme);
+          const hTheme = getHolidayOrWeekendTheme(day);
           const cellStyle: any = {};
-          if (holiday || isWknd) {
-            if (hTheme) {
-              cellStyle.backgroundColor = hTheme.background;
-              cellStyle.color = hTheme.foreground;
-            }
+          if (hTheme) {
+            cellStyle.backgroundColor = hTheme.background;
+            cellStyle.color = hTheme.foreground;
           }
 
           return (

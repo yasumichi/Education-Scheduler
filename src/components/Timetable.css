@@ -355,12 +355,8 @@
 }
 
 /* 土日祝日の色設定 (ダークモード) */
-.holiday-theme-default .is-weekend, 
-.holiday-theme-default .is-holiday { color: #ff8888; background-color: #442222 !important; }
-
-/* 鮮やかなテーマ (ダークモード) */
-.holiday-theme-vivid .is-weekend { color: #88ccff; background-color: #1a3a5a !important; }
-.holiday-theme-vivid .is-holiday { color: #ffaa66; background-color: #5a3a1a !important; }
+.is-weekend, 
+.is-holiday { color: #ffffff; background-color: #ff8181; }
 
 .grid-cell {
   border-right: 1px solid #444;
@@ -368,11 +364,8 @@
 }
 
 /* セルの土日祝日背景 */
-.holiday-theme-default .grid-cell.is-weekend, 
-.holiday-theme-default .grid-cell.is-holiday { background-color: rgba(255, 136, 136, 0.05); }
-
-.holiday-theme-vivid .grid-cell.is-weekend { background-color: rgba(136, 204, 255, 0.1); }
-.holiday-theme-vivid .grid-cell.is-holiday { background-color: rgba(255, 170, 102, 0.1); }
+.grid-cell.is-weekend, 
+.grid-cell.is-holiday { background-color: rgba(255, 129, 129, 0.1); }
 
 .lesson-card {
   background-color: #646cff;
@@ -507,11 +500,8 @@
   .grid-corner { background-color: #eee; border-color: #ccc; }
   .date-header { background-color: #eee; color: #333; border-color: #ccc; }
   
-  .holiday-theme-default .is-weekend, 
-  .holiday-theme-default .is-holiday { color: #d33; background-color: #fff0f0 !important; }
-
-  .holiday-theme-vivid .is-weekend { color: #1a73e8; background-color: #e8f0fe !important; }
-  .holiday-theme-vivid .is-holiday { color: #e67c00; background-color: #fef7e0 !important; }
+  .is-weekend, 
+  .is-holiday { color: #ffffff; background-color: #ff8181; }
 
   .period-header { background-color: #f5f5f5; color: #666; }
   .grid-label { background-color: #eee; color: #333; }
@@ -534,11 +524,8 @@
     color: #fff; /* 文字を白に (反転) */
     border-color: #333;
   }
-  .holiday-theme-default .grid-cell.is-weekend, 
-  .holiday-theme-default .grid-cell.is-holiday { background-color: #fffafa; }
-
-  .holiday-theme-vivid .grid-cell.is-weekend { background-color: #f8fbff; }
-  .holiday-theme-vivid .grid-cell.is-holiday { background-color: #fffdf9; }
+  .grid-cell.is-weekend, 
+  .grid-cell.is-holiday { background-color: #fffafa; }
 }
 
 /* タイムライン用ヘッダー行 */

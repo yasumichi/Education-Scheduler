@@ -54,17 +54,13 @@
   color: #666;
 }
 
-.holiday-theme-default .calendar-day-cell.is-weekend,
-.holiday-theme-default .calendar-day-cell.is-holiday {
-  background-color: #3d2b2b;
+.calendar-day-cell.is-weekend,
+.calendar-day-cell.is-holiday {
+  background-color: #ff8181;
+  color: #ffffff;
 }
-
-.holiday-theme-vivid .calendar-day-cell.is-weekend {
-  background-color: #1a3a5a;
-}
-
-.holiday-theme-vivid .calendar-day-cell.is-holiday {
-  background-color: #5a3a1a;
+.calendar-day-cell.is-holiday .holiday-name {
+  color: #ffffff;
 }
 
 .day-header {
@@ -180,15 +176,13 @@
     background-color: #f9f9f9;
     color: #ccc;
   }
-  .holiday-theme-default .calendar-day-cell.is-weekend,
-  .holiday-theme-default .calendar-day-cell.is-holiday {
-    background-color: #fff5f5;
+  .calendar-day-cell.is-weekend,
+  .calendar-day-cell.is-holiday {
+    background-color: #ff8181;
+    color: #ffffff;
   }
-  .holiday-theme-vivid .calendar-day-cell.is-weekend {
-    background-color: #e8f0fe;
-  }
-  .holiday-theme-vivid .calendar-day-cell.is-holiday {
-    background-color: #fef7e0;
+  .calendar-day-cell.is-holiday .holiday-name {
+    color: #ffffff;
   }
   .period-tag {
     background-color: rgba(0, 0, 0, 0.1);

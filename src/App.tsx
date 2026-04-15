@@ -816,6 +816,7 @@ export function App() {
         <SystemSettingManager 
           backendUrl={BACKEND_URL} 
           onClose={() => showSystemSettingManager.value = false}
+          themes={colorThemes.value}
         />
       )}
 

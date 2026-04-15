@@ -52,9 +52,39 @@ export async function exportTimetableToExcel({
   const isCourseTimeline = viewType === 'course_timeline';
   const effectivePeriods = isCourseTimeline ? [{ id: 'p-all', name: '', startTime: '', endTime: '', order: 0 }] : periods;
 
-  const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
-  const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
+  const getDayInfo = (day: number) => {
+    const weekendDaysStr = systemSettings?.weekendDays || "0:default:true,1:default:false,2:default:false,3:default:false,4:default:false,5:default:false,6:vivid:true";
+    const parts = weekendDaysStr.split(',').filter(p => p !== '');
+    const part = parts.find(p => p.startsWith(`${day}:`));
+    if (part) {
+      const bits = part.split(':');
+      if (bits.length >= 3) {
+        return { themeId: bits[1], isWeekend: bits[2] === 'true' };
+      }
+      if (bits.length === 2) {
+        return { themeId: bits[1], isWeekend: true };
+      }
+    }
+    const simpleIndices = weekendDaysStr.split(',').filter(p => !p.includes(':'));
+    if (simpleIndices.includes(day.toString())) {
+      return { themeId: 'default', isWeekend: true };
+    }
+    return { themeId: 'default', isWeekend: false };
+  };
+
+  const isWeekend = (date: Date) => getDayInfo(date.getDay()).isWeekend;
   const holidayTheme = systemSettings?.holidayTheme || 'default';
+
+  const getHolidayOrWeekendTheme = (date: Date) => {
+    const holiday = getHoliday(date);
+    const dayInfo = getDayInfo(date.getDay());
+    
+    if (holiday || dayInfo.isWeekend) {
+      return getThemeColor(colorThemes, 'HOLIDAY', dayInfo.themeId);
+    }
+    
+    return null;
+  };
   
   const getDayCount = () => {
     if (viewType === 'day') return 1;
@@ -166,8 +196,8 @@ export async function exportTimetableToExcel({
         const holiday = getHoliday(date);
         const isWknd = isWeekend(date);
         
-        const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
-        if ((holiday || isWknd) && hTheme) {
+        const hTheme = getHolidayOrWeekendTheme(date);
+        if (hTheme) {
           c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
           c.font = { ...c.font, color: { argb: hexToARGB(hTheme.foreground) } };
         }
@@ -303,10 +333,10 @@ export async function exportTimetableToExcel({
     displayDates.forEach((date, dIdx) => {
       const isWknd = isWeekend(date);
       const holiday = getHoliday(date);
-      const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+      const hTheme = getHolidayOrWeekendTheme(date);
       
       let bgColor = 'FFFFFFFF';
-      if ((holiday || isWknd) && hTheme) {
+      if (hTheme) {
         bgColor = hexToARGB(hTheme.background);
       }
       
@@ -430,9 +460,9 @@ export async function exportTimetableToExcel({
       displayDates.forEach((date, dIdx) => {
         const isWknd = isWeekend(date);
         const holiday = getHoliday(date);
-        const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+        const hTheme = getHolidayOrWeekendTheme(date);
         let bgColor = 'FFFFFFFF';
-        if ((holiday || isWknd) && hTheme) {
+        if (hTheme) {
           bgColor = hexToARGB(hTheme.background);
         }
         effectivePeriods.forEach((_, pIdx) => {
@@ -533,9 +563,40 @@ export async function exportPersonalMonthlyToExcel({
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
     const totalPeriods = periods.length || 8;
-    const weekendDayIndices = (systemSettings?.weekendDays || "0,6").split(',').map(Number);
-    const isWeekend = (date: Date) => weekendDayIndices.includes(date.getDay());
+    
+    const getDayInfo = (day: number) => {
+      const weekendDaysStr = systemSettings?.weekendDays || "0:default:true,1:default:false,2:default:false,3:default:false,4:default:false,5:default:false,6:vivid:true";
+      const parts = weekendDaysStr.split(',').filter(p => p !== '');
+      const part = parts.find(p => p.startsWith(`${day}:`));
+      if (part) {
+        const bits = part.split(':');
+        if (bits.length >= 3) {
+          return { themeId: bits[1], isWeekend: bits[2] === 'true' };
+        }
+        if (bits.length === 2) {
+          return { themeId: bits[1], isWeekend: true };
+        }
+      }
+      const simpleIndices = weekendDaysStr.split(',').filter(p => !p.includes(':'));
+      if (simpleIndices.includes(day.toString())) {
+        return { themeId: 'default', isWeekend: true };
+      }
+      return { themeId: 'default', isWeekend: false };
+    };
+
+    const isWeekend = (date: Date) => getDayInfo(date.getDay()).isWeekend;
     const holidayTheme = systemSettings?.holidayTheme || 'default';
+
+    const getHolidayOrWeekendTheme = (date: Date) => {
+      const holiday = getHoliday(date, holidays);
+      const dayInfo = getDayInfo(date.getDay());
+      
+      if (holiday || dayInfo.isWeekend) {
+        return getThemeColor(colorThemes, 'HOLIDAY', dayInfo.themeId);
+      }
+      
+      return null;
+    };
 
     const getHoliday = (date: Date) => {
       if (!date) return null;
@@ -656,10 +717,10 @@ export async function exportPersonalMonthlyToExcel({
         cell.font = { bold: true, size: 10 };
         cell.alignment = { horizontal: 'left', vertical: 'middle' };
 
-        const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+        const hTheme = getHolidayOrWeekendTheme(day);
         let bgColor = 'FFFFFFFF';
         let textColor = 'FF000000';
-        if ((holiday || isWknd) && hTheme) {
+        if (hTheme) {
           bgColor = hexToARGB(hTheme.background);
           textColor = hexToARGB(hTheme.foreground);
         }

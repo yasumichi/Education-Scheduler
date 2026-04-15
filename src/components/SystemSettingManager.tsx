@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
+import { ColorTheme } from '../types';
 import './SystemSettingManager.css';
 
 interface Props {
   backendUrl: string;
   onClose: () => void;
+  themes: ColorTheme[];
 }
 
-export function SystemSettingManager({ backendUrl, onClose }: Props) {
+export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
   const { t } = useTranslation();
   const [allowPublicSignup, setAllowPublicSignup] = useState(true);
   const [yearViewStartMonth, setYearViewStartMonth] = useState(4);
   const [yearViewStartDay, setYearViewStartDay] = useState(1);
-  const [weekendDays, setWeekendDays] = useState("0,6");
-  const [holidayTheme, setHolidayTheme] = useState("default");
+  // Default format: day:themeId:isWeekend
+  const [weekendDays, setWeekendDays] = useState("0:default:true,1:default:false,2:default:false,3:default:false,4:default:false,5:default:false,6:vivid:true");
+
+  const holidayThemes = themes.filter(t => t.category === 'HOLIDAY');
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -24,8 +28,7 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
           setAllowPublicSignup(data.allowPublicSignup);
           setYearViewStartMonth(data.yearViewStartMonth || 4);
           setYearViewStartDay(data.yearViewStartDay || 1);
-          setWeekendDays(data.weekendDays || "0,6");
-          setHolidayTheme(data.holidayTheme || "default");
+          setWeekendDays(data.weekendDays || "0:default:true,1:default:false,2:default:false,3:default:false,4:default:false,5:default:false,6:vivid:true");
         }
       } catch (err) {
         console.error('Failed to fetch settings:', err);
@@ -34,13 +37,40 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
     fetchSettings();
   }, []);
 
-  const toggleWeekendDay = (day: number) => {
-    const days = weekendDays ? weekendDays.split(',').map(Number) : [];
-    if (days.includes(day)) {
-      setWeekendDays(days.filter(d => d !== day).sort().join(','));
-    } else {
-      setWeekendDays([...days, day].sort().join(','));
+  const getDayInfo = (day: number) => {
+    const parts = weekendDays.split(',').filter(p => p !== '');
+    const part = parts.find(p => p.startsWith(`${day}:`));
+    if (part) {
+      const bits = part.split(':');
+      if (bits.length >= 3) {
+        return { themeId: bits[1], isWeekend: bits[2] === 'true' };
+      }
+      if (bits.length === 2) {
+        // Migration from day:themeId
+        return { themeId: bits[1], isWeekend: true };
+      }
     }
+    
+    // Fallback for old comma-separated indices format
+    const simpleIndices = weekendDays.split(',').filter(p => !p.includes(':'));
+    if (simpleIndices.includes(day.toString())) {
+      return { themeId: 'default', isWeekend: true };
+    }
+
+    return { themeId: 'default', isWeekend: false };
+  };
+
+  const updateDayInfo = (day: number, themeId: string, isWeekend: boolean) => {
+    const newParts = [];
+    for (let i = 0; i < 7; i++) {
+      if (i === day) {
+        newParts.push(`${i}:${themeId}:${isWeekend}`);
+      } else {
+        const info = getDayInfo(i);
+        newParts.push(`${i}:${info.themeId}:${info.isWeekend}`);
+      }
+    }
+    setWeekendDays(newParts.join(','));
   };
 
   const handleSave = async () => {
@@ -54,13 +84,12 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
           yearViewStartMonth,
           yearViewStartDay,
           weekendDays,
-          holidayTheme
+          holidayTheme: 'default'
         })
       });
       if (res.ok) {
         alert(t('Settings saved successfully'));
         onClose();
-        // ページをリロードするか、親コンポーネントの状態を更新して変更を反映させる
         window.location.reload(); 
       } else {
         alert(t('Failed to save settings'));
@@ -69,6 +98,8 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
       console.error('Error saving settings:', err);
     }
   };
+
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div className="system-setting-overlay">
@@ -120,41 +151,40 @@ export function SystemSettingManager({ backendUrl, onClose }: Props) {
               </div>
             </div>
             <p className="setting-description">
-              {t('Used as the start date for the "1 year" view.')}
+              {t('Used as the start date for the year-based views (3 months, 6 months, 1 year).')}
             </p>
           </div>
 
           <div className="setting-item">
             <label className="field-label">{t('Weekend Days')}</label>
-            <div className="weekend-selector">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
-                <label key={i} className="checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    checked={weekendDays.split(',').includes(i.toString())}
-                    onChange={() => toggleWeekendDay(i)}
-                  />
-                  {t(day)}
-                </label>
-              ))}
+            <div className="weekend-selector-vertical">
+              {daysOfWeek.map((day, i) => {
+                const { themeId, isWeekend } = getDayInfo(i);
+                return (
+                  <div key={i} className="weekend-day-row">
+                    <label className="checkbox-label">
+                      <input 
+                        type="checkbox" 
+                        checked={isWeekend}
+                        onChange={() => updateDayInfo(i, themeId, !isWeekend)}
+                      />
+                      {t(day)}
+                    </label>
+                    <select 
+                      value={themeId || 'default'}
+                      onChange={(e) => updateDayInfo(i, e.currentTarget.value, isWeekend)}
+                      className="theme-select-mini"
+                    >
+                      {holidayThemes.map(theme => (
+                        <option key={theme.id} value={theme.key || theme.id}>{t(theme.name)}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
             </div>
             <p className="setting-description">
               {t('Selected days will be styled as weekends in the calendar.')}
-            </p>
-          </div>
-
-          <div className="setting-item">
-            <label className="field-label">{t('Holiday Theme')}</label>
-            <select 
-              value={holidayTheme}
-              onChange={(e) => setHolidayTheme(e.currentTarget.value)}
-              className="theme-select"
-            >
-              <option value="default">{t('Default')}</option>
-              <option value="vivid">{t('Vivid')}</option>
-            </select>
-            <p className="setting-description">
-              {t('Choose the base theme for holidays and weekends.')}
             </p>
           </div>
         </div>
