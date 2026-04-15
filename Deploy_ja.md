@@ -58,9 +58,9 @@ npm install
 cd ..
 ```
 
-## 5. データベースの初期化とシード (DB Initialization)
+## 5. データベースの初期化とユーザー作成 (DB Initialization)
 
-Prisma 7 を使用してテーブルを作成し、初期テストデータ（ユーザー含む）を投入します。
+Prisma 7 を使用してテーブルを作成し、データを投入します。
 **本プロジェクトは PostgreSQL 用の `pg` ドライバーアダプターを使用するように構成されています。**
 
 ```bash
@@ -69,6 +69,9 @@ cd backend
 # テーブル作成 (スキーマの反映)
 # ※ユーザーに DB 作成権限がない場合は db push を使用
 npx prisma db push
+
+# 管理者ユーザーの作成 (例)
+npm run create-admin -- admin@example.com admin123
 
 # テストデータの投入 (Seed)
 npx prisma db seed
@@ -87,16 +90,13 @@ npm run dev
 - **フロントエンド:** `http://localhost:5173` (またはサーバーのIP)
 - **バックエンド API:** `http://localhost:3001/api` (またはサーバーのIP)
 
-## 7. テスト用ログイン情報 (Test Credentials)
+## 7. ユーザー管理 (User Management)
 
-起動後、以下の情報でログインして動作を確認できます。
+プロジェクトルートから以下のコマンドを使用して管理ユーザーを追加できます。
 
-- **管理者 (Admin):**
-  - Email: `admin@example.com`
-  - Password: `admin123`
-- **講師 (Teacher):**
-  - Email: `teacher@example.com`
-  - Password: `teacher123`
+```bash
+npm --prefix backend run create-admin -- <メールアドレス> <パスワード>
+```
 
 ---
 

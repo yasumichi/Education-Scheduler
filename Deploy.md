@@ -58,9 +58,9 @@ npm install
 cd ..
 ```
 
-## 5. DB Initialization and Seeding
+## 5. DB Initialization and User Creation
 
-Use Prisma 7 to create tables and populate initial test data (including users).
+Use Prisma 7 to create tables and populate data.
 **This project is configured to use the `pg` driver adapter for PostgreSQL.**
 
 ```bash
@@ -70,7 +70,10 @@ cd backend
 # * Use 'db push' if the user doesn't have permissions to create DBs
 npx prisma db push
 
-# Seed test data
+# Create Admin User (Example)
+npm run create-admin -- admin@example.com admin123
+
+# Seed test data (optional)
 npx prisma db seed
 
 cd ..
@@ -87,16 +90,13 @@ npm run dev
 - **Frontend:** `http://localhost:5173` (or server IP)
 - **Backend API:** `http://localhost:3001/api` (or server IP)
 
-## 7. Test Credentials
+## 7. User Management
 
-After starting, you can log in with the following credentials to verify operation.
+You can add administrative users using the following command from the project root:
 
-- **Admin:**
-  - Email: `admin@example.com`
-  - Password: `admin123`
-- **Teacher:**
-  - Email: `teacher@example.com`
-  - Password: `teacher123`
+```bash
+npm --prefix backend run create-admin -- <email> <password>
+```
 
 ---
 
