@@ -777,6 +777,11 @@ export function Timetable({
     overflowX: isDayView ? 'hidden' : 'auto'
   } as JSX.CSSProperties;
 
+  // **Modified Fix: Stop rendering the grid if no resources for course timeline**
+  if (isCourseTimeline && filteredResources.length === 0) {
+    return null; // Stop rendering entirely
+  }
+
   return (
     <div className={`timetable-wrapper holiday-theme-${holidayTheme}`} style={wrapperStyle}>
       <div 
