@@ -588,7 +588,7 @@ export async function exportPersonalMonthlyToExcel({
     const holidayTheme = systemSettings?.holidayTheme || 'default';
 
     const getHolidayOrWeekendTheme = (date: Date) => {
-      const holiday = getHoliday(date, holidays);
+      const holiday = getHoliday(date);
       const dayInfo = getDayInfo(date.getDay());
       
       if (holiday || dayInfo.isWeekend) {
