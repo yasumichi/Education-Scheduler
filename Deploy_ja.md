@@ -195,7 +195,7 @@ After=network.target postgresql.service
 [Service]
 Type=simple
 User=yasumichi
-WorkingDirectory=/home/yasumichi/projects/Education-Scheduler/backend
+WorkingDirectory=/path/to/Education-Scheduler/backend
 ExecStart=/usr/bin/node dist/index.js
 Restart=always
 # 環境変数は .env から読み込まれますが、必要に応じてここでも指定可能です

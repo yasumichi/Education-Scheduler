@@ -195,7 +195,7 @@ After=network.target postgresql.service
 [Service]
 Type=simple
 User=yasumichi
-WorkingDirectory=/home/yasumichi/projects/Education-Scheduler/backend
+WorkingDirectory=/path/to/Education-Scheduler/backend
 ExecStart=/usr/bin/node dist/index.js
 Restart=always
 # Environment variables are loaded from .env, but can also be specified here if needed
