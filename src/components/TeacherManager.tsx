@@ -9,11 +9,13 @@ interface Props {
   onUpdate: () => void;
   resources: Resource[];
   labels: ResourceLabels;
+  isAdmin?: boolean;
+  initialTeacherId?: string | null;
 }
 
-export function TeacherManager({ backendUrl, onClose, onUpdate, resources, labels }: Props) {
+export function TeacherManager({ backendUrl, onClose, onUpdate, resources, labels, isAdmin = true, initialTeacherId }: Props) {
   const { t } = useTranslation();
-  const [editingTeacherId, setEditingTeacherId] = useState<string | null>(null);
+  const [editingTeacherId, setEditingTeacherId] = useState<string | null>(initialTeacherId || null);
   const [teachersList, setTeachersList] = useState<Resource[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -196,9 +198,11 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
           {!editingTeacherId ? (
             <>
               <div className="header-actions">
-                <button className="add-button" onClick={() => setEditingTeacherId('new')}>
-                  {t('Add New {{resource}}', { resource: labels.teacher })}
-                </button>
+                {isAdmin && (
+                  <button className="add-button" onClick={() => setEditingTeacherId('new')}>
+                    {t('Add New {{resource}}', { resource: labels.teacher })}
+                  </button>
+                )}
                 <div className="search-box">
                   <input 
                     type="text" 
@@ -213,10 +217,10 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
                 <table>
                   <thead>
                     <tr>
-                      <th style={{ width: '30px' }}></th>
-                      <th style={{ width: '70px' }}>{t('Move')}</th>
+                      {isAdmin && <th style={{ width: '30px' }}></th>}
+                      {isAdmin && <th style={{ width: '70px' }}>{t('Move')}</th>}
                       <th>{t('Name')}</th>
-                      <th>{t('Linked User')}</th>
+                      {isAdmin && <th>{t('Linked User')}</th>}
                       <th style={{ width: '120px' }}>{t('Actions')}</th>
                     </tr>
                   </thead>
@@ -225,26 +229,28 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
                       const listIdx = teachersList.findIndex(item => item.id === teacher.id);
                       return (
                         <tr key={teacher.id}
-                            draggable={!isFiltering}
-                            onDragStart={() => !isFiltering && handleDragStart(listIdx)}
-                            onDragEnter={() => !isFiltering && handleDragEnter(listIdx)}
-                            onDragEnd={handleDragEnd}
-                            onDragOver={(e) => !isFiltering && e.preventDefault()}
-                            className={`draggable-row ${isFiltering ? 'non-draggable' : ''}`}
+                            draggable={isAdmin && !isFiltering}
+                            onDragStart={() => isAdmin && !isFiltering && handleDragStart(listIdx)}
+                            onDragEnter={() => isAdmin && !isFiltering && handleDragEnter(listIdx)}
+                            onDragEnd={() => isAdmin && handleDragEnd()}
+                            onDragOver={(e) => isAdmin && !isFiltering && e.preventDefault()}
+                            className={`draggable-row ${isFiltering || !isAdmin ? 'non-draggable' : ''}`}
                         >
-                          <td className="drag-handle">{isFiltering ? '•' : '⋮⋮'}</td>
-                          <td>
-                            <div className="move-buttons">
-                              <button className="move-btn" onClick={() => moveItem(listIdx, 'up')} disabled={isFiltering || listIdx === 0}>↑</button>
-                              <button className="move-btn" onClick={() => moveItem(listIdx, 'down')} disabled={isFiltering || listIdx === teachersList.length - 1}>↓</button>
-                            </div>
-                          </td>
+                          {isAdmin && <td className="drag-handle">{isFiltering ? '•' : '⋮⋮'}</td>}
+                          {isAdmin && (
+                            <td>
+                              <div className="move-buttons">
+                                <button className="move-btn" onClick={() => moveItem(listIdx, 'up')} disabled={isFiltering || listIdx === 0}>↑</button>
+                                <button className="move-btn" onClick={() => moveItem(listIdx, 'down')} disabled={isFiltering || listIdx === teachersList.length - 1}>↓</button>
+                              </div>
+                            </td>
+                          )}
                           <td style={{ fontWeight: 'bold' }}>{teacher.name}</td>
-                          <td>{getUserEmail(teacher.userId)}</td>
+                          {isAdmin && <td>{getUserEmail(teacher.userId)}</td>}
                           <td>
                             <div className="action-buttons">
-                              <button className="edit-btn" onClick={() => setEditingTeacherId(teacher.id)}>{t('Edit')}</button>
-                              <button className="delete-btn" onClick={() => handleDelete(teacher.id)}>{t('Delete')}</button>
+                              <button className="edit-btn" onClick={() => setEditingTeacherId(teacher.id)}>{isAdmin ? t('Edit') : t('View')}</button>
+                              {isAdmin && <button className="delete-btn" onClick={() => handleDelete(teacher.id)}>{t('Delete')}</button>}
                             </div>
                           </td>
                         </tr>
@@ -253,42 +259,51 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
                   </tbody>
                 </table>
               </div>
-              <p className="hint-text">
-                {isFiltering ? t('Reordering is disabled during filtering') : t('Drag and drop rows or use arrows to change order')}
-              </p>
-              <div className="list-footer">
-                <button className="save-order-button" onClick={handleSaveOrder} disabled={isFiltering}>{t('Save Order')}</button>
-              </div>
+              {isAdmin && (
+                <p className="hint-text">
+                  {isFiltering ? t('Reordering is disabled during filtering') : t('Drag and drop rows or use arrows to change order')}
+                </p>
+              )}
+              {isAdmin && (
+                <div className="list-footer">
+                  <button className="save-order-button" onClick={handleSaveOrder} disabled={isFiltering}>{t('Save Order')}</button>
+                </div>
+              )}
             </>
           ) : (
             <div className="teacher-form">
-              <h3>{editingTeacherId === 'new' ? t('Add New {{resource}}', { resource: labels.teacher }) : t('Edit')}</h3>
+              <h3>{editingTeacherId === 'new' ? t('Add New {{resource}}', { resource: labels.teacher }) : (isAdmin ? t('Edit') : t('View'))}</h3>
               <div className="form-group">
                 <label>{t('{{resource}} Name', { resource: labels.teacher })}</label>
                 <input 
                   type="text" 
                   value={formData.name} 
                   onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
+                  readOnly={!isAdmin}
                 />
               </div>
-              <div className="form-group">
-                <label>{t('Linked User (Optional)')}</label>
-                <select 
-                  value={formData.userId} 
-                  onChange={(e) => setFormData({ ...formData, userId: e.currentTarget.value })}
-                >
-                  <option value="">{t('No link')}</option>
-                  {users.map(u => (
-                    <option key={u.id} value={u.id}>{u.email} ({u.role})</option>
-                  ))}
-                </select>
-              </div>
+                {isAdmin && (
+                  <div className="form-group">
+                    <label>{t('Linked User (Optional)')}</label>
+                    <select 
+                      value={formData.userId} 
+                      onChange={(e) => setFormData({ ...formData, userId: e.currentTarget.value })}
+                      disabled={!isAdmin}
+                    >
+                      <option value="">{t('No link')}</option>
+                      {users.map(u => (
+                        <option key={u.id} value={u.id}>{u.email} ({u.role})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               <div className="form-group">
                 <label>{t('Order')}</label>
                 <input 
                   type="number" 
                   value={formData.order} 
                   onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
+                  readOnly={!isAdmin}
                 />
               </div>
             </div>
@@ -298,12 +313,14 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
         <div className="teacher-manager-footer">
           {editingTeacherId ? (
             <>
-              {editingTeacherId !== 'new' && (
+              {isAdmin && editingTeacherId !== 'new' && (
                 <button className="delete-button" onClick={() => handleDelete(editingTeacherId)}>{t('Delete')}</button>
               )}
               <div className="footer-right">
-                <button className="cancel-button" onClick={() => setEditingTeacherId(null)}>{t('Cancel')}</button>
-                <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+                <button className="cancel-button" onClick={() => isAdmin ? setEditingTeacherId(null) : onClose()}>
+                  {isAdmin ? t('Cancel') : t('Close')}
+                </button>
+                {isAdmin && <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>}
               </div>
             </>
           ) : (

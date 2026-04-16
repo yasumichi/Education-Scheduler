@@ -11,9 +11,10 @@ interface Props {
   labels: ResourceLabels;
   systemSettings: SystemSetting | null;
   initialCourseId?: string | null;
+  isAdmin?: boolean;
 }
 
-export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels, systemSettings, initialCourseId }: Props) {
+export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels, systemSettings, initialCourseId, isAdmin = true }: Props) {
   const { t } = useTranslation();
   const [editingCourseId, setEditingCourseId] = useState<string | null>(initialCourseId || null);
   const [coursesList, setCoursesList] = useState<Resource[]>([]);
@@ -411,9 +412,11 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           {!editingCourseId ? (
             <>
               <div className="header-actions">
-                <button className="add-button" onClick={() => setEditingCourseId('new')}>
-                  {t('Add New {{resource}}', { resource: labels.course })}
-                </button>
+                {isAdmin && (
+                  <button className="add-button" onClick={() => setEditingCourseId('new')}>
+                    {t('Add New {{resource}}', { resource: labels.course })}
+                  </button>
+                )}
                 <div className="year-filter">
                   <label>{t('Year')}:</label>
                   <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.currentTarget.value))}>
@@ -434,8 +437,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 <table>
                   <thead>
                     <tr>
-                      <th style={{ width: '30px' }}></th>
-                      <th style={{ width: '70px' }}>{t('Move')}</th>
+                      {isAdmin && <th style={{ width: '30px' }}></th>}
+                      {isAdmin && <th style={{ width: '70px' }}>{t('Move')}</th>}
                       <th>{t('Name')}</th>
                       <th>{t('Period')}</th>
                       <th>{labels.mainTeacher}</th>
@@ -448,20 +451,22 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                       const listIdx = coursesList.findIndex(item => item.id === c.id);
                       return (
                         <tr key={c.id}
-                            draggable
-                            onDragStart={() => handleDragStart(listIdx)}
-                            onDragEnter={() => handleDragEnter(listIdx)}
-                            onDragEnd={handleDragEnd}
-                            onDragOver={(e) => e.preventDefault()}
-                            className="draggable-row"
+                            draggable={isAdmin}
+                            onDragStart={() => isAdmin && handleDragStart(listIdx)}
+                            onDragEnter={() => isAdmin && handleDragEnter(listIdx)}
+                            onDragEnd={() => isAdmin && handleDragEnd()}
+                            onDragOver={(e) => isAdmin && e.preventDefault()}
+                            className={`draggable-row ${!isAdmin ? 'non-draggable' : ''}`}
                         >
-                          <td className="drag-handle">⋮⋮</td>
-                          <td>
-                            <div className="move-buttons">
-                              <button className="move-btn" onClick={() => moveItem(listIdx, 'up')} disabled={listIdx === 0}>↑</button>
-                              <button className="move-btn" onClick={() => moveItem(listIdx, 'down')} disabled={listIdx === coursesList.length - 1}>↓</button>
-                            </div>
-                          </td>
+                          {isAdmin && <td className="drag-handle">⋮⋮</td>}
+                          {isAdmin && (
+                            <td>
+                              <div className="move-buttons">
+                                <button className="move-btn" onClick={() => moveItem(listIdx, 'up')} disabled={listIdx === 0}>↑</button>
+                                <button className="move-btn" onClick={() => moveItem(listIdx, 'down')} disabled={listIdx === coursesList.length - 1}>↓</button>
+                              </div>
+                            </td>
+                          )}
                           <td style={{ fontWeight: 'bold' }}>{c.name}</td>
                           <td>{c.startDate && c.endDate ? `${c.startDate} ~ ${c.endDate}` : '-'}</td>
                           <td>{c.chiefTeacherId ? getTeacherName(c.chiefTeacherId) : '-'}</td>
@@ -471,8 +476,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                           </td>
                           <td>
                             <div className="action-buttons">
-                              <button className="edit-btn" onClick={() => setEditingCourseId(c.id)}>{t('Edit')}</button>
-                              <button className="delete-btn" onClick={() => handleDelete(c.id)}>{t('Delete')}</button>
+                              <button className="edit-btn" onClick={() => setEditingCourseId(c.id)}>{isAdmin ? t('Edit') : t('View')}</button>
+                              {isAdmin && <button className="delete-btn" onClick={() => handleDelete(c.id)}>{t('Delete')}</button>}
                             </div>
                           </td>
                         </tr>
@@ -481,16 +486,18 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   </tbody>
                 </table>
               </div>
-              <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>
-              <div className="list-footer">
-                <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
-              </div>
+              {isAdmin && <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>}
+              {isAdmin && (
+                <div className="list-footer">
+                  <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
+                </div>
+              )}
             </>
           ) : (
             <div className="course-form">
-              <h3>{editingCourseId === 'new' ? t('Add New {{resource}}', { resource: labels.course }) : t('Edit')}</h3>
+              <h3>{editingCourseId === 'new' ? t('Add New {{resource}}', { resource: labels.course }) : (isAdmin ? t('Edit') : t('View'))}</h3>
               
-              {showDuplicateLessons && (
+              {showDuplicateLessons && isAdmin && (
                 <div className="duplicate-lessons-dialog">
                   <h3>{t('Duplicate Lessons from Another Course')}</h3>
                   <div className="form-group">
@@ -536,6 +543,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   type="text" 
                   value={formData.name} 
                   onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
+                  readOnly={!isAdmin}
                 />
               </div>
               <div className="form-row">
@@ -545,6 +553,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                     type="date" 
                     value={formData.startDate} 
                     onInput={(e) => setFormData({ ...formData, startDate: e.currentTarget.value })}
+                    readOnly={!isAdmin}
                   />
                 </div>
                 <div className="form-group">
@@ -553,6 +562,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                     type="date" 
                     value={formData.endDate} 
                     onInput={(e) => setFormData({ ...formData, endDate: e.currentTarget.value })}
+                    readOnly={!isAdmin}
                   />
                 </div>
               </div>
@@ -562,6 +572,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   type="number" 
                   value={formData.order} 
                   onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
+                  readOnly={!isAdmin}
                 />
               </div>
 
@@ -570,6 +581,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 <select 
                   value={formData.mainRoomId} 
                   onChange={(e) => setFormData({ ...formData, mainRoomId: e.currentTarget.value })}
+                  disabled={!isAdmin}
                 >
                   <option value="">{t('Select Room')}</option>
                   {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -582,6 +594,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   <select 
                     value={formData.chiefTeacherId} 
                     onChange={(e) => setFormData({ ...formData, chiefTeacherId: e.currentTarget.value })}
+                    disabled={!isAdmin}
                   >
                     <option value="">{t('Select Teacher')}</option>
                     {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -594,6 +607,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                     value={formData.mainTeacherLabel} 
                     onInput={(e) => setFormData({ ...formData, mainTeacherLabel: e.currentTarget.value })}
                     placeholder={labels.mainTeacher}
+                    readOnly={!isAdmin}
                   />
                 </div>
               </div>
@@ -611,7 +625,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                           <input 
                             type="checkbox" 
                             checked={formData.assistantTeacherIds.includes(t.id)}
-                            onChange={() => toggleAssistantTeacher(t.id)}
+                            onChange={() => isAdmin && toggleAssistantTeacher(t.id)}
+                            disabled={!isAdmin}
                           />
                           {t.name}
                         </label>
@@ -626,6 +641,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                     value={formData.subTeacherLabel} 
                     onInput={(e) => setFormData({ ...formData, subTeacherLabel: e.currentTarget.value })}
                     placeholder={labels.subTeacher}
+                    readOnly={!isAdmin}
                   />
                 </div>
               </div>
@@ -639,28 +655,32 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                       placeholder={t('{{resource}} Name', { resource: labels.subject })}
                       value={s.name}
                       onInput={(e) => handleSubjectChange(index, 'name', e.currentTarget.value)}
+                      readOnly={!isAdmin}
                     />
                     <input 
                       type="number" 
                       placeholder={t('Total Periods')}
                       value={s.totalPeriods}
                       onInput={(e) => handleSubjectChange(index, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
+                      readOnly={!isAdmin}
                     />
-                    <button className="remove-btn" onClick={() => handleRemoveSubject(index)}>×</button>
+                    {isAdmin && <button className="remove-btn" onClick={() => handleRemoveSubject(index)}>×</button>}
                   </div>
                 ))}
-                <div className="subjects-actions">
-                  <button className="add-btn" onClick={handleAddSubject}>{t('Add {{resource}}', { resource: labels.subject })}</button>
-                  <label className="import-csv-label">
-                    <input
-                      type="file"
-                      accept=".csv"
-                      style={{ display: 'none' }}
-                      onChange={handleImportCSV}
-                    />
-                    <span className="import-btn">{t('Import CSV')}</span>
-                  </label>
-                </div>
+                {isAdmin && (
+                  <div className="subjects-actions">
+                    <button className="add-btn" onClick={handleAddSubject}>{t('Add {{resource}}', { resource: labels.subject })}</button>
+                    <label className="import-csv-label">
+                      <input
+                        type="file"
+                        accept=".csv"
+                        style={{ display: 'none' }}
+                        onChange={handleImportCSV}
+                      />
+                      <span className="import-btn">{t('Import CSV')}</span>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -669,17 +689,20 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         <div className="dialog-footer">
           {editingCourseId ? (
             <>
-              {editingCourseId !== 'new' && (
+              {isAdmin && editingCourseId !== 'new' && (
                 <div className="footer-left">
                   <button className="delete-button" onClick={() => handleDelete(editingCourseId)}>{t('Delete')}</button>
                   <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate Course')}</button>
                   <button className="duplicate-lessons-btn" onClick={() => setShowDuplicateLessons(true)}>{t('Duplicate Lessons')}</button>
                 </div>
               )}
-              <div className="footer-right">
-                <button className="cancel-button" onClick={() => setEditingCourseId(null)}>{t('Cancel')}</button>
-                <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+              <div className="form-actions">
+                <button className="cancel-button" onClick={() => isAdmin ? setEditingCourseId(null) : onClose()}>
+                  {isAdmin ? t('Cancel') : t('Close')}
+                </button>
+                {isAdmin && <button className="save-button" onClick={handleSave}>{t('Save')}</button>}
               </div>
+
             </>
           ) : (
             <div className="footer-right">

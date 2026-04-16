@@ -21,13 +21,16 @@ interface Props {
   onEmptyEventClick?: (date: string, periodId: string) => void;
   onLessonClick?: (lesson: Lesson) => void;
   onCourseClick?: (course: Resource) => void;
+  onRoomClick?: (room: Resource) => void;
+  onTeacherClick?: (teacher: Resource) => void;
   onViewWeekly?: (courseId: string) => void;
   onEmptyResourceCellClick?: (resourceId: string, date: string, periodId: string) => void;
 }
 
 export function Timetable({ 
   periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings,
-  colorThemes, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onViewWeekly, onEmptyResourceCellClick 
+  colorThemes, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onRoomClick, onTeacherClick,
+  onViewWeekly, onEmptyResourceCellClick 
 }: Props) {
   const { t } = useTranslation();
   const locale = navigator.language;
@@ -148,7 +151,6 @@ export function Timetable({
 
   const filteredResources = allResourcesOfMode.filter(r => !hiddenResourceIds.value.has(r.id));
 
-
   const toggleResource = (id: string) => {
     const next = new Set(hiddenResourceIds.value);
     if (next.has(id)) next.delete(id);
@@ -196,7 +198,6 @@ export function Timetable({
 
   const stickyLeft = { position: 'sticky', left: 0 } as JSX.CSSProperties;
 
-  // 以前はテキスト選択中を無視していたが、ダブルクリックによる編集を優先するため常に実行
   const handleIntentionalClick = (callback: () => void) => {
     callback();
   };
@@ -233,7 +234,6 @@ export function Timetable({
     </div>
   );
 
-  // 日付ヘッダーの生成
   const dateHeaders = (() => {
     if (isCourseTimeline) {
       const monthHeaders: any[] = [];
@@ -370,7 +370,6 @@ export function Timetable({
     ));
   });
 
-  // 行内での重なりを計算する汎用関数
   const calculateLayout = (items: { id: string, start: number, end: number }[]) => {
     if (items.length === 0) return [];
     const placements: { id: string, start: number, end: number, level: number, maxLevelInGroup: number }[] = [];
@@ -389,7 +388,6 @@ export function Timetable({
     return placements;
   };
 
-  // --- 行事行（Row 3 or 4）のデータ準備 ---
   const row3Items: { id: string, start: number, end: number, type: 'holiday' | 'event', data: any }[] = [];
   displayDates.forEach((date, dIdx) => {
     const holiday = getHoliday(date);
@@ -423,7 +421,6 @@ export function Timetable({
     if (e.showInEventRow !== false || resourceIdList.length === 0) {
       const startDayIdx = displayDates.findIndex(d => isSameDay(d, eStart));
       const endDayIdx = displayDates.findIndex(d => isSameDay(d, eEnd));
-      
       const sCol = (startDayIdx === -1) ? 2 : startDayIdx * effectivePeriods.length + 2;
       const eCol = (endDayIdx === -1) ? (displayDates.length * effectivePeriods.length + 1) : endDayIdx * effectivePeriods.length + effectivePeriods.length + 1;
       row3Items.push({ id: `event-${e.id}`, start: sCol, end: eCol, type: 'event', data: e });
@@ -452,9 +449,7 @@ export function Timetable({
     }
 
     return (
-      <div key={layout.id} className="event-card holiday-card"
-           title={h.name}
-           style={style}>
+      <div key={layout.id} className="event-card holiday-card" title={h.name} style={style}>
         {h.name}
       </div>
     );
@@ -466,7 +461,6 @@ export function Timetable({
     const itemHeight = unitHeight - 8;
     const top = headerHeight + 4 + (layout.level * unitHeight);
 
-    // テーマカラーの取得
     const theme = getThemeColor('EVENT', e.name) || getThemeColor('EVENT', 'default');
     const bgColor = e.color || theme?.background || '#fef3c7';
     const textColor = theme?.foreground || 'inherit';
@@ -500,12 +494,10 @@ export function Timetable({
     );
   });
 
-  // --- リソース行のデータ準備 ---
   const resourceRowItems: JSX.Element[] = [];
   
   filteredResources.forEach((res, resIdx) => {
     if (isCourseTimeline) {
-      // 講座タイムラインモード: このリソースに関連する「講座」を取得
       const allCourses = resources.filter(r => r.type === 'course' && r.startDate && r.endDate);
       let relatedCourses: Resource[] = [];
       if (viewMode === 'course') {
@@ -513,10 +505,7 @@ export function Timetable({
       } else if (viewMode === 'teacher') {
         relatedCourses = allCourses.filter(c => {
           const chiefId = c.chiefTeacherId;
-          const subIds = [
-            ...(c.assistantTeacherIds || []),
-            ...(c.assistantTeachers || []).map(at => at.id)
-          ];
+          const subIds = [...(c.assistantTeacherIds || []), ...(c.assistantTeachers || []).map(at => at.id)];
           return chiefId === res.id || subIds.includes(res.id);
         });
       } else if (viewMode === 'room') {
@@ -546,10 +535,7 @@ export function Timetable({
         const totalPeriods = workDays * periods.length;
 
         const chiefTeacher = resources.find(r => r.id === c.chiefTeacherId);
-        const subIds = [
-          ...(c.assistantTeacherIds || []),
-          ...(c.assistantTeachers || []).map(at => at.id)
-        ];
+        const subIds = [...(c.assistantTeacherIds || []), ...(c.assistantTeachers || []).map(at => at.id)];
         const assistantNames = subIds.map(id => resources.find(r => r.id === id)?.name).filter(Boolean).map(name => t(name!)).join(', ');
 
         const mLabel = c.mainTeacherLabel || labels.mainTeacher;
@@ -593,7 +579,6 @@ export function Timetable({
     } else {
       const resItems: { id: string, start: number, end: number, type: 'event' | 'lesson', data: any }[] = [];
       
-      // このリソースに関連するイベントを収集
       events.forEach(e => {
         const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
         if (resourceIdList.includes(res.id)) {
@@ -611,7 +596,6 @@ export function Timetable({
         }
       });
 
-      // このリソースに関連する授業を収集
       lessons.forEach(l => {
         const lStart = startOfDay(parseISO(l.startDate));
         const lEnd = startOfDay(parseISO(l.endDate));
@@ -670,8 +654,6 @@ export function Timetable({
           );
         } else {
           const l = item.data as Lesson;
-          
-          // テーマカラーの取得
           const hasTeacher = !!(l.teacherId || l.externalTeacher);
           const theme = getThemeColor('LESSON', hasTeacher ? 'with-teacher' : 'no-teacher');
           const bgColor = theme?.background || (hasTeacher ? '#646cff' : '#e884fa');
@@ -707,8 +689,7 @@ export function Timetable({
           }
 
           resourceRowItems.push(
-            <div 
-              key={layout.id} 
+            <div key={layout.id} 
               className={`lesson-card ${(!l.teacherId && !l.externalTeacher) ? 'no-main-teacher' : ''}`}
               style={{
                 gridColumn: `${layout.start} / ${layout.end + 1}`,
@@ -747,41 +728,49 @@ export function Timetable({
     }
   });
 
-  const resourceLabels = filteredResources.map((r, idx) => (
-    <div key={`label-${r.id}`} className="grid-label" style={{ ...stickyLeft, gridColumn: 1, gridRow: idx + resourceBaseRowIdx, height: isCourseTimeline ? '120px' : '80px' }}>
-      <span className="label-name" 
-            onClick={() => handleIntentionalClick(() => onCourseClick?.(r))} 
-            style={{ cursor: r.type === 'course' ? 'pointer' : 'default' }}
-            title={t(r.name)}>
-        {t(r.name)}
-      </span>
-      {viewMode === 'course' && (
-        <button 
-          className="weekly-view-btn" 
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewWeekly?.(r.id);
-          }}
-          title={t('Weekly Schedule')}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-        </button>
-      )}
-    </div>
-  ));
+  const resourceLabels = filteredResources.map((r, idx) => {
+    const handleLabelClick = () => {
+      if (r.type === 'room') onRoomClick?.(r);
+      else if (r.type === 'teacher') onTeacherClick?.(r);
+      else if (r.type === 'course') onCourseClick?.(r);
+    };
+
+    return (
+      <div key={`label-${r.id}`} className="grid-label" style={{ ...stickyLeft, gridColumn: 1, gridRow: idx + resourceBaseRowIdx, height: isCourseTimeline ? '120px' : '80px' }}>
+        <span className="label-name"
+              onClick={() => handleIntentionalClick(handleLabelClick)}
+              style={{ cursor: 'pointer' }}
+              title={t(r.name)}>
+          {t(r.name)}
+        </span>
+
+        {viewMode === 'course' && (
+          <button 
+            className="weekly-view-btn" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewWeekly?.(r.id);
+            }}
+            title={t('Weekly Schedule')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </button>
+        )}
+      </div>
+    );
+  });
 
   const wrapperStyle = {
     overflowX: isDayView ? 'hidden' : 'auto'
   } as JSX.CSSProperties;
 
-  // **Modified Fix: Stop rendering the grid if no resources for course timeline**
   if (isCourseTimeline && filteredResources.length === 0) {
-    return null; // Stop rendering entirely
+    return null;
   }
 
   return (
@@ -819,7 +808,6 @@ export function Timetable({
         {periodHeaders}
         {eventLabel}
         {eventCells}
-        {/* レベル別の配置を確保 */}
         {holidayItems}
         {globalEventItems}
         {resourceRowItems}

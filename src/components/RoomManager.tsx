@@ -9,11 +9,13 @@ interface Props {
   onUpdate: () => void;
   resources: Resource[];
   labels: ResourceLabels;
+  isAdmin?: boolean;
+  initialRoomId?: string | null;
 }
 
-export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }: Props) {
+export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, isAdmin = true, initialRoomId }: Props) {
   const { t } = useTranslation();
-  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(initialRoomId || null);
   const [roomsList, setRoomsList] = useState<Resource[]>([]);
   const [formData, setFormData] = useState<{
     name: string;
@@ -161,17 +163,19 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
         <div className="room-manager-content">
           {!editingRoomId ? (
             <>
-              <div className="header-actions">
-                <button className="add-button" onClick={() => setEditingRoomId('new')}>
-                  {t('Add New {{resource}}', { resource: labels.room })}
-                </button>
-              </div>
+              {isAdmin && (
+                <div className="header-actions">
+                  <button className="add-button" onClick={() => setEditingRoomId('new')}>
+                    {t('Add New {{resource}}', { resource: labels.room })}
+                  </button>
+                </div>
+              )}
               <div className="room-list">
                 <table>
                   <thead>
                     <tr>
-                      <th style={{ width: '40px' }}></th>
-                      <th style={{ width: '80px' }}>{t('Move')}</th>
+                      {isAdmin && <th style={{ width: '40px' }}></th>}
+                      {isAdmin && <th style={{ width: '80px' }}>{t('Move')}</th>}
                       <th>{t('Name')}</th>
                       <th style={{ width: '120px' }}>{t('Actions')}</th>
                     </tr>
@@ -179,30 +183,34 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
                   <tbody>
                     {roomsList.map((r, idx) => (
                       <tr key={r.id}
-                          draggable
-                          onDragStart={() => handleDragStart(idx)}
-                          onDragEnter={() => handleDragEnter(idx)}
-                          onDragEnd={handleDragEnd}
-                          onDragOver={(e) => e.preventDefault()}
-                          className="draggable-row"
+                          draggable={isAdmin}
+                          onDragStart={() => isAdmin && handleDragStart(idx)}
+                          onDragEnter={() => isAdmin && handleDragEnter(idx)}
+                          onDragEnd={() => isAdmin && handleDragEnd()}
+                          onDragOver={(e) => isAdmin && e.preventDefault()}
+                          className={isAdmin ? "draggable-row" : ""}
                       >
-                        <td className="drag-handle">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="9" cy="5" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="9" cy="19" r="1" />
-                            <circle cx="15" cy="5" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="15" cy="19" r="1" />
-                          </svg>
-                        </td>
-                        <td>
-                          <div className="move-buttons">
-                            <button className="move-btn" onClick={() => moveItem(idx, 'up')} disabled={idx === 0}>↑</button>
-                            <button className="move-btn" onClick={() => moveItem(idx, 'down')} disabled={idx === roomsList.length - 1}>↓</button>
-                          </div>
-                        </td>
+                        {isAdmin && (
+                          <td className="drag-handle">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="9" cy="5" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="9" cy="19" r="1" />
+                              <circle cx="15" cy="5" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="15" cy="19" r="1" />
+                            </svg>
+                          </td>
+                        )}
+                        {isAdmin && (
+                          <td>
+                            <div className="move-buttons">
+                              <button className="move-btn" onClick={() => moveItem(idx, 'up')} disabled={idx === 0}>↑</button>
+                              <button className="move-btn" onClick={() => moveItem(idx, 'down')} disabled={idx === roomsList.length - 1}>↓</button>
+                            </div>
+                          </td>
+                        )}
                         <td>{r.name}</td>
                         <td>
                           <div className="action-buttons">
-                            <button className="edit-btn" onClick={() => setEditingRoomId(r.id)}>{t('Edit')}</button>
-                            <button className="delete-btn" onClick={() => handleDelete(r.id)}>{t('Delete')}</button>
+                            <button className="edit-btn" onClick={() => setEditingRoomId(r.id)}>{isAdmin ? t('Edit') : t('View')}</button>
+                            {isAdmin && <button className="delete-btn" onClick={() => handleDelete(r.id)}>{t('Delete')}</button>}
                           </div>
                         </td>
                       </tr>
@@ -210,20 +218,23 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
                   </tbody>
                 </table>
               </div>
-              <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>
-              <div className="list-footer">
-                <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
-              </div>
+              {isAdmin && <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>}
+              {isAdmin && (
+                <div className="list-footer">
+                  <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
+                </div>
+              )}
             </>
           ) : (
             <div className="room-form">
-              <h3>{editingRoomId === 'new' ? t('Add New {{resource}}', { resource: labels.room }) : t('Edit')}</h3>
+              <h3>{editingRoomId === 'new' ? t('Add New {{resource}}', { resource: labels.room }) : (isAdmin ? t('Edit') : t('View'))}</h3>
               <div className="form-group">
                 <label>{t('{{resource}} Name', { resource: labels.room })}</label>
                 <input 
                   type="text" 
                   value={formData.name} 
                   onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
+                  readOnly={!isAdmin}
                 />
               </div>
               <div className="form-group">
@@ -232,11 +243,14 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels }
                   type="number" 
                   value={formData.order} 
                   onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
+                  readOnly={!isAdmin}
                 />
               </div>
               <div className="form-actions">
-                <button className="cancel-button" onClick={() => setEditingRoomId(null)}>{t('Cancel')}</button>
-                <button className="save-button" onClick={handleSave}>{t('Save')}</button>
+                <button className="cancel-button" onClick={() => isAdmin ? setEditingRoomId(null) : onClose()}>
+                  {isAdmin ? t('Cancel') : t('Close')}
+                </button>
+                {isAdmin && <button className="save-button" onClick={handleSave}>{t('Save')}</button>}
               </div>
             </div>
           )}

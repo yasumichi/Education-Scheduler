@@ -54,6 +54,8 @@ export function App() {
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const editingCourseId = useSignal<string | null>(null);
+  const editingRoomId = useSignal<string | null>(null);
+  const editingTeacherId = useSignal<string | null>(null);
   const showSettingsDropdown = useSignal<boolean>(false);
   const showUserDropdown = useSignal<boolean>(false);
   const resources = useSignal<Resource[]>([]);
@@ -684,6 +686,14 @@ export function App() {
               showCourseWeekly.value = true;
               showPersonalMonthly.value = false;
             }}
+            onRoomClick={(room) => {
+              editingRoomId.value = room.id;
+              showRoomManager.value = true;
+            }}
+            onTeacherClick={(teacher) => {
+              editingTeacherId.value = teacher.id;
+              showTeacherManager.value = true;
+            }}
             onEmptyResourceCellClick={(resourceId, date, periodId) => {
               const initial: Partial<Lesson> = { startDate: date, startPeriodId: periodId, endDate: date, endPeriodId: periodId };
               if (viewMode.value === 'room') {
@@ -730,26 +740,37 @@ export function App() {
           labels={resourceLabels.value}
           systemSettings={systemSettings.value}
           initialCourseId={editingCourseId.value}
+          isAdmin={user.value?.role === 'ADMIN'}
         />
       )}
 
       {showRoomManager.value && (
         <RoomManager 
           backendUrl={BACKEND_URL} 
-          onClose={() => showRoomManager.value = false}
+          onClose={() => {
+            showRoomManager.value = false;
+            editingRoomId.value = null;
+          }}
           onUpdate={fetchData}
           resources={resources.value}
           labels={resourceLabels.value}
+          isAdmin={user.value?.role === 'ADMIN'}
+          initialRoomId={editingRoomId.value}
         />
       )}
 
       {showTeacherManager.value && (
         <TeacherManager 
           backendUrl={BACKEND_URL} 
-          onClose={() => showTeacherManager.value = false}
+          onClose={() => {
+            showTeacherManager.value = false;
+            editingTeacherId.value = null;
+          }}
           onUpdate={fetchData}
           resources={resources.value}
           labels={resourceLabels.value}
+          isAdmin={user.value?.role === 'ADMIN'}
+          initialTeacherId={editingTeacherId.value}
         />
       )}
 
