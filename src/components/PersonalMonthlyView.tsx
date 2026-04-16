@@ -86,8 +86,8 @@ export function PersonalMonthlyView({
   const holidayTheme = systemSettings?.holidayTheme || 'default';
 
   // カラーテーマ取得用ヘルパー
-  const getThemeColor = (category: ColorCategory, keyOrName: string) => {
-    const theme = colorThemes.find(t => t.category === category && (t.key === keyOrName || t.name === keyOrName));
+  const getThemeColor = (category: ColorCategory, keyOrId: string) => {
+    const theme = colorThemes.find(t => t.category === category && (t.key === keyOrId || t.id === keyOrId));
     if (theme) return theme;
     return colorThemes.find(t => t.category === category && t.key === 'default');
   };
@@ -96,8 +96,14 @@ export function PersonalMonthlyView({
     const holiday = getHoliday(date);
     const dayInfo = getDayInfo(date.getDay());
     
-    if (holiday || dayInfo.isWeekend) {
+    // 週末設定がある場合は、休日であっても週末のテーマを優先する
+    if (dayInfo.isWeekend) {
       return getThemeColor('HOLIDAY', dayInfo.themeId);
+    }
+
+    // 週末でない平日の休日の場合は、holidayTheme を使用する
+    if (holiday) {
+      return getThemeColor('HOLIDAY', holidayTheme);
     }
     
     return null;
@@ -109,11 +115,11 @@ export function PersonalMonthlyView({
   };
 
   const getHoliday = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
+    const targetStr = format(date, 'yyyy-MM-dd');
     return holidays.find(h => {
-      if (h.date === dateStr) return true;
+      if (h.date) return h.date === targetStr;
       if (h.start && h.end) {
-        return dateStr >= h.start && dateStr <= h.end;
+        return targetStr >= h.start && targetStr <= h.end;
       }
       return false;
     });

@@ -70,8 +70,8 @@ export function Timetable({
   const holidayTheme = systemSettings?.holidayTheme || 'default';
 
   // カラーテーマ取得用ヘルパー
-  const getThemeColor = (category: ColorCategory, keyOrName: string) => {
-    const theme = colorThemes.find(t => t.category === category && (t.key === keyOrName || t.name === keyOrName));
+  const getThemeColor = (category: ColorCategory, keyOrId: string) => {
+    const theme = colorThemes.find(t => t.category === category && (t.key === keyOrId || t.id === keyOrId));
     if (theme) return theme;
     // Fallback to default
     return colorThemes.find(t => t.category === category && t.key === 'default');
@@ -81,23 +81,25 @@ export function Timetable({
     const holiday = getHoliday(date);
     const dayInfo = getDayInfo(date.getDay());
     
-    // Holiday or Weekend uses the day's specific theme
-    if (holiday || dayInfo.isWeekend) {
+    // 週末設定がある場合は、休日であっても週末のテーマを優先する
+    if (dayInfo.isWeekend) {
       return getThemeColor('HOLIDAY', dayInfo.themeId);
+    }
+
+    // 週末でない平日の休日の場合は、holidayTheme を使用する
+    if (holiday) {
+      return getThemeColor('HOLIDAY', holidayTheme);
     }
     
     return null;
   };
 
   const getHoliday = (date: Date) => {
-    const target = startOfDay(date);
+    const targetStr = format(date, 'yyyy-MM-dd');
     return holidays.find(h => {
-      if (h.date) return isSameDay(target, startOfDay(parseISO(h.date)));
+      if (h.date) return h.date === targetStr;
       if (h.start && h.end) {
-        const start = startOfDay(parseISO(h.start));
-        const end = startOfDay(parseISO(h.end));
-        return (isSameDay(target, start) || isAfter(target, start)) && 
-               (isSameDay(target, end) || isBefore(target, end));
+        return targetStr >= h.start && targetStr <= h.end;
       }
       return false;
     });

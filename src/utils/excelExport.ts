@@ -36,8 +36,8 @@ const hexToARGB = (hex?: string) => {
 };
 
 // Helper to get theme color
-const getThemeColor = (themes: ColorTheme[], category: ColorCategory, keyOrName: string) => {
-  const theme = themes.find(t => t.category === category && (t.key === keyOrName || t.name === keyOrName));
+const getThemeColor = (themes: ColorTheme[], category: ColorCategory, keyOrId: string) => {
+  const theme = themes.find(t => t.category === category && (t.key === keyOrId || t.id === keyOrId));
   if (theme) return theme;
   return themes.find(t => t.category === category && t.key === 'default');
 };
@@ -79,8 +79,14 @@ export async function exportTimetableToExcel({
     const holiday = getHoliday(date);
     const dayInfo = getDayInfo(date.getDay());
     
-    if (holiday || dayInfo.isWeekend) {
+    // 週末設定がある場合は、休日であっても週末のテーマを優先する
+    if (dayInfo.isWeekend) {
       return getThemeColor(colorThemes, 'HOLIDAY', dayInfo.themeId);
+    }
+    
+    // 週末でない平日の休日の場合は、holidayTheme を使用する
+    if (holiday) {
+      return getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
     }
     
     return null;
@@ -115,14 +121,11 @@ export async function exportTimetableToExcel({
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   const getHoliday = (date: Date) => {
-    const target = startOfDay(date);
+    const targetStr = format(date, 'yyyy-MM-dd');
     return holidays.find(h => {
-      if (h.date) return isSameDay(target, startOfDay(parseISO(h.date)));
+      if (h.date) return h.date === targetStr;
       if (h.start && h.end) {
-        const start = startOfDay(parseISO(h.start));
-        const end = startOfDay(parseISO(h.end));
-        return (isSameDay(target, start) || isAfter(target, start)) && 
-               (isSameDay(target, end) || isBefore(target, end));
+        return targetStr >= h.start && targetStr <= h.end;
       }
       return false;
     });
@@ -190,13 +193,13 @@ export async function exportTimetableToExcel({
       const wCell = worksheet.getCell(3, col);
       dCell.value = dayFormatter.format(date);
       wCell.value = weekdayFormatter.format(date);
+      
+      const hTheme = getHolidayOrWeekendTheme(date);
+      
       [dCell, wCell].forEach(c => {
         c.alignment = { horizontal: 'center', vertical: 'middle' };
         c.font = { size: 9 };
-        const holiday = getHoliday(date);
-        const isWknd = isWeekend(date);
         
-        const hTheme = getHolidayOrWeekendTheme(date);
         if (hTheme) {
           c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
           c.font = { ...c.font, color: { argb: hexToARGB(hTheme.foreground) } };
@@ -216,11 +219,9 @@ export async function exportTimetableToExcel({
       cell.value = dateFormatter.format(date);
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.font = { bold: true };
-      const holiday = getHoliday(date);
-      const isWknd = isWeekend(date);
 
-      const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
-      if ((holiday || isWknd) && hTheme) {
+      const hTheme = getHolidayOrWeekendTheme(date);
+      if (hTheme) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
         cell.font = { ...cell.font, color: { argb: hexToARGB(hTheme.foreground) } };
       }
@@ -233,16 +234,14 @@ export async function exportTimetableToExcel({
     const periodRow = worksheet.getRow(2);
     periodRow.height = 20;
     displayDates.forEach((date, dIdx) => {
-      const holiday = getHoliday(date);
-      const isWknd = isWeekend(date);
-      const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+      const hTheme = getHolidayOrWeekendTheme(date);
 
       periods.forEach((p, pIdx) => {
         const cell = worksheet.getCell(2, dIdx * periods.length + pIdx + 2);
         cell.value = p.name;
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         
-        if ((holiday || isWknd) && hTheme) {
+        if (hTheme) {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
           cell.font = { color: { argb: hexToARGB(hTheme.foreground) } };
         }
@@ -331,8 +330,6 @@ export async function exportTimetableToExcel({
     const row = worksheet.getRow(currentRow + l);
     row.height = 35;
     displayDates.forEach((date, dIdx) => {
-      const isWknd = isWeekend(date);
-      const holiday = getHoliday(date);
       const hTheme = getHolidayOrWeekendTheme(date);
       
       let bgColor = 'FFFFFFFF';
@@ -360,7 +357,9 @@ export async function exportTimetableToExcel({
     if (item.type === 'holiday') {
       const h = item.data;
       cell.value = h.name;
-      const hTheme = getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
+      // Get theme for the holiday. If it's a multi-day holiday, we use the theme of its first day.
+      const hDate = h.date ? parseISO(h.date) : (h.start ? parseISO(h.start) : new Date());
+      const hTheme = getHolidayOrWeekendTheme(hDate);
       if (hTheme) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
         cell.font = { color: { argb: hexToARGB(hTheme.foreground) }, bold: true };
@@ -458,8 +457,6 @@ export async function exportTimetableToExcel({
       const row = worksheet.getRow(currentRow + l);
       row.height = isCourseTimeline ? 60 : 35;
       displayDates.forEach((date, dIdx) => {
-        const isWknd = isWeekend(date);
-        const holiday = getHoliday(date);
         const hTheme = getHolidayOrWeekendTheme(date);
         let bgColor = 'FFFFFFFF';
         if (hTheme) {
@@ -591,8 +588,14 @@ export async function exportPersonalMonthlyToExcel({
       const holiday = getHoliday(date);
       const dayInfo = getDayInfo(date.getDay());
       
-      if (holiday || dayInfo.isWeekend) {
+      // 週末設定がある場合は、休日であっても週末のテーマを優先する
+      if (dayInfo.isWeekend) {
         return getThemeColor(colorThemes, 'HOLIDAY', dayInfo.themeId);
+      }
+      
+      // 週末でない平日の休日の場合は、holidayTheme を使用する
+      if (holiday) {
+        return getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
       }
       
       return null;
@@ -600,10 +603,12 @@ export async function exportPersonalMonthlyToExcel({
 
     const getHoliday = (date: Date) => {
       if (!date) return null;
-      const dateStr = format(date, 'yyyy-MM-dd');
+      const targetStr = format(date, 'yyyy-MM-dd');
       return holidays.find(h => {
-        if (h.date === dateStr) return true;
-        if (h.start && h.end) return dateStr >= h.start && dateStr <= h.end;
+        if (h.date) return h.date === targetStr;
+        if (h.start && h.end) {
+          return targetStr >= h.start && targetStr <= h.end;
+        }
         return false;
       });
     };
@@ -709,22 +714,23 @@ export async function exportPersonalMonthlyToExcel({
         const colEnd = colStart + maxOverlaps - 1;
         const cell = worksheet.getCell(baseRow, colStart);
         
-        const holiday = getHoliday(day);
-        const isWknd = isWeekend(day);
         const isCurrMonth = isSameMonth(day, monthStart);
+        const holiday = getHoliday(day);
+        const hTheme = getHolidayOrWeekendTheme(day);
 
         cell.value = `${format(day, 'd')}${holiday ? ` (${holiday.name})` : ''}`;
         cell.font = { bold: true, size: 10 };
         cell.alignment = { horizontal: 'left', vertical: 'middle' };
 
-        const hTheme = getHolidayOrWeekendTheme(day);
         let bgColor = 'FFFFFFFF';
         let textColor = 'FF000000';
+        
         if (hTheme) {
           bgColor = hexToARGB(hTheme.background);
           textColor = hexToARGB(hTheme.foreground);
+        } else if (!isCurrMonth) {
+          bgColor = 'FFF0F0F0';
         }
-        if (!isCurrMonth && bgColor === 'FFFFFFFF') bgColor = 'FFF0F0F0';
 
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
         cell.font = { ...cell.font, color: { argb: textColor } };
