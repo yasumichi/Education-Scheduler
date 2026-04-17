@@ -421,8 +421,15 @@ export function Timetable({
     if (e.showInEventRow !== false || resourceIdList.length === 0) {
       const startDayIdx = displayDates.findIndex(d => isSameDay(d, eStart));
       const endDayIdx = displayDates.findIndex(d => isSameDay(d, eEnd));
-      const sCol = (startDayIdx === -1) ? 2 : startDayIdx * effectivePeriods.length + 2;
-      const eCol = (endDayIdx === -1) ? (displayDates.length * effectivePeriods.length + 1) : endDayIdx * effectivePeriods.length + effectivePeriods.length + 1;
+
+      const startPeriodIdx = (e.startPeriodId && !isCourseTimeline) ? effectivePeriods.findIndex(p => p.id === e.startPeriodId) : 0;
+      const endPeriodIdx = (e.endPeriodId && !isCourseTimeline) ? effectivePeriods.findIndex(p => p.id === e.endPeriodId) : effectivePeriods.length - 1;
+      
+      const safeStartPeriodIdx = startPeriodIdx === -1 ? 0 : startPeriodIdx;
+      const safeEndPeriodIdx = endPeriodIdx === -1 ? effectivePeriods.length - 1 : endPeriodIdx;
+
+      const sCol = (startDayIdx === -1) ? 2 : startDayIdx * effectivePeriods.length + safeStartPeriodIdx + 2;
+      const eCol = (endDayIdx === -1) ? (displayDates.length * effectivePeriods.length + 1) : endDayIdx * effectivePeriods.length + safeEndPeriodIdx + 2;
       row3Items.push({ id: `event-${e.id}`, start: sCol, end: eCol, type: 'event', data: e });
     }
   });
@@ -588,10 +595,12 @@ export function Timetable({
           
           const startDayIdx = displayDates.findIndex(d => isSameDay(d, eStart));
           const endDayIdx = displayDates.findIndex(d => isSameDay(d, eEnd));
-          const startPeriodIdx = periods.findIndex(p => p.id === e.startPeriodId);
-          const endPeriodIdx = periods.findIndex(p => p.id === e.endPeriodId);
-          const sCol = (startDayIdx === -1) ? 2 : startDayIdx * periods.length + startPeriodIdx + 2;
-          const eCol = (endDayIdx === -1) ? (displayDates.length * periods.length + 1) : endDayIdx * periods.length + endPeriodIdx + 2;
+          const startPeriodIdx = e.startPeriodId ? periods.findIndex(p => p.id === e.startPeriodId) : 0;
+          const endPeriodIdx = e.endPeriodId ? periods.findIndex(p => p.id === e.endPeriodId) : periods.length - 1;
+          const safeStartPeriodIdx = startPeriodIdx === -1 ? 0 : startPeriodIdx;
+          const safeEndPeriodIdx = endPeriodIdx === -1 ? periods.length - 1 : endPeriodIdx;
+          const sCol = (startDayIdx === -1) ? 2 : startDayIdx * periods.length + safeStartPeriodIdx + 2;
+          const eCol = (endDayIdx === -1) ? (displayDates.length * periods.length + 1) : endDayIdx * periods.length + safeEndPeriodIdx + 2;
           resItems.push({ id: `event-${e.id}-${res.id}`, start: sCol, end: eCol, type: 'event', data: e });
         }
       });
@@ -610,10 +619,12 @@ export function Timetable({
         if (isTarget) {
           const startDayIdx = displayDates.findIndex(d => isSameDay(d, lStart));
           const endDayIdx = displayDates.findIndex(d => isSameDay(d, lEnd));
-          const startPeriodIdx = periods.findIndex(p => p.id === l.startPeriodId);
-          const endPeriodIdx = periods.findIndex(p => p.id === l.endPeriodId);
-          const sCol = (startDayIdx === -1) ? 2 : startDayIdx * periods.length + startPeriodIdx + 2;
-          const eCol = (endDayIdx === -1) ? (displayDates.length * periods.length + 1) : endDayIdx * periods.length + endPeriodIdx + 2;
+          const startPeriodIdx = l.startPeriodId ? periods.findIndex(p => p.id === l.startPeriodId) : 0;
+          const endPeriodIdx = l.endPeriodId ? periods.findIndex(p => p.id === l.endPeriodId) : periods.length - 1;
+          const safeStartPeriodIdx = startPeriodIdx === -1 ? 0 : startPeriodIdx;
+          const safeEndPeriodIdx = endPeriodIdx === -1 ? periods.length - 1 : endPeriodIdx;
+          const sCol = (startDayIdx === -1) ? 2 : startDayIdx * periods.length + safeStartPeriodIdx + 2;
+          const eCol = (endDayIdx === -1) ? (displayDates.length * periods.length + 1) : endDayIdx * periods.length + safeEndPeriodIdx + 2;
           resItems.push({ id: `lesson-${l.id}-${res.id}`, start: sCol, end: eCol, type: 'lesson', data: l });
         }
       });
