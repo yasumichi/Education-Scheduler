@@ -10,7 +10,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // データのクリア (保持するデータ以外をクリア)
+  // Clear configuration data (except for preserved data)
   await prisma.timePeriod.deleteMany();
   await prisma.resourceLabel.deleteMany();
   await prisma.systemSetting.deleteMany();
@@ -18,7 +18,7 @@ async function main() {
 
   console.log('Clearing configuration data...');
 
-  // 時限の生成
+  // Generate time periods
   const periods = [
     { id: 'p1', name: '1st Period', startTime: '09:00', endTime: '09:50', order: 1 },
     { id: 'p2', name: '2nd Period', startTime: '10:00', endTime: '10:50', order: 2 },
@@ -36,7 +36,7 @@ async function main() {
 
   console.log('Seeding time periods...');
 
-  // リソースラベルの生成
+  // Generate resource labels
   await prisma.resourceLabel.create({
     data: {
       room: 'Room',
@@ -63,7 +63,7 @@ async function main() {
 
   console.log('Seeding system settings...');
 
-  // カラーテーマ
+  // Color themes
   await prisma.colorTheme.createMany({
     data: [
       { name: 'Default Event', category: ColorCategory.EVENT, key: 'default', background: '#fef3c7', foreground: '#92400e', order: 1 },

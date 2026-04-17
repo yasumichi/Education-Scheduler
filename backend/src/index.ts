@@ -55,7 +55,7 @@ const canManageCourseLessons = async (userId: string, courseId: string): Promise
 
 // --- Authentication Routes ---
 
-// ユーザー登録
+// User registration
 app.post('/api/auth/register', async (req, res) => {
   const { email, password, role } = req.body;
   try {
@@ -78,7 +78,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// パスワード変更 (自分自身)
+// Change password (self)
 app.post('/api/auth/change-password', verifyToken, async (req: AuthRequest, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
@@ -101,7 +101,7 @@ app.post('/api/auth/change-password', verifyToken, async (req: AuthRequest, res)
   }
 });
 
-// ログイン
+// Login
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -116,12 +116,12 @@ app.post('/api/auth/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
     
-    // Cookie に保存
+    // Save to Cookie
     res.cookie('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax', // または 'strict'
-      maxAge: 24 * 60 * 60 * 1000 // 24時間
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
 
     res.json({
@@ -132,13 +132,13 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// ログアウト
+// Logout
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('auth_token');
   res.json({ message: 'Logged out successfully' });
 });
 
-// セッション確認 (自分自身の情報取得)
+// Check session (get own user info)
 app.get('/api/auth/me', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   try {
@@ -165,12 +165,12 @@ app.get('/api/auth/me', verifyToken, async (req: AuthRequest, res) => {
 
 // --- Protected Routes ---
 
-// 基本的なヘルスチェック
+// Basic health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'ScholaTile Backend is running' });
 });
 
-// リソース一覧取得 (認証必須)
+// Fetch resources (Auth required)
 app.get('/api/resources', verifyToken, async (req, res) => {
   try {
     const resources = await prisma.resource.findMany({
@@ -189,7 +189,7 @@ app.get('/api/resources', verifyToken, async (req, res) => {
   }
 });
 
-// ユーザー一覧取得 (ADMIN権限)
+// Fetch users (ADMIN required)
 app.get('/api/users', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -204,7 +204,7 @@ app.get('/api/users', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// ユーザー作成・更新 (ADMIN権限)
+// Create/Update user (ADMIN required)
 app.post('/api/users', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -213,7 +213,7 @@ app.post('/api/users', verifyToken, async (req: AuthRequest, res) => {
   try {
     let user;
     if (id) {
-      // 更新
+      // Update
       const data: any = { email, role };
       if (password) {
         data.password = await bcrypt.hash(password, 10);
@@ -224,7 +224,7 @@ app.post('/api/users', verifyToken, async (req: AuthRequest, res) => {
         select: { id: true, email: true, role: true }
       });
     } else {
-      // 新規作成
+      // Create
       const hashedPassword = await bcrypt.hash(password, 10);
       user = await prisma.user.create({
         data: { email, password: hashedPassword, role },
@@ -237,14 +237,14 @@ app.post('/api/users', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// ユーザー削除 (ADMIN権限)
+// Delete user (ADMIN required)
 app.delete('/api/users/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
   const { id } = req.params;
   try {
-    // 自分自身は削除できないようにする
+    // Prevent deleting self
     if (req.user.id === id) {
       return res.status(400).json({ error: 'Cannot delete yourself' });
     }
@@ -255,7 +255,7 @@ app.delete('/api/users/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 管理者によるパスワードリセット (ADMIN権限)
+// Password reset by admin (ADMIN required)
 app.post('/api/users/:id/reset-password', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -274,7 +274,7 @@ app.post('/api/users/:id/reset-password', verifyToken, async (req: AuthRequest, 
   }
 });
 
-// システム設定取得
+// Fetch system settings
 app.get('/api/settings', async (req, res) => {
   try {
     let settings = await prisma.systemSetting.findFirst();
@@ -295,7 +295,7 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-// システム設定更新 (ADMIN権限)
+// Update system settings (ADMIN required)
 app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -327,7 +327,7 @@ app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 教室の作成・更新 (ADMIN権限)
+// Create/Update room (ADMIN required)
 app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -359,7 +359,7 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 教室の順序更新 (ADMIN権限)
+// Update room order (ADMIN required)
 app.post('/api/rooms/reorder', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -381,7 +381,7 @@ app.post('/api/rooms/reorder', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 教室の削除 (ADMIN権限)
+// Delete room (ADMIN required)
 app.delete('/api/rooms/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -398,7 +398,7 @@ app.delete('/api/rooms/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 講師の作成・更新 (ADMIN権限)
+// Create/Update teacher (ADMIN required)
 app.post('/api/teachers', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -432,7 +432,7 @@ app.post('/api/teachers', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 講師の順序更新 (ADMIN権限)
+// Update teacher order (ADMIN required)
 app.post('/api/teachers/reorder', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -454,7 +454,7 @@ app.post('/api/teachers/reorder', verifyToken, async (req: AuthRequest, res) => 
   }
 });
 
-// 講師の削除 (ADMIN権限)
+// Delete teacher (ADMIN required)
 app.delete('/api/teachers/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -471,7 +471,7 @@ app.delete('/api/teachers/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 講座の作成・更新 (ADMIN権限)
+// Create/Update course (ADMIN required)
 app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -494,7 +494,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
     const subTeachersConnect = assistantTeacherIds?.map((tid: string) => ({ id: tid })) || [];
 
     if (id) {
-      // 更新
+      // Update
       course = await prisma.resource.update({
         where: { id },
         data: {
@@ -515,7 +515,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
         include: { subjects: true, assistantTeachers: true }
       });
     } else {
-      // 新規作成
+      // Create
       course = await prisma.resource.create({
         data: {
           ...commonData,
@@ -541,7 +541,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 講座の削除 (ADMIN権限)
+// Delete course (ADMIN required)
 app.delete('/api/courses/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -557,7 +557,7 @@ app.delete('/api/courses/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 講座の順序更新 (ADMIN権限)
+// Update course order (ADMIN required)
 app.post('/api/courses/reorder', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -579,14 +579,14 @@ app.post('/api/courses/reorder', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 講座の複製 (ADMIN権限)
+// Clone course (ADMIN required)
 app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
   const { id } = req.params;
   try {
-    // 元の講座を取得 (関連する課目、サブ講師も含む)
+    // Get original course (including related subjects and sub teachers)
     const original = await prisma.resource.findUnique({
       where: { id },
       include: {
@@ -599,14 +599,14 @@ app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    // 新しい講座の作成 (トランザクションを使用)
+    // Create new course (using transaction)
     const duplicated = await prisma.$transaction(async (tx) => {
-      // 1. 講座リソースを新規作成
+      // 1. Create new course resource
       const newCourse = await tx.resource.create({
         data: {
           name: `(Copy) ${original.name}`,
           type: ResourceType.course,
-          order: (original.order || 0) + 1, // 元の講座の次の位置に配置
+          order: (original.order || 0) + 1, // Place at next position of original course
           startDate: original.startDate,
           endDate: original.endDate,
           mainRoomId: original.mainRoomId,
@@ -619,7 +619,7 @@ app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res
         }
       });
 
-      // 2. 課目を複製
+      // 2. Clone subjects
       if (original.subjects.length > 0) {
         await tx.courseSubject.createMany({
           data: original.subjects.map(s => ({
@@ -643,18 +643,18 @@ app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res
   }
 });
 
-// 講座間での授業複製 (ADMIN / Course Chief or Assistant Teacher)
+// Clone lessons between courses (ADMIN / Course Chief or Assistant Teacher)
 app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   const { id: destinationCourseId } = req.params;
   const { sourceCourseId, startDate, endDate } = req.body;
 
   try {
-    // 権限チェック (複製先の講座に対して)
+    // Check permission (for target course)
     const hasPermission = await canManageCourseLessons(req.user.id, destinationCourseId);
     if (!hasPermission) return res.status(403).json({ error: 'Access denied to destination course.' });
 
-    // 複製先の講座情報を取得
+    // Get target course info
     const destinationCourse = await prisma.resource.findUnique({
       where: { id: destinationCourseId }
     });
@@ -662,7 +662,7 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
       return res.status(404).json({ error: 'Destination course not found.' });
     }
 
-    // 日付範囲バリデーション
+    // Date range validation
     if (destinationCourse.startDate && startDate < destinationCourse.startDate) {
       return res.status(400).json({ error: `Start date cannot be before ${destinationCourse.startDate}` });
     }
@@ -670,14 +670,14 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
       return res.status(400).json({ error: `End date cannot be after ${destinationCourse.endDate}` });
     }
 
-    // 全ての時限を取得 (絶対時間計算用)
+    // Get all time periods (for absolute time calculation)
     const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
     const getAbsTime = (date: string, pId: string) => {
       const pIdx = periods.findIndex(p => p.id === pId);
       return `${date}-${pIdx.toString().padStart(3, '0')}`;
     };
 
-    // 複製元の授業を取得
+    // Get source lessons
     const sourceLessons = await prisma.lesson.findMany({
       where: {
         courseId: sourceCourseId,
@@ -687,7 +687,7 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
       include: { deliveryMethods: { select: { id: true } } }
     });
 
-    // 複製先の既存の授業を取得 (重複チェック用)
+    // Get target existing lessons (for duplication check)
     const existingLessons = await prisma.lesson.findMany({
       where: { courseId: destinationCourseId }
     });
@@ -697,7 +697,7 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
       const sStart = getAbsTime(sL.startDate, sL.startPeriodId);
       const sEnd = getAbsTime(sL.endDate, sL.endPeriodId);
 
-      // 重複チェック
+      // Duplication check
       const isOverlapping = existingLessons.some(eL => {
         const eStart = getAbsTime(eL.startDate, eL.startPeriodId);
         const eEnd = getAbsTime(eL.endDate, eL.endPeriodId);
@@ -734,7 +734,7 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
   }
 });
 
-// 授業一覧取得 (認証必須)
+// Fetch lessons (Auth required)
 app.get('/api/lessons', verifyToken, async (req, res) => {
   try {
     const lessons = await prisma.lesson.findMany({
@@ -753,16 +753,16 @@ app.get('/api/lessons', verifyToken, async (req, res) => {
   }
 });
 
-// 授業の作成・更新 (ADMIN / Course Chief or Assistant Teacher)
+// Create/Update lesson (ADMIN / Course Chief or Assistant Teacher)
 app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   
   const { id, subject, teacherId, subTeacherIds, roomId, courseId, location, startDate, startPeriodId, endDate, endPeriodId, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers } = req.body;
 
   try {
-    // 権限チェック
+    // Permission check
     if (id) {
-      // 更新時: 現在の授業の講座に対して権限があるか
+      // When updating: check permission for current lesson's course
       const currentLesson = await prisma.lesson.findUnique({ 
         where: { id },
         include: { subTeachers: { select: { id: true } } }
@@ -771,7 +771,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
       
       const hasPermissionToCurrent = await canManageCourseLessons(req.user.id, currentLesson.courseId);
       
-      // 追加: 授業の担当講師（メインまたはサブ）であれば、授業方式と備考のみ変更可能とするためのフラグ
+      // Add: Flag to allow only editing delivery method and remarks if the user is a lesson teacher (main or sub)
       let onlyDeliveryMethodAndRemarksAllowed = false;
       if (!hasPermissionToCurrent && req.user.role === UserRole.TEACHER) {
         const user = await prisma.user.findUnique({
@@ -792,7 +792,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         return res.status(403).json({ error: 'Access denied.' });
       }
 
-      // 講座が変更される場合、変更先への権限もチェック
+      // If course is changed, check permission for target course too
       if (courseId && courseId !== currentLesson.courseId) {
         if (onlyDeliveryMethodAndRemarksAllowed) {
            return res.status(403).json({ error: 'Access denied. You can only change delivery methods and remarks for this lesson.' });
@@ -801,7 +801,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         if (!hasPermissionToNew) return res.status(403).json({ error: 'Access denied to new course.' });
       }
 
-      // 権限が「授業方式と備考のみ」の場合、他のフィールドが変更されていないかチェック
+      // If permission is "delivery method and remarks only", check if other fields were changed
       if (onlyDeliveryMethodAndRemarksAllowed) {
         const isOtherFieldChanged = 
           subject !== currentLesson.subject ||
@@ -812,10 +812,10 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
           startPeriodId !== currentLesson.startPeriodId ||
           endDate !== currentLesson.endDate ||
           endPeriodId !== currentLesson.endPeriodId ||
-          // remarks は許可されているので除外
+          // remarks are allowed, so exclude
           externalTeacher !== currentLesson.externalTeacher ||
           externalSubTeachers !== currentLesson.externalSubTeachers ||
-          // サブ講師の変更チェック (簡易的)
+          // Sub teacher change check (simplified)
           (subTeacherIds && (
             subTeacherIds.length !== currentLesson.subTeachers.length ||
             !subTeacherIds.every((id: string) => currentLesson.subTeachers.some(t => t.id === id))
@@ -826,7 +826,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         }
       }
     } else {
-      // 新規作成時: 指定された講座に対して権限があるか
+      // Create時: 指定された講座に対して権限があるか
       if (!courseId) return res.status(400).json({ error: 'courseId is required' });
       const hasPermission = await canManageCourseLessons(req.user.id, courseId);
       if (!hasPermission) return res.status(403).json({ error: 'Access denied.' });
@@ -835,7 +835,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
     const subTeachersConnect = subTeacherIds?.map((tid: string) => ({ id: tid })) || [];
     const deliveryMethodsConnect = deliveryMethodIds?.map((did: string) => ({ id: did })) || [];
     
-    // 共通のデータ
+    // Common data
     const commonData = {
       subject,
       location: location || null,
@@ -849,7 +849,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
     };
 
     if (id) {
-      // 更新 (Update)
+      // Update (Update)
       const data: any = {
         ...commonData,
         course: { connect: { id: courseId } },
@@ -882,7 +882,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
       });
       res.json(lesson);
     } else {
-      // 新規作成 (Create)
+      // Create (Create)
       const data: any = {
         ...commonData,
         course: { connect: { id: courseId } },
@@ -913,7 +913,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 授業方式一覧取得
+// Fetch delivery methods
 app.get('/api/delivery-methods', verifyToken, async (req, res) => {
   try {
     const methods = await prisma.deliveryMethod.findMany({
@@ -925,7 +925,7 @@ app.get('/api/delivery-methods', verifyToken, async (req, res) => {
   }
 });
 
-// 授業方式の一括更新/作成 (ADMIN権限)
+// Bulk update/create delivery methods (ADMIN required)
 app.post('/api/delivery-methods', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -933,18 +933,18 @@ app.post('/api/delivery-methods', verifyToken, async (req: AuthRequest, res) => 
   const { methods } = req.body;
   try {
     await prisma.$transaction(async (tx) => {
-      // 既存のIDリストを取得
+      // Get existing ID list
       const existingMethods = await tx.deliveryMethod.findMany();
       const existingIds = existingMethods.map(m => m.id);
       const incomingIds = methods.filter((m: any) => m.id).map((m: any) => m.id);
 
-      // 削除されたものを特定して削除
+      // Identify deleted items and remove
       const idsToDelete = existingIds.filter(id => !incomingIds.includes(id));
       if (idsToDelete.length > 0) {
         await tx.deliveryMethod.deleteMany({ where: { id: { in: idsToDelete } } });
       }
 
-      // 更新または新規作成
+      // Updateまたは新規作成
       for (let i = 0; i < methods.length; i++) {
         const m = methods[i];
         if (m.id) {
@@ -970,7 +970,7 @@ app.post('/api/delivery-methods', verifyToken, async (req: AuthRequest, res) => 
   }
 });
 
-// 授業の削除 (ADMIN / Course Chief or Assistant Teacher)
+// Delete lesson (ADMIN / Course Chief or Assistant Teacher)
 app.delete('/api/lessons/:id', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   const { id } = req.params;
@@ -988,7 +988,7 @@ app.delete('/api/lessons/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// イベント一覧取得 (認証必須)
+// Fetch events (Auth required)
 app.get('/api/events', verifyToken, async (req, res) => {
   try {
     const events = await prisma.scheduleEvent.findMany({
@@ -1004,7 +1004,7 @@ app.get('/api/events', verifyToken, async (req, res) => {
   }
 });
 
-// iCalendar (.ics) エクスポート
+// Export iCalendar (.ics)
 app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   const { id } = req.params;
@@ -1018,12 +1018,12 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
 
     if (!resource) return res.status(404).json({ error: 'Resource not found' });
 
-    // 権限チェック: ADMIN または 紐付けられたユーザー本人
+    // Permission check: ADMIN または 紐付けられたユーザー本人
     if (req.user.role !== UserRole.ADMIN && resource.userId !== req.user.id) {
       return res.status(403).json({ error: 'Access denied.' });
     }
 
-    // 期間内の授業とイベントを取得
+    // Get lessons and events within range
     const whereClause: any = {};
     if (start && end) {
       whereClause.startDate = { gte: String(start) };
@@ -1050,7 +1050,7 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
       prisma.timePeriod.findMany({ orderBy: { order: 'asc' } })
     ]);
 
-    // ics ファイルの生成
+    // Generate ics file
     let ics = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
@@ -1064,13 +1064,13 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
     const formatICSDate = (dateStr: string, periodId: string, isEnd: boolean) => {
       const period = periods.find(p => p.id === periodId);
       const time = isEnd ? (period?.endTime || '23:59') : (period?.startTime || '00:00');
-      // YYYY-MM-DD と HH:mm を結合して YYYYMMDDTHHmmSS 形式にする
+      // Combine YYYY-MM-DD and HH:mm into YYYYMMDDTHHmmSS format
       const d = dateStr.replace(/-/g, '');
       const t = time.replace(/:/g, '') + '00';
       return `${d}T${t}`;
     };
 
-    // 授業の追加
+    // Add lessons
     lessons.forEach(l => {
       ics.push('BEGIN:VEVENT');
       ics.push(`UID:lesson-${l.id}@scholatile`);
@@ -1096,7 +1096,7 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
       ics.push('END:VEVENT');
     });
 
-    // イベントの追加
+    // Add events
     events.forEach(e => {
       ics.push('BEGIN:VEVENT');
       ics.push(`UID:event-${e.id}@scholatile`);
@@ -1120,7 +1120,7 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
   }
 });
 
-// 行事の作成・更新 (ADMIN/TEACHER権限)
+// Create/Update event (ADMIN/TEACHER required)
 app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.TEACHER) {
     return res.status(403).json({ error: 'Access denied. Admin or Teacher role required.' });
@@ -1131,7 +1131,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
     let event;
 
     if (id) {
-      // 更新
+      // Update
       event = await prisma.scheduleEvent.update({
         where: { id },
         data: {
@@ -1144,14 +1144,14 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
           location: location || null,
           showInEventRow: showInEventRow ?? true,
           resources: {
-            set: [], // 一旦クリア
+            set: [], // Clear temporarily
             connect: resourceConnect
           }
         },
         include: { resources: true }
       });
     } else {
-      // 新規作成
+      // Create
       event = await prisma.scheduleEvent.create({
         data: {
           name,
@@ -1176,7 +1176,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 行事の削除 (ADMIN/TEACHER権限)
+// Delete event (ADMIN/TEACHER required)
 app.delete('/api/events/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.TEACHER) {
     return res.status(403).json({ error: 'Access denied. Admin or Teacher role required.' });
@@ -1192,7 +1192,7 @@ app.delete('/api/events/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 祝日一覧取得 (認証必須)
+// Fetch holidays (Auth required)
 app.get('/api/holidays', verifyToken, async (req, res) => {
   try {
     const holidays = await prisma.holiday.findMany();
@@ -1202,7 +1202,7 @@ app.get('/api/holidays', verifyToken, async (req, res) => {
   }
 });
 
-// 祝日作成 (ADMIN のみ)
+// Create holiday (ADMIN only)
 app.post('/api/holidays', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Forbidden' });
   const { name, date, start, end } = req.body;
@@ -1216,7 +1216,7 @@ app.post('/api/holidays', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 祝日更新 (ADMIN のみ)
+// Update holiday (ADMIN only)
 app.put('/api/holidays/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Forbidden' });
   const { id } = req.params;
@@ -1232,7 +1232,7 @@ app.put('/api/holidays/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// 祝日削除 (ADMIN のみ)
+// Delete holiday (ADMIN only)
 app.delete('/api/holidays/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Forbidden' });
   const { id } = req.params;
@@ -1244,7 +1244,7 @@ app.delete('/api/holidays/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// Nager.Date からのインポート (ADMIN のみ)
+// Import from Nager.Date (ADMIN only)
 app.post('/api/holidays/import-nager', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Forbidden' });
   const { year, countryCode } = req.body;
@@ -1267,7 +1267,7 @@ app.post('/api/holidays/import-nager', verifyToken, async (req: AuthRequest, res
   }
 });
 
-// JSON ファイルからのインポート (ADMIN のみ)
+// Import from JSON file (ADMIN only)
 app.post('/api/holidays/import-json', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Forbidden' });
   const { holidays: nagerHolidays } = req.body;
@@ -1286,7 +1286,7 @@ app.post('/api/holidays/import-json', verifyToken, async (req: AuthRequest, res)
   }
 });
 
-// 時限一覧取得 (認証必須)
+// Fetch periods (Auth required)
 app.get('/api/periods', verifyToken, async (req, res) => {
   try {
     const periods = await prisma.timePeriod.findMany({
@@ -1299,14 +1299,14 @@ app.get('/api/periods', verifyToken, async (req, res) => {
   }
 });
 
-// 時限の更新/作成 (ADMIN権限)
+// Update/Create periods (ADMIN required)
 app.post('/api/periods', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
   const { periods } = req.body;
   try {
-    // 既存の時限を全削除して再作成（単純化のため）
+    // Delete all existing periods and recreate (for simplification)
     await prisma.$transaction([
       prisma.timePeriod.deleteMany(),
       prisma.timePeriod.createMany({
@@ -1328,7 +1328,7 @@ app.post('/api/periods', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// リソースラベル取得 (認証必須)
+// Fetch resource labels (Auth required)
 app.get('/api/labels', verifyToken, async (req, res) => {
   try {
     const label = await prisma.resourceLabel.findFirst();
@@ -1347,13 +1347,13 @@ app.get('/api/labels', verifyToken, async (req, res) => {
   }
 });
 
-// リソースラベル更新 (ADMIN権限)
+// Update resource labels (ADMIN required)
 app.post('/api/labels', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
   const { labels } = req.body;
-  // id が含まれている場合は削除（Prismaの更新エラー回避）
+  // Remove id if included (avoid Prisma update error)
   const { id, ...labelData } = labels;
 
   try {
@@ -1475,7 +1475,7 @@ app.post('/api/subjects/reorder', verifyToken, async (req: AuthRequest, res) => 
   }
 });
 
-// カラーテーマ一覧取得 (認証必須)
+// Fetch color themes (Auth required)
 app.get('/api/color-themes', verifyToken, async (req, res) => {
   try {
     const themes = await prisma.colorTheme.findMany({
@@ -1490,7 +1490,7 @@ app.get('/api/color-themes', verifyToken, async (req, res) => {
   }
 });
 
-// カラーテーマの一括更新/作成 (ADMIN権限)
+// Bulk update/create color themes (ADMIN required)
 app.post('/api/color-themes', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
@@ -1519,7 +1519,7 @@ app.post('/api/color-themes', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// カラーテーマ削除 (ADMIN権限)
+// Delete color theme (ADMIN required)
 app.delete('/api/color-themes/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });

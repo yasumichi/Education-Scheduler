@@ -13,7 +13,7 @@ export interface User {
   id: string;
   email: string;
   role: UserRole;
-  resourceId?: string; // 対応する講師リソース等
+  resourceId?: string; // Corresponding teacher resource, etc.
 }
 
 export interface AuthResponse {
@@ -95,7 +95,7 @@ export interface Resource {
   name: string;
   type: ResourceType;
   order?: number;
-  userId?: string; // 紐付けられたユーザーID
+  userId?: string; // Associated user ID
   startDate?: string; // YYYY-MM-DD
   endDate?: string;   // YYYY-MM-DD
   subjects?: CourseSubject[];
@@ -117,9 +117,9 @@ export interface ScheduleEvent {
   endPeriodId: string;
   color?: string;
   location?: string;
-  resourceIds?: string[]; // 紐付けられたリソースID（講師、教室など）
-  resources?: { id: string }[]; // バックエンドからのリレーション
-  showInEventRow?: boolean; // イベント行（最上部）に表示するかどうか
+  resourceIds?: string[]; // Associated resource ID (teacher, room, etc.)
+  resources?: { id: string }[]; // Relation from backend
+  showInEventRow?: boolean; // Whether to show in event row (top)
 }
 
 export interface Lesson {
@@ -127,7 +127,7 @@ export interface Lesson {
   subject: string;
   teacherId?: string;
   subTeacherIds?: string[]; // サブ講師
-  subTeachers?: { id: string }[]; // バックエンドからのリレーション
+  subTeachers?: { id: string }[]; // Relation from backend
   roomId?: string;
   courseId: string;
   location?: string;
@@ -135,7 +135,7 @@ export interface Lesson {
   externalTeacher?: string;
   externalSubTeachers?: string;
   deliveryMethodIds?: string[]; // 授業方式
-  deliveryMethods?: { id: string, name: string, color?: string }[]; // バックエンドからのリレーション
+  deliveryMethods?: { id: string, name: string, color?: string }[]; // Relation from backend
   startDate: string;   // 開始日 "2026-03-26"
   startPeriodId: string; // 開始時限 "p1"
   endDate: string;     // 終了日 "2026-03-27"
