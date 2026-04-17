@@ -16,6 +16,7 @@ import { ProfileManager, ProfileMode } from './components/ProfileManager';
 import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { ColorThemeManager } from './components/ColorThemeManager';
+import { SubjectManager } from './components/SubjectManager';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme } from './types';
@@ -51,6 +52,7 @@ export function App() {
   const showSystemSettingManager = useSignal<boolean>(false);
   const showDeliveryMethodManager = useSignal<boolean>(false);
   const showColorThemeManager = useSignal<boolean>(false);
+  const showSubjectManager = useSignal<boolean>(false);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const editingCourseId = useSignal<string | null>(null);
@@ -77,7 +79,11 @@ export function App() {
     subTeacher: '',
     mainRoom: '',
     deliveryMethod: '',
-    subject: ''
+    subject: '',
+    courseType: '',
+    subjectLarge: '',
+    subjectMiddle: '',
+    subjectSmall: ''
   });
 
   // 初期化時に /auth/me でセッション復元
@@ -356,6 +362,15 @@ export function App() {
                         }}
                       >
                         {t('Manage Labels')}
+                      </button>
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
+                          showSubjectManager.value = true;
+                          showSettingsDropdown.value = false;
+                        }}
+                      >
+                        {t('Manage Subjects')}
                       </button>
                       <button 
                         className="dropdown-item" 
@@ -725,6 +740,14 @@ export function App() {
           onClose={() => showLabelManager.value = false}
           onUpdate={(newLabels) => resourceLabels.value = newLabels}
           initialLabels={resourceLabels.value}
+        />
+      )}
+
+      {showSubjectManager.value && (
+        <SubjectManager
+          backendUrl={BACKEND_URL}
+          onClose={() => showSubjectManager.value = false}
+          labels={resourceLabels.value}
         />
       )}
 

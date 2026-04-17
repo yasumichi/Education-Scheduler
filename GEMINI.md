@@ -50,6 +50,13 @@
 - **リソースタイプ:** 「教室 (Room)」「講師 (Teacher)」「講座 (Course)」の3種類。
 - **リソースのフィルター機能:** grid-corner に配置されたフィルターボタンから、表示するリソース（行）をチェックボックスで動的に絞り込み可能。
 - **表示ラベルの動的変更:** リソース名や「メイン講師」「補佐講師」「課目 (Subject)」等のラベルをDBで一括管理・変更可能。
+- **課目の階層管理 (Subject Hierarchy):** 
+  - 課目を最大3階層（大・中・小課目）で集中管理可能。
+  - 各階層の名称（ラベル）はシステム設定で変更可能。
+  - 最小単位の課目（または子項目を持たない上位課目）に対して「総時限数」を設定可能。
+- **講座タイプ (Course Type):** 
+  - 講座を「講座タイプ」で分類し、タイプごとに有効な課目セットを定義可能。
+  - 講座編集時は、選択されたタイプに紐づく課目のみが階層構造を維持してリスト表示される。
 
 - **講師とユーザーの紐付け:** 講師リソースを特定のシステムユーザーと 1:1 で紐付け可能。
 - **講座の詳細管理:** 開始/終了年月日、メイン教室、管理講師（主任・補佐）、および関連する課目（Subject）と合計時限数を管理。
@@ -116,13 +123,15 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 ```
 
 ### Main Entities
-- **Resource:** `id, name, type, order, userId, startDate, endDate, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel`
+- **Resource:** `id, name, type, order, userId, startDate, endDate, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel, courseTypeId`
+- **CourseType:** `id, name, order`
+- **Subject:** `id, name, level, parentId, courseTypeId, totalPeriods, order`
 - **Lesson:** `id, subject, startDate, startPeriodId, endDate, endPeriodId, roomId, teacherId, courseId, location, subTeacherIds, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers`
 - **ScheduleEvent:** `id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, showInEventRow, resourceIds`
 - **DeliveryMethod:** `id, name, color, order`
 - **TimePeriod:** `id, name, startTime, endTime, order` (IDは `p1`, `p2` ... 形式を維持)
 - **Holiday:** `id, name, date, start, end`
-- **ResourceLabels:** `room, teacher, course, event, mainTeacher, subTeacher, mainRoom, deliveryMethod, subject`
+- **ResourceLabels:** `room, teacher, course, event, mainTeacher, subTeacher, mainRoom, deliveryMethod, subject, courseType, subjectLarge, subjectMiddle, subjectSmall`
 - **ColorTheme:** `id, name, category, key, background, foreground, order`
 
 ---
@@ -148,6 +157,8 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 - [x] 3ヶ月/6ヶ月/1年ビューの開始月日のカスタマイズ機能
 - [x] カラーテーママネージャーによる配色のカスタマイズ（イベント・授業・休日）
 - [x] ダークテーマ / ライトテーマの完全対応
+- [x] 課目の階層管理 (最大3階層) と講座タイプによるフィルタリング機能
+- [x] イベント行の表示崩れ修正およびリソース行の重なり回避ロジックの改善
 
 ### Upcoming Tasks (Next Steps)
 - [ ] ドラッグ＆ドロップによる授業の移動・編集機能

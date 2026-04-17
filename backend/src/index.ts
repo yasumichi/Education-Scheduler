@@ -175,8 +175,11 @@ app.get('/api/resources', verifyToken, async (req, res) => {
   try {
     const resources = await prisma.resource.findMany({
       include: {
-        subjects: true,
-        assistantTeachers: { select: { id: true } }
+        subjects: {
+          include: { subject: true }
+        },
+        assistantTeachers: { select: { id: true } },
+        courseType: true
       },
       orderBy: { order: 'asc' }
     });
@@ -473,7 +476,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { id, name, order, startDate, endDate, subjects, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel } = req.body;
+  const { id, name, order, startDate, endDate, subjects, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel, courseTypeId } = req.body;
   try {
     let course;
     const commonData = {
@@ -485,6 +488,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
       chiefTeacherId: chiefTeacherId || null,
       mainTeacherLabel: mainTeacherLabel || null,
       subTeacherLabel: subTeacherLabel || null,
+      courseTypeId: courseTypeId || null,
     };
 
     const subTeachersConnect = assistantTeacherIds?.map((tid: string) => ({ id: tid })) || [];
@@ -498,8 +502,9 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
           subjects: {
             deleteMany: {},
             create: subjects.map((s: any) => ({
-              name: s.name,
-              totalPeriods: s.totalPeriods
+              name: s.name || null,
+              totalPeriods: s.totalPeriods || 0,
+              subjectId: s.subjectId || null
             }))
           },
           assistantTeachers: {
@@ -516,8 +521,9 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
           ...commonData,
           subjects: {
             create: subjects.map((s: any) => ({
-              name: s.name,
-              totalPeriods: s.totalPeriods
+              name: s.name || null,
+              totalPeriods: s.totalPeriods || 0,
+              subjectId: s.subjectId || null
             }))
           },
           type: ResourceType.course,
@@ -1330,6 +1336,10 @@ app.get('/api/labels', verifyToken, async (req, res) => {
       if (!label.deliveryMethod) (label as any).deliveryMethod = "Delivery Method";
       if (!label.mainRoom) (label as any).mainRoom = "Main Room";
       if (!label.subject) (label as any).subject = "Subject";
+      if (!label.courseType) (label as any).courseType = "Course Type";
+      if (!label.subjectLarge) (label as any).subjectLarge = "Subject (Large)";
+      if (!label.subjectMiddle) (label as any).subjectMiddle = "Subject (Middle)";
+      if (!label.subjectSmall) (label as any).subjectSmall = "Subject (Small)";
     }
     res.json(label);
   } catch (error) {
@@ -1363,6 +1373,105 @@ app.post('/api/labels', verifyToken, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Failed to update resource labels:', error);
     res.status(500).json({ error: 'Failed to update resource labels' });
+  }
+});
+
+// --- CourseType Endpoints ---
+
+app.get('/api/course-types', verifyToken, async (req, res) => {
+  try {
+    const types = await prisma.courseType.findMany({ orderBy: { order: 'asc' } });
+    res.json(types);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch course types' });
+  }
+});
+
+app.post('/api/course-types', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  const { id, name, order } = req.body;
+  try {
+    const data = { name, order: order || 0 };
+    const result = id 
+      ? await prisma.courseType.update({ where: { id }, data })
+      : await prisma.courseType.create({ data });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save course type' });
+  }
+});
+
+app.delete('/api/course-types/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  try {
+    await prisma.courseType.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete course type' });
+  }
+});
+
+app.post('/api/course-types/reorder', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  const { orders } = req.body; // [{ id, order }, ...]
+  try {
+    await prisma.$transaction(
+      orders.map((o: any) => prisma.courseType.update({ where: { id: o.id }, data: { order: o.order } }))
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reorder course types' });
+  }
+});
+
+// --- Subject Endpoints ---
+
+app.get('/api/subjects', verifyToken, async (req, res) => {
+  try {
+    const subjects = await prisma.subject.findMany({ 
+      include: { children: true },
+      orderBy: { order: 'asc' } 
+    });
+    res.json(subjects);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch subjects' });
+  }
+});
+
+app.post('/api/subjects', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  const { id, name, level, parentId, courseTypeId, totalPeriods, order } = req.body;
+  try {
+    const data = { name, level, parentId, courseTypeId, totalPeriods, order: order || 0 };
+    const result = id 
+      ? await prisma.subject.update({ where: { id }, data })
+      : await prisma.subject.create({ data });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save subject' });
+  }
+});
+
+app.delete('/api/subjects/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  try {
+    await prisma.subject.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete subject' });
+  }
+});
+
+app.post('/api/subjects/reorder', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  const { orders } = req.body;
+  try {
+    await prisma.$transaction(
+      orders.map((o: any) => prisma.subject.update({ where: { id: o.id }, data: { order: o.order } }))
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reorder subjects' });
   }
 });
 

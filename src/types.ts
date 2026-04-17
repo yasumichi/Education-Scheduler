@@ -31,6 +31,10 @@ export type ResourceLabels = {
   mainRoom: string;
   deliveryMethod: string;
   subject: string;
+  courseType: string;
+  subjectLarge: string;
+  subjectMiddle: string;
+  subjectSmall: string;
 }
 
 export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
@@ -55,10 +59,28 @@ export interface SystemSetting {
   holidayTheme: string; // "default"
 }
 
-export interface CourseSubject {
+export interface CourseType {
   id: string;
   name: string;
-  totalPeriods: number;
+  order: number;
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  level: number;
+  parentId?: string | null;
+  courseTypeId: string;
+  totalPeriods?: number | null;
+  order: number;
+}
+
+export interface CourseSubject {
+  id: string;
+  name?: string | null;
+  totalPeriods?: number | null;
+  subjectId?: string | null;
+  subject?: Subject | null;
 }
 
 export interface DeliveryMethod {
@@ -83,6 +105,7 @@ export interface Resource {
   assistantTeachers?: { id: string }[];
   mainTeacherLabel?: string;
   subTeacherLabel?: string;
+  courseTypeId?: string | null;
 }
 
 export interface ScheduleEvent {

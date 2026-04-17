@@ -44,15 +44,41 @@ model Resource {
 
   mainTeacherLabel String?
   subTeacherLabel  String?
+
+  courseTypeId     String?
+  courseType       CourseType?     @relation(fields: [courseTypeId], references: [id])
+}
+
+model CourseType {
+  id        String     @id @default(uuid())
+  name      String
+  order     Int        @default(0)
+  subjects  Subject[]
+  resources Resource[]
+}
+
+model Subject {
+  id            String          @id @default(uuid())
+  name          String
+  level         Int             @default(1) // 1: Large, 2: Middle, 3: Small
+  parentId      String?
+  parent        Subject?        @relation("SubjectHierarchy", fields: [parentId], references: [id])
+  children      Subject[]       @relation("SubjectHierarchy")
+  courseTypeId  String
+  courseType    CourseType      @relation(fields: [courseTypeId], references: [id], onDelete: Cascade)
+  totalPeriods  Int?            // Only for leaf nodes
+  order         Int             @default(0)
+  courseSubjects CourseSubject[]
 }
 
 model CourseSubject {
-// ... (rest of the file)
   id           String   @id @default(uuid())
-  name         String
-  totalPeriods Int
+  name         String?  // Legacy
+  totalPeriods Int?     // Legacy
   resourceId   String
   course       Resource @relation("CourseSubjects", fields: [resourceId], references: [id], onDelete: Cascade)
+  subjectId    String?
+  subject      Subject? @relation(fields: [subjectId], references: [id])
 }
 
 model Lesson {
@@ -124,6 +150,10 @@ model ResourceLabel {
   mainRoom       String @default("Main Room")
   deliveryMethod String @default("Delivery Method")
   subject        String @default("Subject")
+  courseType     String @default("Course Type")
+  subjectLarge   String @default("Subject (Large)")
+  subjectMiddle  String @default("Subject (Middle)")
+  subjectSmall   String @default("Subject (Small)")
 }
 
 model SystemSetting {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Resource, ResourceLabels, SystemSetting } from '../types';
+import { Resource, ResourceLabels, SystemSetting, CourseType, Subject } from '../types';
 import './CourseManager.css';
 
 interface Props {
@@ -20,6 +20,9 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   const [coursesList, setCoursesList] = useState<Resource[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [showDuplicateLessons, setShowDuplicateLessons] = useState(false);
+  
+  const [courseTypes, setCourseTypes] = useState<CourseType[]>([]);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
   
   // システム設定から開始月日を取得
   const startMonth = systemSettings?.yearViewStartMonth ?? 4;
@@ -69,7 +72,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     assistantTeacherIds: string[];
     mainTeacherLabel: string;
     subTeacherLabel: string;
-    subjects: { name: string; totalPeriods: number }[];
+    courseTypeId: string;
+    subjects: { name: string; totalPeriods: number; subjectId: string | null }[];
   }>({
     name: '',
     order: 0,
@@ -80,6 +84,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     assistantTeacherIds: [],
     mainTeacherLabel: '',
     subTeacherLabel: '',
+    courseTypeId: '',
     subjects: []
   });
 
@@ -93,7 +98,23 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
   useEffect(() => {
     setCoursesList(courses);
+    fetchMasterData();
   }, [resources]);
+
+  const fetchMasterData = async () => {
+    try {
+      const [typesRes, subjectsRes] = await Promise.all([
+        fetch(`${backendUrl}/course-types`, { credentials: 'include' }),
+        fetch(`${backendUrl}/subjects`, { credentials: 'include' })
+      ]);
+      if (typesRes.ok && subjectsRes.ok) {
+        setCourseTypes(await typesRes.json());
+        setAllSubjects(await subjectsRes.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch master data:', err);
+    }
+  };
 
   useEffect(() => {
     if (editingCourseId && editingCourseId !== 'new') {
@@ -109,7 +130,12 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           assistantTeacherIds: course.assistantTeacherIds || (course.assistantTeachers || []).map(t => t.id),
           mainTeacherLabel: course.mainTeacherLabel || '',
           subTeacherLabel: course.subTeacherLabel || '',
-          subjects: course.subjects?.map(s => ({ name: s.name, totalPeriods: s.totalPeriods })) || []
+          courseTypeId: course.courseTypeId || '',
+          subjects: course.subjects?.map(s => ({ 
+            name: s.name || (s.subject?.name || ''), 
+            totalPeriods: s.totalPeriods || (s.subject?.totalPeriods || 0),
+            subjectId: s.subjectId || null
+          })) || []
         });
       }
     } else if (editingCourseId === 'new') {
@@ -123,6 +149,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         assistantTeacherIds: [],
         mainTeacherLabel: '',
         subTeacherLabel: '',
+        courseTypeId: '',
         subjects: []
       });
     }
@@ -152,7 +179,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   const handleAddSubject = () => {
     setFormData({
       ...formData,
-      subjects: [...formData.subjects, { name: '', totalPeriods: 0 }]
+      subjects: [...formData.subjects, { name: '', totalPeriods: 0, subjectId: null }]
     });
   };
 
@@ -163,9 +190,19 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     });
   };
 
-  const handleSubjectChange = (index: number, field: 'name' | 'totalPeriods', value: string | number) => {
+  const handleSubjectChange = (index: number, field: 'name' | 'totalPeriods' | 'subjectId', value: any) => {
     const newSubjects = [...formData.subjects];
-    newSubjects[index] = { ...newSubjects[index], [field]: value };
+    if (field === 'subjectId') {
+      const sub = allSubjects.find(s => s.id === value);
+      newSubjects[index] = { 
+        ...newSubjects[index], 
+        subjectId: value,
+        name: sub ? sub.name : newSubjects[index].name,
+        totalPeriods: sub ? (sub.totalPeriods || 0) : newSubjects[index].totalPeriods
+      };
+    } else {
+      newSubjects[index] = { ...newSubjects[index], [field]: value };
+    }
     setFormData({ ...formData, subjects: newSubjects });
   };
 
@@ -191,7 +228,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
       try {
         const lines = text.split(/\r?\n/);
-        const importedSubjects: { name: string; totalPeriods: number }[] = [];
+        const importedSubjects: { name: string; totalPeriods: number; subjectId: string | null }[] = [];
         
         lines.forEach((line, index) => {
           const trimmedLine = line.trim();
@@ -213,7 +250,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           if (index === 0 && isNaN(totalPeriods)) return;
 
           if (name && !isNaN(totalPeriods)) {
-            importedSubjects.push({ name, totalPeriods });
+            importedSubjects.push({ name, totalPeriods, subjectId: null });
           }
         });
 
@@ -393,6 +430,25 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   };
 
   const getTeacherName = (id: string) => teachers.find(t => t.id === id)?.name || id;
+
+  const getSortedSubjects = () => {
+    const typeSubjects = allSubjects.filter(sub => sub.courseTypeId === formData.courseTypeId);
+    const sorted: Subject[] = [];
+    
+    const addChildren = (parentId: string | null, level: number) => {
+      const children = typeSubjects
+        .filter(s => s.parentId === parentId)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      children.forEach(child => {
+        sorted.push(child);
+        addChildren(child.id, level + 1);
+      });
+    };
+
+    addChildren(null, 1);
+    return sorted;
+  };
 
   return (
     <div className="course-manager-overlay">
@@ -577,6 +633,18 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
               </div>
 
               <div className="form-group">
+                <label>{labels.courseType}</label>
+                <select 
+                  value={formData.courseTypeId} 
+                  onChange={(e) => setFormData({ ...formData, courseTypeId: e.currentTarget.value })}
+                  disabled={!isAdmin}
+                >
+                  <option value="">{t('Select {{resource}}', { resource: labels.courseType })}</option>
+                  {courseTypes.map(ct => <option key={ct.id} value={ct.id}>{ct.name}</option>)}
+                </select>
+              </div>
+
+              <div className="form-group">
                 <label>{labels.mainRoom}</label>
                 <select 
                   value={formData.mainRoomId} 
@@ -650,12 +718,26 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 <h3>{labels.subject}</h3>
                 {formData.subjects.map((s, index) => (
                   <div key={index} className="subject-row">
+                    <select
+                      value={s.subjectId || ''}
+                      onChange={(e) => handleSubjectChange(index, 'subjectId', e.currentTarget.value || null)}
+                      disabled={!isAdmin}
+                      style={{ width: '40%' }}
+                    >
+                      <option value="">-- {t('Select Subject')} --</option>
+                      {getSortedSubjects().map(sub => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.level === 2 ? '　' : sub.level === 3 ? '　　' : ''}{sub.name}
+                        </option>
+                      ))}
+                    </select>
                     <input 
                       type="text" 
                       placeholder={t('{{resource}} Name', { resource: labels.subject })}
                       value={s.name}
                       onInput={(e) => handleSubjectChange(index, 'name', e.currentTarget.value)}
                       readOnly={!isAdmin}
+                      style={{ width: '30%' }}
                     />
                     <input 
                       type="number" 
@@ -663,6 +745,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                       value={s.totalPeriods}
                       onInput={(e) => handleSubjectChange(index, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
                       readOnly={!isAdmin}
+                      style={{ width: '20%' }}
                     />
                     {isAdmin && <button className="remove-btn" onClick={() => handleRemoveSubject(index)}>×</button>}
                   </div>

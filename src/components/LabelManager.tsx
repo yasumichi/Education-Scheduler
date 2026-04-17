@@ -121,6 +121,38 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
               onInput={(e) => handleChange('subject', e.currentTarget.value)}
             />
           </div>
+          <div className="period-field" style={{ marginBottom: '15px' }}>
+            <label>Course Type</label>
+            <input 
+              type="text" 
+              value={labels.courseType} 
+              onInput={(e) => handleChange('courseType', e.currentTarget.value)}
+            />
+          </div>
+          <div className="period-field" style={{ marginBottom: '15px' }}>
+            <label>Subject (Large)</label>
+            <input 
+              type="text" 
+              value={labels.subjectLarge} 
+              onInput={(e) => handleChange('subjectLarge', e.currentTarget.value)}
+            />
+          </div>
+          <div className="period-field" style={{ marginBottom: '15px' }}>
+            <label>Subject (Middle)</label>
+            <input 
+              type="text" 
+              value={labels.subjectMiddle} 
+              onInput={(e) => handleChange('subjectMiddle', e.currentTarget.value)}
+            />
+          </div>
+          <div className="period-field" style={{ marginBottom: '15px' }}>
+            <label>Subject (Small)</label>
+            <input 
+              type="text" 
+              value={labels.subjectSmall} 
+              onInput={(e) => handleChange('subjectSmall', e.currentTarget.value)}
+            />
+          </div>
         </div>
 
         <div className="period-manager-footer">

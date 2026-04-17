@@ -131,8 +131,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
       return {
         name: s.name,
-        total: s.totalPeriods,
-        remaining: s.totalPeriods - scheduledPeriods
+        total: s.totalPeriods || 0,
+        remaining: (s.totalPeriods || 0) - scheduledPeriods
       };
     });
   }, [formData.courseId, formData.id, lessons, courses, periods, selectedCourse]);
@@ -317,7 +317,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
               >
                 <option value="">{t('Select {{resource}}', { resource: labels.subject })}</option>
                 {subjectOptions.map(s => (
-                  <option key={s.name} value={s.name} disabled={s.remaining <= 0}>
+                  <option key={s.name || ''} value={s.name || ''} disabled={s.remaining <= 0}>
                     {s.name} ({t('Remaining')}: {s.remaining}/{s.total})
                   </option>
                 ))}
