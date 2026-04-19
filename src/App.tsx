@@ -26,7 +26,7 @@ import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeekl
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export function App() {
-  const { t } = useTranslation();
+  const { t, ready } = useTranslation();
   const viewMode = useSignal<ResourceType>('room');
   const viewType = useSignal<ViewType>('month');
   const showPersonalMonthly = useSignal<boolean>(false);
@@ -210,8 +210,8 @@ export function App() {
     }
   };
 
-  if (!sessionRestored.value) {
-    return <div className="loading">Loading session...</div>;
+  if (!sessionRestored.value || !ready) {
+    return <div className="loading">Loading...</div>;
   }
 
   if (!user.value) {
