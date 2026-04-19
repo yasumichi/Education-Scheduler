@@ -190,6 +190,33 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     });
   };
 
+  const handleBulkAddSubjects = () => {
+    if (!formData.courseTypeId) {
+      alert(t('Please select a {{resource}} first', { resource: labels.courseType }));
+      return;
+    }
+    
+    // Get leaf subjects for the selected course type
+    const typeSubjects = allSubjects.filter(s => s.courseTypeId === formData.courseTypeId);
+    const leafSubjects = typeSubjects.filter(s => !typeSubjects.some(child => child.parentId === s.id));
+    
+    const newSubjects = leafSubjects.map(s => ({
+      name: s.name,
+      totalPeriods: s.totalPeriods || 0,
+      subjectId: s.id
+    }));
+
+    if (newSubjects.length === 0) {
+      alert(t('No subjects found for this {{resource}}', { resource: labels.courseType }));
+      return;
+    }
+
+    setFormData({
+      ...formData,
+      subjects: [...formData.subjects, ...newSubjects]
+    });
+  };
+
   const handleSubjectChange = (index: number, field: 'name' | 'totalPeriods' | 'subjectId', value: any) => {
     const newSubjects = [...formData.subjects];
     if (field === 'subjectId') {
@@ -753,6 +780,9 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 {isAdmin && (
                   <div className="subjects-actions">
                     <button className="add-btn" onClick={handleAddSubject}>{t('Add {{resource}}', { resource: labels.subject })}</button>
+                    <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
+                      {t('Add all from {{resource}}', { resource: labels.courseType })}
+                    </button>
                     <label className="import-csv-label">
                       <input
                         type="file"
