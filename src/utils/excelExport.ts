@@ -1008,3 +1008,77 @@ export async function exportCourseWeeklyToExcel({
     console.error('Course Weekly Export Error:', err);
   }
 }
+
+export async function exportCourseStatisticsToExcel({
+  courseName, stats, labels, t
+}: {
+  courseName: string;
+  stats: any[];
+  labels: ResourceLabels;
+  t: (key: string, options?: any) => string;
+}) {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Statistics');
+    worksheet.mergeCells(1, 1, 1, 6);
+    const titleCell = worksheet.getCell(1, 1);
+    titleCell.value = `${t('Course Statistics')}: ${courseName}`;
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: 'center' };
+    const headers = [labels.subjectLarge, labels.subjectMiddle, labels.subjectSmall, t('Assigned'), t('Scheduled'), t('Diff')];
+    const headerRow = worksheet.getRow(3);
+    headers.forEach((h, i) => {
+      const cell = headerRow.getCell(i + 1);
+      cell.value = h;
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      cell.alignment = { horizontal: 'center' };
+    });
+    worksheet.getColumn(1).width = 25; worksheet.getColumn(2).width = 25; worksheet.getColumn(3).width = 30;
+    worksheet.getColumn(4).width = 12; worksheet.getColumn(5).width = 12; worksheet.getColumn(6).width = 12;
+    let currentRowIdx = 4;
+    let totalAssigned = 0;
+    let totalScheduled = 0;
+    const addRows = (rows: any[]) => {
+      rows.forEach(row => {
+        const xlRow = worksheet.getRow(currentRowIdx);
+        xlRow.getCell(1).value = row.level === 1 ? row.name : '';
+        xlRow.getCell(2).value = row.level === 2 ? row.name : '';
+        xlRow.getCell(3).value = row.level === 3 ? row.name : '';
+        xlRow.getCell(4).value = row.assigned;
+        xlRow.getCell(5).value = row.scheduled;
+        xlRow.getCell(6).value = row.scheduled - row.assigned;
+        const isGroup = row.children && row.children.length > 0;
+        if (isGroup || row.level === 1) {
+          xlRow.font = { bold: true };
+          for (let i = 1; i <= 6; i++) xlRow.getCell(i).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: row.level === 1 ? 'FFF5F5F5' : 'FFF9F9F9' } };
+        }
+        if (row.level === 1) { totalAssigned += row.assigned; totalScheduled += row.scheduled; }
+        for (let i = 1; i <= 6; i++) {
+          const cell = xlRow.getCell(i);
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          if (i >= 4) cell.alignment = { horizontal: 'right' };
+        }
+        currentRowIdx++;
+        if (row.children) addRows(row.children);
+      });
+    };
+    addRows(stats);
+    const footerRow = worksheet.getRow(currentRowIdx);
+    footerRow.getCell(1).value = t('Grand Total');
+    worksheet.mergeCells(currentRowIdx, 1, currentRowIdx, 3);
+    footerRow.getCell(4).value = totalAssigned;
+    footerRow.getCell(5).value = totalScheduled;
+    footerRow.getCell(6).value = totalScheduled - totalAssigned;
+    footerRow.font = { bold: true };
+    for (let i = 1; i <= 6; i++) {
+      const cell = footerRow.getCell(i);
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+      cell.border = { top: { style: 'medium' }, left: { style: 'thin' }, bottom: { style: 'medium' }, right: { style: 'thin' } };
+      if (i >= 4) cell.alignment = { horizontal: 'right' };
+    }
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `Statistics_${courseName}_${format(new Date(), 'yyyyMMdd')}.xlsx`);
+  } catch (err) { console.error('Course Statistics Export Error:', err); }
+}

@@ -2,6 +2,7 @@ import { useMemo } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { CourseType, Subject, Lesson, TimePeriod, ResourceLabels, Resource } from '../types';
 import { parseISO, differenceInDays } from 'date-fns';
+import { exportCourseStatisticsToExcel } from '../utils/excelExport';
 import './CourseStatistics.css';
 
 interface Props {
@@ -115,7 +116,22 @@ export function CourseStatistics({ course, subjects, lessons, periods, labels, o
       <div className="course-statistics-box">
         <div className="dialog-header">
           <h2>{t('Course Statistics')}: {course.name}</h2>
-          <button className="close-button" onClick={onClose}>×</button>
+          <div className="header-actions">
+            <button 
+              className="excel-export-btn" 
+              onClick={() => exportCourseStatisticsToExcel({ courseName: course.name, stats, labels, t })}
+              title={t('Export to Excel')}
+              style={{ marginRight: '10px' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span style={{ marginLeft: '5px' }}>Excel</span>
+            </button>
+            <button className="close-button" onClick={onClose}>×</button>
+          </div>
         </div>
 
         <div className="course-statistics-content">
