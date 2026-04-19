@@ -196,9 +196,24 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
       return;
     }
     
-    // Get leaf subjects for the selected course type
+    // Get all subjects for the selected course type and sort them hierarchically
     const typeSubjects = allSubjects.filter(s => s.courseTypeId === formData.courseTypeId);
-    const leafSubjects = typeSubjects.filter(s => !typeSubjects.some(child => child.parentId === s.id));
+    const sortedSubjects: Subject[] = [];
+    
+    const addChildren = (parentId: string | null) => {
+      const children = typeSubjects
+        .filter(s => s.parentId === parentId)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      children.forEach(child => {
+        sortedSubjects.push(child);
+        addChildren(child.id);
+      });
+    };
+    addChildren(null);
+
+    // Filter only leaf subjects from the sorted list
+    const leafSubjects = sortedSubjects.filter(s => !typeSubjects.some(child => child.parentId === s.id));
     
     const newSubjects = leafSubjects.map(s => ({
       name: s.name,
