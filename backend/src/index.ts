@@ -836,9 +836,8 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
     const deliveryMethodsConnect = deliveryMethodIds?.map((did: string) => ({ id: did })) || [];
     
     // Common data
-    const commonData = {
+    const commonData: any = {
       subject,
-      subjectId: subjectId || null,
       location: location || null,
       startDate,
       startPeriodId,
@@ -848,6 +847,13 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
       externalTeacher: externalTeacher || null,
       externalSubTeachers: externalSubTeachers || null,
     };
+
+    if (subjectId) {
+      commonData.subjectRef = { connect: { id: subjectId } };
+    } else {
+      // If we are updating and subjectId is null, disconnect
+      if (id) commonData.subjectRef = { disconnect: true };
+    }
 
     if (id) {
       // Update (Update)
