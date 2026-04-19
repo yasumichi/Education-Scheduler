@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Resource, ResourceLabels, SystemSetting, CourseType, Subject } from '../types';
+import { CourseType, Subject, ResourceLabels, SystemSetting, Resource, Lesson, TimePeriod } from '../types';
 import './CourseManager.css';
 
 interface Props {

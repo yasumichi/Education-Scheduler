@@ -757,7 +757,7 @@ app.get('/api/lessons', verifyToken, async (req, res) => {
 app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   
-  const { id, subject, teacherId, subTeacherIds, roomId, courseId, location, startDate, startPeriodId, endDate, endPeriodId, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers } = req.body;
+  const { id, subject, subjectId, teacherId, subTeacherIds, roomId, courseId, location, startDate, startPeriodId, endDate, endPeriodId, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers } = req.body;
 
   try {
     // Permission check
@@ -838,6 +838,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
     // Common data
     const commonData = {
       subject,
+      subjectId: subjectId || null,
       location: location || null,
       startDate,
       startPeriodId,

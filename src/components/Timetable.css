@@ -299,9 +299,10 @@
   background-color: #444;
   color: #fff;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  padding: 0 10px;
+  align-items: flex-start;
+  padding: 8px 10px;
   font-weight: bold;
   border-right: 1px solid #666;
   border-bottom: 1px solid #555;
@@ -316,19 +317,24 @@
 }
 
 .label-name {
-  flex: 1;
+  width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.weekly-view-btn {
+.label-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.weekly-view-btn, .stats-view-btn {
   background: #3b2b00;
   color: #fbd38d;
   border: 1px solid #744210;
   border-radius: 4px;
   padding: 4px;
-  margin-left: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -339,6 +345,17 @@
 
 .weekly-view-btn:hover {
   background: #5a4a00;
+  color: #fff;
+}
+
+.stats-view-btn {
+  background: #234;
+  color: #8af;
+  border-color: #346;
+}
+
+.stats-view-btn:hover {
+  background: #345;
   color: #fff;
 }
 

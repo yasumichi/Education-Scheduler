@@ -17,9 +17,10 @@ import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { ColorThemeManager } from './components/ColorThemeManager';
 import { SubjectManager } from './components/SubjectManager';
+import { CourseStatistics } from './components/CourseStatistics';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
-import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme } from './types';
+import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject } from './types';
 import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
 
@@ -53,6 +54,8 @@ export function App() {
   const showDeliveryMethodManager = useSignal<boolean>(false);
   const showColorThemeManager = useSignal<boolean>(false);
   const showSubjectManager = useSignal<boolean>(false);
+  const showCourseStatistics = useSignal<boolean>(false);
+  const selectedCourseIdForStats = useSignal<string | null>(null);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const editingCourseId = useSignal<string | null>(null);
@@ -63,6 +66,7 @@ export function App() {
   const resources = useSignal<Resource[]>([]);
   const lessons = useSignal<Lesson[]>([]);
   const events = useSignal<ScheduleEvent[]>([]);
+  const subjects = useSignal<Subject[]>([]);
   const sessionRestored = useSignal<boolean>(false);
 
   // Auth signals
@@ -117,7 +121,8 @@ export function App() {
         fetch(`${BACKEND_URL}/periods`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/labels`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/settings`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/color-themes`, { credentials: 'include' })
+        fetch(`${BACKEND_URL}/color-themes`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/subjects`, { credentials: 'include' })
       ]);
 
       const failed = responses.find(r => !r.ok);
@@ -131,10 +136,10 @@ export function App() {
         return;
       }
 
-      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels, resSettings, resThemes] = responses;
+      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels, resSettings, resThemes, resSubjects] = responses;
 
       // すべてのJSONパースを並列で行う
-      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels, dataSettings, dataThemes] = await Promise.all([
+      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels, dataSettings, dataThemes, dataSubjects] = await Promise.all([
         resResources.json(),
         resLessons.json(),
         resEvents.json(),
@@ -142,7 +147,8 @@ export function App() {
         resPeriods.json(),
         resLabels.json(),
         resSettings.json(),
-        resThemes.json()
+        resThemes.json(),
+        resSubjects.json()
       ]);
 
       resources.value = dataResources;
@@ -153,6 +159,7 @@ export function App() {
       resourceLabels.value = dataLabels || resourceLabels.value;
       systemSettings.value = dataSettings;
       colorThemes.value = dataThemes;
+      subjects.value = dataSubjects;
 
       console.log('Successfully fetched all data from backend');
     } catch (err) {
@@ -702,6 +709,10 @@ export function App() {
               showCourseWeekly.value = true;
               showPersonalMonthly.value = false;
             }}
+            onViewStats={(courseId) => {
+              selectedCourseIdForStats.value = courseId;
+              showCourseStatistics.value = true;
+            }}
             onRoomClick={(room) => {
               editingRoomId.value = room.id;
               showRoomManager.value = true;
@@ -882,6 +893,28 @@ export function App() {
           themes={colorThemes.value}
         />
       )}
+
+      {showCourseStatistics.value && selectedCourseIdForStats.value && (() => {
+        const course = resources.value.find(c => c.id === selectedCourseIdForStats.value);
+        if (!course) return null;
+        
+        // Fetch subjects if needed, but they are already managed in CourseManager.
+        // For simplicity, we'll fetch all subjects here too or rely on a global state.
+        // Since we don't have global subjects signal yet, we'll need to fetch them.
+        return (
+          <CourseStatistics
+            course={course}
+            subjects={subjects.value}
+            lessons={lessons.value}
+            periods={periods.value}
+            labels={resourceLabels.value}
+            onClose={() => {
+              showCourseStatistics.value = false;
+              selectedCourseIdForStats.value = null;
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }

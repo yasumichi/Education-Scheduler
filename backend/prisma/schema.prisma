@@ -69,6 +69,7 @@ model Subject {
   totalPeriods  Int?            // Only for leaf nodes
   order         Int             @default(0)
   courseSubjects CourseSubject[]
+  lessons       Lesson[]        @relation("SubjectLessons")
 }
 
 model CourseSubject {
@@ -84,6 +85,8 @@ model CourseSubject {
 model Lesson {
   id              String           @id @default(uuid())
   subject         String
+  subjectId       String?
+  subjectRef      Subject?         @relation("SubjectLessons", fields: [subjectId], references: [id])
   startDate       String
   startPeriodId   String
   endDate         String

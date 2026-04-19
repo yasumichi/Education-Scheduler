@@ -1,0 +1,88 @@
+.course-statistics-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+}
+
+.course-statistics-box {
+  background-color: #242424;
+  color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 95%;
+  max-width: 1100px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.course-statistics-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.stat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.stat-table th {
+  background-color: #333;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #444;
+  position: sticky;
+  top: 0;
+}
+
+.stat-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #333;
+}
+
+.stat-group {
+  background-color: #2a2a2a;
+  font-weight: bold;
+}
+
+.stat-level-1 td { border-top: 1px solid #444; }
+.stat-level-2 td.col-middle { padding-left: 20px; }
+.stat-level-3 td.col-small { padding-left: 40px; }
+
+.col-assigned, .col-scheduled, .col-diff {
+  text-align: right;
+  width: 100px;
+}
+
+.grand-total {
+  background-color: #333;
+  font-weight: bold;
+}
+
+.grand-total td {
+  border-top: 2px solid #555;
+  padding: 12px 10px;
+}
+
+.text-over { color: #f88; }
+.text-under { color: #8af; }
+
+@media (prefers-color-scheme: light) {
+  .course-statistics-box { background-color: #fff; color: #333; }
+  .stat-table th { background-color: #f5f5f5; border-bottom-color: #ddd; }
+  .stat-table td { border-bottom-color: #eee; }
+  .stat-group { background-color: #fafafa; }
+  .grand-total { background-color: #f0f0f0; }
+  .text-over { color: #d00; }
+  .text-under { color: #00d; }
+}

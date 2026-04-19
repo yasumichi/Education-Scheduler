@@ -125,6 +125,7 @@ export interface ScheduleEvent {
 export interface Lesson {
   id: string;
   subject: string;
+  subjectId?: string;
   teacherId?: string;
   subTeacherIds?: string[]; // サブ講師
   subTeachers?: { id: string }[]; // Relation from backend

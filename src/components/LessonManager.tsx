@@ -23,6 +23,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const [formData, setFormData] = useState<{
     id?: string;
     subject: string;
+    subjectId: string;
     teacherId: string;
     subTeacherIds: string[];
     roomId: string;
@@ -39,6 +40,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   }>({
     id: initialLesson?.id,
     subject: initialLesson?.subject || '',
+    subjectId: initialLesson?.subjectId || '',
     teacherId: initialLesson?.teacherId || '',
     subTeacherIds: initialLesson?.subTeacherIds || (initialLesson?.subTeachers || []).map(t => t.id),
     roomId: initialLesson?.roomId || '',
@@ -115,7 +117,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     return course.subjects.map(s => {
       // 既存の授業から、この講座・この課目の時限数を合計
       const scheduledPeriods = lessons
-        .filter(l => l.courseId === formData.courseId && l.subject === s.name && l.id !== formData.id)
+        .filter(l => l.courseId === formData.courseId && (l.subjectId ? l.subjectId === s.subjectId : l.subject === s.name) && l.id !== formData.id)
         .reduce((sum, l) => {
           const sIdx = periods.findIndex(p => p.id === l.startPeriodId);
           const eIdx = periods.findIndex(p => p.id === l.endPeriodId);
@@ -130,6 +132,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
         }, 0);
 
       return {
+        id: s.subjectId,
         name: s.name,
         total: s.totalPeriods || 0,
         remaining: (s.totalPeriods || 0) - scheduledPeriods
@@ -311,13 +314,21 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
             <label>{labels.subject} *</label>
             {canManage ? (
               <select 
-                value={formData.subject} 
-                onChange={(e) => setFormData({ ...formData, subject: e.currentTarget.value })}
+                value={formData.subjectId || formData.subject} 
+                onChange={(e) => {
+                  const val = e.currentTarget.value;
+                  const opt = subjectOptions.find(o => o.id === val || o.name === val);
+                  setFormData({ 
+                    ...formData, 
+                    subject: opt ? (opt.name || '') : val,
+                    subjectId: opt ? (opt.id || '') : ''
+                  });
+                }}
                 disabled={!canManage || !formData.courseId}
               >
                 <option value="">{t('Select {{resource}}', { resource: labels.subject })}</option>
                 {subjectOptions.map(s => (
-                  <option key={s.name || ''} value={s.name || ''} disabled={s.remaining <= 0}>
+                  <option key={s.id || s.name} value={s.id || s.name || ''} disabled={s.remaining <= 0}>
                     {s.name} ({t('Remaining')}: {s.remaining}/{s.total})
                   </option>
                 ))}
