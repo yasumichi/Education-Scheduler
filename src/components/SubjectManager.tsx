@@ -113,6 +113,67 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
     }
   };
 
+  const handleImportCSV = async (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split(/\r?\n/).filter(line => line.trim());
+      // Skip header if it exists (e.g., if first line contains "Large" or "大課目")
+      const startIdx = (lines[0].includes('Large') || lines[0].includes('Subject') || lines[0].includes('課目')) ? 1 : 0;
+      
+      const rows = lines.slice(startIdx).map(line => {
+        const [large, middle, small, totalPeriods, order] = line.split(',').map(s => s.trim());
+        return { 
+          large: large || '', 
+          middle: middle || '', 
+          small: small || '', 
+          totalPeriods: totalPeriods ? parseInt(totalPeriods) : null,
+          order: order ? parseInt(order) : 0
+        };
+      });
+
+      // Front-end pre-processing to fill in omissions (optional as backend also handles it, but good for clarity)
+      let currentLarge = '';
+      let currentMiddle = '';
+      const processedRows = rows.map(row => {
+        if (row.large) {
+          currentLarge = row.large;
+          currentMiddle = '';
+        }
+        if (row.middle) {
+          currentMiddle = row.middle;
+        }
+        return {
+          ...row,
+          large: row.large || currentLarge,
+          middle: row.middle || (row.large ? '' : currentMiddle)
+        };
+      });
+
+      try {
+        const res = await fetch(`${backendUrl}/course-types/${selectedTypeId}/import-subjects`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ rows: processedRows })
+        });
+        if (res.ok) {
+          alert(t('Import successful'));
+          fetchData();
+        } else {
+          const errData = await res.json();
+          alert(`${t('Import failed')}: ${errData.error}`);
+        }
+      } catch (err) {
+        console.error('Failed to import subjects:', err);
+        alert(t('Import failed'));
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const renderSubjectNode = (subject: Subject, level: number) => {
     const children = subjects.filter(s => s.parentId === subject.id);
     const hasChildren = children.length > 0;
@@ -181,7 +242,19 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
           <div className="hierarchy-section">
             <div className="section-header">
               <h3>{labels.subject}</h3>
-              <button className="add-btn" onClick={() => setEditingSubject({ level: 1, parentId: null, name: '' })}>{t('Add')}</button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="add-btn" onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.csv';
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) handleImportCSV(file);
+                  };
+                  input.click();
+                }}>{t('Import CSV')}</button>
+                <button className="add-btn" onClick={() => setEditingSubject({ level: 1, parentId: null, name: '' })}>{t('Add')}</button>
+              </div>
             </div>
             <div className="subject-tree">
               {filteredSubjects.map(s => renderSubjectNode(s, 1))}

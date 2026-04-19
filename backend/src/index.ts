@@ -1411,7 +1411,7 @@ app.delete('/api/course-types/:id', verifyToken, async (req: AuthRequest, res) =
   }
 });
 
-app.post('/api/course-types/reorder', verifyToken, async (req: AuthRequest, res) => {
+app.post('/api/course-types/:id/reorder', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
   const { orders } = req.body; // [{ id, order }, ...]
   try {
@@ -1421,6 +1421,109 @@ app.post('/api/course-types/reorder', verifyToken, async (req: AuthRequest, res)
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to reorder course types' });
+  }
+});
+
+app.post('/api/course-types/:id/import-subjects', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  const { id: courseTypeId } = req.params;
+  const { rows } = req.body; // Array of { large, middle, small, totalPeriods, order }
+
+  try {
+    const courseType = await prisma.courseType.findUnique({ where: { id: courseTypeId } });
+    if (!courseType) return res.status(404).json({ error: 'Course type not found' });
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete existing subjects for this type
+      await tx.subject.deleteMany({ where: { courseTypeId } });
+
+      // 2. Process rows and build hierarchy
+      let lastLarge: any = null;
+      let lastMiddle: any = null;
+
+      let currentLargeName = '';
+      let currentMiddleName = '';
+
+      for (const row of rows) {
+        const largeName = row.large || currentLargeName;
+        const middleName = row.middle || (row.large ? '' : currentMiddleName);
+        const smallName = row.small;
+
+        // Determine actual level of this row
+        let level = 1;
+        if (row.small) level = 3;
+        else if (row.middle || (middleName && !row.large)) level = 2;
+        else if (row.large || largeName) level = 1;
+
+        if (level === 1) {
+          lastLarge = await tx.subject.create({
+            data: {
+              name: largeName,
+              level: 1,
+              courseTypeId,
+              order: row.order || 0,
+              totalPeriods: row.totalPeriods || null
+            }
+          });
+          currentLargeName = largeName;
+          lastMiddle = null;
+          currentMiddleName = '';
+        } else if (level === 2) {
+          if (!lastLarge || currentLargeName !== largeName) {
+            // Find or create large parent if missing or changed
+            lastLarge = await tx.subject.findFirst({
+              where: { name: largeName, level: 1, courseTypeId }
+            }) || await tx.subject.create({
+              data: { name: largeName, level: 1, courseTypeId, order: 0 }
+            });
+            currentLargeName = largeName;
+          }
+          lastMiddle = await tx.subject.create({
+            data: {
+              name: middleName,
+              level: 2,
+              parentId: lastLarge.id,
+              courseTypeId,
+              order: row.order || 0,
+              totalPeriods: row.totalPeriods || null
+            }
+          });
+          currentMiddleName = middleName;
+        } else if (level === 3) {
+          if (!lastLarge || currentLargeName !== largeName) {
+             lastLarge = await tx.subject.findFirst({
+              where: { name: largeName, level: 1, courseTypeId }
+            }) || await tx.subject.create({
+              data: { name: largeName, level: 1, courseTypeId, order: 0 }
+            });
+            currentLargeName = largeName;
+          }
+          if (!lastMiddle || currentMiddleName !== middleName) {
+            lastMiddle = await tx.subject.findFirst({
+              where: { name: middleName, level: 2, parentId: lastLarge.id, courseTypeId }
+            }) || await tx.subject.create({
+              data: { name: middleName, level: 2, parentId: lastLarge.id, courseTypeId, order: 0 }
+            });
+            currentMiddleName = middleName;
+          }
+          await tx.subject.create({
+            data: {
+              name: smallName,
+              level: 3,
+              parentId: lastMiddle.id,
+              courseTypeId,
+              order: row.order || 0,
+              totalPeriods: row.totalPeriods || null
+            }
+          });
+        }
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Failed to import subjects:', error);
+    res.status(500).json({ error: 'Failed to import subjects' });
   }
 });
 
