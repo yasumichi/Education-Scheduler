@@ -363,15 +363,16 @@ export function App() {
                       >
                         {t('Manage Labels')}
                       </button>
-                      <button 
-                        className="dropdown-item" 
+                      <button
+                        className="dropdown-item"
                         onClick={() => {
                           showSubjectManager.value = true;
                           showSettingsDropdown.value = false;
                         }}
                       >
-                        {t('Manage Subjects')}
+                        {t('Manage {{resource}}', { resource: resourceLabels.value.subject })}
                       </button>
+
                       <button 
                         className="dropdown-item" 
                         onClick={() => {

@@ -214,7 +214,7 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
     <div className="subject-manager-overlay">
       <div className="subject-manager-box">
         <div className="subject-manager-header">
-          <h2>{t('Manage Subjects')}</h2>
+          <h2>{t('Manage {{resource}}', { resource: labels.subject })}</h2>
           <button className="icon-btn" style={{ fontSize: '1.5rem' }} onClick={onClose}>×</button>
         </div>
 
