@@ -330,7 +330,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         await onUpdate();
         setEditingCourseId(null);
       } else {
-        alert(t('Failed to save course'));
+        alert(t('Failed to save {{resource}}', { resource: labels.course }));
       }
     } catch (err) {
       console.error('Error saving course:', err);
@@ -349,7 +349,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         await onUpdate();
         if (editingCourseId === id) setEditingCourseId(null);
       } else {
-        alert(t('Failed to delete course'));
+        alert(t('Failed to delete {{resource}}', { resource: labels.course }));
       }
     } catch (err) {
       console.error('Error deleting course:', err);
@@ -367,7 +367,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         const data = await res.json();
         await onUpdate();
         setEditingCourseId(data.id);
-        setStatusMessage(t('Course duplicated successfully'));
+        setStatusMessage(t('{{resource}} duplicated successfully', { resource: labels.course }));
         setTimeout(() => setStatusMessage(null), 3000);
       } else {
         alert(t('Failed to duplicate {{resource}}', { resource: labels.course }));
@@ -379,7 +379,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
   const handleDuplicateLessons = async () => {
     if (!editingCourseId || !duplicationData.sourceCourseId || !duplicationData.startDate || !duplicationData.endDate) {
-      alert(t('Please select source course and date range'));
+      alert(t('Please select source {{resource}} and date range', { resource: labels.course }));
       return;
     }
 
@@ -597,14 +597,14 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
               
               {showDuplicateLessons && isAdmin && (
                 <div className="duplicate-lessons-dialog">
-                  <h3>{t('Duplicate Lessons from Another Course')}</h3>
+                  <h3>{t('Duplicate Lessons from Another {{resource}}', { resource: labels.course })}</h3>
                   <div className="form-group">
-                    <label>{t('Source Course')}</label>
+                    <label>{t('Source {{resource}}', { resource: labels.course })}</label>
                     <select 
                       value={duplicationData.sourceCourseId}
                       onChange={(e) => setDuplicationData({ ...duplicationData, sourceCourseId: e.currentTarget.value })}
                     >
-                      <option value="">{t('Select Course')}</option>
+                      <option value="">{t('Select {{resource}}', { resource: labels.course })}</option>
                       {courses.filter(c => c.id !== editingCourseId).map(c => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -693,7 +693,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   onChange={(e) => setFormData({ ...formData, mainRoomId: e.currentTarget.value })}
                   disabled={!isAdmin}
                 >
-                  <option value="">{t('Select Room')}</option>
+                  <option value="">{t('Select {{resource}}', { resource: labels.room })}</option>
                   {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>
@@ -706,7 +706,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                     onChange={(e) => setFormData({ ...formData, chiefTeacherId: e.currentTarget.value })}
                     disabled={!isAdmin}
                   >
-                    <option value="">{t('Select Teacher')}</option>
+                    <option value="">{t('Select {{resource}}', { resource: labels.teacher })}</option>
                     {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
@@ -820,7 +820,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
               {isAdmin && editingCourseId !== 'new' && (
                 <div className="footer-left">
                   <button className="delete-button" onClick={() => handleDelete(editingCourseId)}>{t('Delete')}</button>
-                  <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate Course')}</button>
+                  <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate {{resource}}', { resource: labels.course })}</button>
                   <button className="duplicate-lessons-btn" onClick={() => setShowDuplicateLessons(true)}>{t('Duplicate Lessons')}</button>
                 </div>
               )}
