@@ -604,7 +604,7 @@ app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res
       // 1. Create new course resource
       const newCourse = await tx.resource.create({
         data: {
-          name: `(Copy) ${original.name}`,
+          name: `${original.name} (Copy)`,
           type: ResourceType.course,
           order: (original.order || 0) + 1, // Place at next position of original course
           startDate: original.startDate,
@@ -613,6 +613,7 @@ app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res
           chiefTeacherId: original.chiefTeacherId,
           mainTeacherLabel: original.mainTeacherLabel,
           subTeacherLabel: original.subTeacherLabel,
+          courseTypeId: original.courseTypeId,
           assistantTeachers: {
             connect: original.assistantTeachers.map(t => ({ id: t.id }))
           }
@@ -625,6 +626,7 @@ app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res
           data: original.subjects.map(s => ({
             name: s.name,
             totalPeriods: s.totalPeriods,
+            subjectId: s.subjectId,
             resourceId: newCourse.id
           }))
         });
