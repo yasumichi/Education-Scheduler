@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { CourseType, Subject, ResourceLabels } from '../types';
 import './SubjectManager.css';
@@ -6,10 +6,11 @@ import './SubjectManager.css';
 interface Props {
   backendUrl: string;
   onClose: () => void;
+  onUpdate: () => void;
   labels: ResourceLabels;
 }
 
-export function SubjectManager({ backendUrl, onClose, labels }: Props) {
+export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props) {
   const { t } = useTranslation();
   const [courseTypes, setCourseTypes] = useState<CourseType[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -17,6 +18,11 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
   const [editingType, setEditingType] = useState<Partial<CourseType> | null>(null);
   const [editingSubject, setEditingSubject] = useState<Partial<Subject> | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [isModified, setIsModified] = useState(false);
+
+  // For Drag and Drop
+  const dragItemRef = useRef<{ id: string, parentId: string | null, level: number } | null>(null);
+  const dragOverItemRef = useRef<{ id: string, parentId: string | null, level: number } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -32,7 +38,7 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
         const types = await typesRes.json();
         const subs = await subjectsRes.json();
         setCourseTypes(types);
-        setSubjects(subs);
+        setSubjects(subs.sort((a: Subject, b: Subject) => (a.order || 0) - (b.order || 0)));
         if (types.length > 0 && !selectedTypeId) {
           setSelectedTypeId(types[0].id);
         }
@@ -40,6 +46,7 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
+    setIsModified(false);
   };
 
   const toggleNode = (id: string) => {
@@ -47,6 +54,100 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
     if (next.has(id)) next.delete(id);
     else next.add(id);
     setExpandedNodes(next);
+  };
+
+  const handleMoveSubject = (subjectId: string, direction: 'up' | 'down') => {
+    const subject = subjects.find(s => s.id === subjectId);
+    if (!subject) return;
+
+    const siblings = subjects
+      .filter(s => (s.parentId ?? null) === (subject.parentId ?? null) && s.courseTypeId === subject.courseTypeId && s.level === subject.level)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    const index = siblings.findIndex(s => s.id === subjectId);
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= siblings.length) return;
+
+    const newSubjects = [...subjects];
+    const targetSubject = siblings[targetIndex];
+    
+    // Swap orders
+    const tempOrder = subject.order;
+    const s1 = newSubjects.find(s => s.id === subject.id)!;
+    const s2 = newSubjects.find(s => s.id === targetSubject.id)!;
+    s1.order = targetSubject.order;
+    s2.order = tempOrder;
+
+    setSubjects(newSubjects.sort((a, b) => (a.order || 0) - (b.order || 0)));
+    setIsModified(true);
+  };
+
+  const handleDragStart = (subject: Subject) => {
+    dragItemRef.current = { id: subject.id, parentId: subject.parentId ?? null, level: subject.level };
+  };
+
+  const handleDragEnter = (subject: Subject) => {
+    if (dragItemRef.current && 
+        dragItemRef.current.parentId === (subject.parentId ?? null) && 
+        dragItemRef.current.level === subject.level &&
+        dragItemRef.current.id !== subject.id) {
+      dragOverItemRef.current = { id: subject.id, parentId: subject.parentId ?? null, level: subject.level };
+    } else {
+      dragOverItemRef.current = null;
+    }
+  };
+
+  const handleDragEnd = () => {
+    if (!dragItemRef.current || !dragOverItemRef.current) {
+      dragItemRef.current = null;
+      dragOverItemRef.current = null;
+      return;
+    }
+
+    const newSubjects = [...subjects];
+    const siblings = newSubjects
+      .filter(s => (s.parentId ?? null) === dragItemRef.current!.parentId && s.courseTypeId === selectedTypeId && s.level === dragItemRef.current!.level)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    const fromIdx = siblings.findIndex(s => s.id === dragItemRef.current!.id);
+    const toIdx = siblings.findIndex(s => s.id === dragOverItemRef.current!.id);
+
+    const [movedItem] = siblings.splice(fromIdx, 1);
+    siblings.splice(toIdx, 0, movedItem);
+
+    // Re-assign orders based on new sequence
+    siblings.forEach((s, idx) => {
+      const original = newSubjects.find(ns => ns.id === s.id)!;
+      original.order = idx + 1;
+    });
+
+    setSubjects(newSubjects.sort((a, b) => (a.order || 0) - (b.order || 0)));
+    setIsModified(true);
+    dragItemRef.current = null;
+    dragOverItemRef.current = null;
+  };
+
+  const handleSaveOrder = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/subjects/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          orders: subjects.map(s => ({ id: s.id, order: s.order }))
+        })
+      });
+      if (res.ok) {
+        alert(t('Order saved successfully'));
+        setIsModified(false);
+        onUpdate();
+      } else {
+        alert(t('Failed to save order'));
+      }
+    } catch (err) {
+      console.error('Error saving subject order:', err);
+    }
   };
 
   // --- CourseType Handlers ---
@@ -179,9 +280,27 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
     const hasChildren = children.length > 0;
     const isExpanded = expandedNodes.has(subject.id);
 
+    const siblings = subjects
+      .filter(s => (s.parentId ?? null) === (subject.parentId ?? null) && s.courseTypeId === subject.courseTypeId && s.level === subject.level)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    const index = siblings.findIndex(s => s.id === subject.id);
+
     return (
-      <div key={subject.id} className={`tree-node node-level-${level}`}>
+      <div key={subject.id} 
+           className={`tree-node node-level-${level} draggable-node`}
+           draggable
+           onDragStart={() => handleDragStart(subject)}
+           onDragEnter={() => handleDragEnter(subject)}
+           onDragEnd={handleDragEnd}
+           onDragOver={(e) => e.preventDefault()}
+      >
         <div className="node-content">
+          <div className="drag-handle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="9" cy="5" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="9" cy="19" r="1" />
+              <circle cx="15" cy="5" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="15" cy="19" r="1" />
+            </svg>
+          </div>
           <div className="node-toggle" onClick={() => toggleNode(subject.id)}>
             {level < 3 && (hasChildren ? (isExpanded ? '▼' : '▶') : '○')}
           </div>
@@ -192,6 +311,10 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
             )}
           </div>
           <div className="item-actions">
+            <div className="move-buttons">
+              <button className="icon-btn move-btn" onClick={() => handleMoveSubject(subject.id, 'up')} disabled={index === 0}>↑</button>
+              <button className="icon-btn move-btn" onClick={() => handleMoveSubject(subject.id, 'down')} disabled={index === siblings.length - 1}>↓</button>
+            </div>
             <button className="icon-btn" onClick={() => setEditingSubject(subject)}>✎</button>
             {level < 3 && (
               <button className="icon-btn" onClick={() => setEditingSubject({ level: level + 1, parentId: subject.id })}>＋</button>
@@ -259,6 +382,12 @@ export function SubjectManager({ backendUrl, onClose, labels }: Props) {
             <div className="subject-tree">
               {filteredSubjects.map(s => renderSubjectNode(s, 1))}
             </div>
+            {isModified && (
+              <div className="save-order-container">
+                <button className="save-order-btn" onClick={handleSaveOrder}>{t('Save Order')}</button>
+              </div>
+            )}
+            <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>
           </div>
         </div>
 

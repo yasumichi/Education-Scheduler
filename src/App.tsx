@@ -759,10 +759,10 @@ export function App() {
         <SubjectManager
           backendUrl={BACKEND_URL}
           onClose={() => showSubjectManager.value = false}
+          onUpdate={fetchData}
           labels={resourceLabels.value}
         />
       )}
-
       {showCourseManager.value && (
         <CourseManager 
           backendUrl={BACKEND_URL} 

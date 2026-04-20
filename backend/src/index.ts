@@ -1451,6 +1451,10 @@ app.post('/api/course-types/:id/import-subjects', verifyToken, async (req: AuthR
       let currentLargeName = '';
       let currentMiddleName = '';
 
+      let largeOrder = 0;
+      let middleOrder = 0;
+      let smallOrder = 0;
+
       for (const row of rows) {
         const largeName = row.large || currentLargeName;
         const middleName = row.middle || (row.large ? '' : currentMiddleName);
@@ -1463,12 +1467,17 @@ app.post('/api/course-types/:id/import-subjects', verifyToken, async (req: AuthR
         else if (row.large || largeName) level = 1;
 
         if (level === 1) {
+          if (largeName !== currentLargeName) {
+            largeOrder++;
+            middleOrder = 0;
+            smallOrder = 0;
+          }
           lastLarge = await tx.subject.create({
             data: {
               name: largeName,
               level: 1,
               courseTypeId,
-              order: row.order || 0,
+              order: largeOrder,
               totalPeriods: row.totalPeriods || null
             }
           });
@@ -1476,14 +1485,18 @@ app.post('/api/course-types/:id/import-subjects', verifyToken, async (req: AuthR
           lastMiddle = null;
           currentMiddleName = '';
         } else if (level === 2) {
-          if (!lastLarge || currentLargeName !== largeName) {
-            // Find or create large parent if missing or changed
-            lastLarge = await tx.subject.findFirst({
-              where: { name: largeName, level: 1, courseTypeId }
-            }) || await tx.subject.create({
-              data: { name: largeName, level: 1, courseTypeId, order: 0 }
+          if (largeName !== currentLargeName) {
+            largeOrder++;
+            lastLarge = await tx.subject.create({
+              data: { name: largeName, level: 1, courseTypeId, order: largeOrder }
             });
             currentLargeName = largeName;
+            middleOrder = 0;
+            smallOrder = 0;
+          }
+          if (middleName !== currentMiddleName) {
+            middleOrder++;
+            smallOrder = 0;
           }
           lastMiddle = await tx.subject.create({
             data: {
@@ -1491,35 +1504,37 @@ app.post('/api/course-types/:id/import-subjects', verifyToken, async (req: AuthR
               level: 2,
               parentId: lastLarge.id,
               courseTypeId,
-              order: row.order || 0,
+              order: middleOrder,
               totalPeriods: row.totalPeriods || null
             }
           });
           currentMiddleName = middleName;
         } else if (level === 3) {
           if (!lastLarge || currentLargeName !== largeName) {
-             lastLarge = await tx.subject.findFirst({
-              where: { name: largeName, level: 1, courseTypeId }
-            }) || await tx.subject.create({
-              data: { name: largeName, level: 1, courseTypeId, order: 0 }
+            largeOrder++;
+            lastLarge = await tx.subject.create({
+              data: { name: largeName, level: 1, courseTypeId, order: largeOrder }
             });
             currentLargeName = largeName;
+            middleOrder = 0;
+            smallOrder = 0;
           }
           if (!lastMiddle || currentMiddleName !== middleName) {
-            lastMiddle = await tx.subject.findFirst({
-              where: { name: middleName, level: 2, parentId: lastLarge.id, courseTypeId }
-            }) || await tx.subject.create({
-              data: { name: middleName, level: 2, parentId: lastLarge.id, courseTypeId, order: 0 }
+            middleOrder++;
+            lastMiddle = await tx.subject.create({
+              data: { name: middleName, level: 2, parentId: lastLarge.id, courseTypeId, order: middleOrder }
             });
             currentMiddleName = middleName;
+            smallOrder = 0;
           }
+          smallOrder++;
           await tx.subject.create({
             data: {
               name: smallName,
               level: 3,
               parentId: lastMiddle.id,
               courseTypeId,
-              order: row.order || 0,
+              order: smallOrder,
               totalPeriods: row.totalPeriods || null
             }
           });
