@@ -13,7 +13,7 @@ i18n
       escapeValue: false
     },
     backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+      loadPath: 'locales/{{lng}}/{{ns}}.json',
     },
     react: {
       useSuspense: false // Disable Suspense for Preact to handle loading state manually
