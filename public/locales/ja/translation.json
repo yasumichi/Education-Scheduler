@@ -196,5 +196,10 @@
   "Drag and drop rows or use arrows to change order": "行をドラッグ&ドロップするか、矢印ボタンで順序を変更できます",
   "Personal Monthly": "個人の月間予定",
   "Weekly Schedule": "週間予定表",
-  "My Schedule": "個人の予定"
+  "My Schedule": "個人の予定",
+  "Teacher Statistics": "講師別の割当統計",
+  "Subtotal": "小計",
+  "All Period": "全期間",
+  "Course Subtotal": "講座小計",
+  "Export to Excel": "Excelに書き出し"
 }

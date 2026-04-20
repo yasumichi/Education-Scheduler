@@ -1,0 +1,112 @@
+.teacher-statistics-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.teacher-statistics-box {
+  background: #222;
+  color: #fff;
+  width: 95%;
+  max-width: 1100px;
+  max-height: 90vh;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.teacher-statistics-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.range-selector {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+.range-selector label {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.range-selector input {
+  background: #333;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+.stat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.stat-table th, .stat-table td {
+  border: 1px solid #444;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.stat-table th {
+  background: #333;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.stat-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.col-course { width: 15%; }
+.col-large { width: 15%; }
+.col-middle { width: 15%; }
+.col-small { width: 15%; }
+.col-main { width: 10%; text-align: right; }
+.col-sub { width: 10%; text-align: right; }
+.col-total { width: 10%; text-align: right; font-weight: bold; }
+
+.stat-group {
+  background: #2a2a2a;
+  font-weight: bold;
+}
+
+.course-subtotal {
+  background: #333;
+  font-weight: bold;
+}
+
+.grand-total {
+  background: #444;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+@media (prefers-color-scheme: light) {
+  .teacher-statistics-box { background: #fff; color: #333; }
+  .range-selector { background: #f5f5f5; }
+  .range-selector input { background: #fff; border-color: #ccc; color: #333; }
+  .stat-table th { background: #f0f0f0; }
+  .stat-table th, .stat-table td { border-color: #eee; }
+  .stat-table tr:hover { background: #f9f9f9; }
+  .stat-group { background: #f5f5f5; }
+  .course-subtotal { background: #eee; }
+  .grand-total { background: #e0e0e0; }
+}

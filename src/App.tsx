@@ -18,10 +18,11 @@ import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { ColorThemeManager } from './components/ColorThemeManager';
 import { SubjectManager } from './components/SubjectManager';
 import { CourseStatistics } from './components/CourseStatistics';
+import { TeacherStatistics } from './components/TeacherStatistics';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject } from './types';
-import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, startOfDay, startOfWeek } from 'date-fns';
+import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, differenceInDays, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -56,6 +57,8 @@ export function App() {
   const showSubjectManager = useSignal<boolean>(false);
   const showCourseStatistics = useSignal<boolean>(false);
   const selectedCourseIdForStats = useSignal<string | null>(null);
+  const showTeacherStatistics = useSignal<boolean>(false);
+  const selectedTeacherIdForStats = useSignal<string | null>(null);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const editingCourseId = useSignal<string | null>(null);
@@ -713,6 +716,10 @@ export function App() {
               selectedCourseIdForStats.value = courseId;
               showCourseStatistics.value = true;
             }}
+            onViewTeacherStats={(teacherId) => {
+              selectedTeacherIdForStats.value = teacherId;
+              showTeacherStatistics.value = true;
+            }}
             onRoomClick={(room) => {
               editingRoomId.value = room.id;
               showRoomManager.value = true;
@@ -911,6 +918,51 @@ export function App() {
             onClose={() => {
               showCourseStatistics.value = false;
               selectedCourseIdForStats.value = null;
+            }}
+          />
+        );
+      })()}
+
+      {showTeacherStatistics.value && selectedTeacherIdForStats.value && (() => {
+        const teacher = resources.value.find(t => t.id === selectedTeacherIdForStats.value);
+        if (!teacher) return null;
+        
+        const currentViewStart = startOfDay(currentDate.value);
+        let dayCount = 1;
+        
+        if (viewType.value === 'day') dayCount = 1;
+        else if (viewType.value === 'week') dayCount = 7;
+        else if (viewType.value === 'month') {
+          dayCount = differenceInDays(addMonths(currentViewStart, 1), currentViewStart);
+        }
+        else if (viewType.value === '3month' || viewType.value === '6month') {
+          const months = viewType.value === '3month' ? 3 : 6;
+          dayCount = differenceInDays(addMonths(currentViewStart, months), currentViewStart);
+        }
+        else if (viewType.value === 'year' || viewType.value === 'course_timeline') {
+          const month = systemSettings.value?.yearViewStartMonth ?? 4;
+          const day = systemSettings.value?.yearViewStartDay ?? 1;
+          const start = new Date(getYear(currentDate.value), month - 1, day);
+          const end = new Date(getYear(currentDate.value) + 1, month - 1, day);
+          dayCount = differenceInDays(end, start);
+        }
+
+        const initialStart = format(currentViewStart, 'yyyy-MM-dd');
+        const initialEnd = format(addDays(currentViewStart, dayCount - 1), 'yyyy-MM-dd');
+
+        return (
+          <TeacherStatistics
+            teacher={teacher}
+            courses={resources.value.filter(r => r.type === 'course')}
+            subjects={subjects.value}
+            lessons={lessons.value}
+            periods={periods.value}
+            labels={resourceLabels.value}
+            initialStartDate={initialStart}
+            initialEndDate={initialEnd}
+            onClose={() => {
+              showTeacherStatistics.value = false;
+              selectedTeacherIdForStats.value = null;
             }}
           />
         );
