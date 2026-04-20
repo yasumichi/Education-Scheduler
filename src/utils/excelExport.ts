@@ -1040,31 +1040,79 @@ export async function exportCourseStatisticsToExcel({
     let currentRowIdx = 4;
     let totalAssigned = 0;
     let totalScheduled = 0;
-    const addRows = (rows: any[]) => {
+
+    let lastLarge = '';
+    let lastMiddle = '';
+
+    const addRows = (rows: any[], context: { large: string, middle: string }) => {
       rows.forEach(row => {
         const xlRow = worksheet.getRow(currentRowIdx);
+        const currentLarge = row.level === 1 ? row.name : context.large;
+        const currentMiddle = row.level === 2 ? row.name : context.middle;
+
+        const isFirstRow = context.large === ''; // Start of the table
+        const largeChanged = isFirstRow || currentLarge !== context.large;
+        const middleChanged = largeChanged || currentMiddle !== context.middle;
+
         xlRow.getCell(1).value = row.level === 1 ? row.name : '';
         xlRow.getCell(2).value = row.level === 2 ? row.name : '';
         xlRow.getCell(3).value = row.level === 3 ? row.name : '';
         xlRow.getCell(4).value = row.assigned;
         xlRow.getCell(5).value = row.scheduled;
         xlRow.getCell(6).value = row.scheduled - row.assigned;
+
         const isGroup = row.children && row.children.length > 0;
         if (isGroup || row.level === 1) {
           xlRow.font = { bold: true };
-          for (let i = 1; i <= 6; i++) xlRow.getCell(i).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: row.level === 1 ? 'FFF5F5F5' : 'FFF9F9F9' } };
+          for (let i = 1; i <= 6; i++) {
+            xlRow.getCell(i).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: row.level === 1 ? 'FFF5F5F5' : 'FFF9F9F9' } };
+          }
         }
         if (row.level === 1) { totalAssigned += row.assigned; totalScheduled += row.scheduled; }
+
         for (let i = 1; i <= 6; i++) {
           const cell = xlRow.getCell(i);
-          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          const border: any = {}; // No bottom border by default
+          
+          // Top Border
+          if (i === 1) {
+            if (largeChanged) border.top = { style: 'thin' };
+          } else if (i === 2) {
+            if (middleChanged) border.top = { style: 'thin' };
+          } else {
+            border.top = { style: 'thin' };
+          }
+
+          // Left Border
+          if (i === 1) {
+            border.left = { style: 'thin' };
+          } else if (i === 2) {
+            if (row.level >= 2) border.left = { style: 'thin' };
+          } else if (i === 3) {
+            if (row.level >= 3) border.left = { style: 'thin' };
+          } else {
+            border.left = { style: 'thin' };
+          }
+
+          // Right Border
+          if (i === 1) {
+            if (row.level >= 2) border.right = { style: 'thin' };
+          } else if (i === 2) {
+            if (row.level >= 3) border.right = { style: 'thin' };
+          } else if (i === 6) {
+            border.right = { style: 'thin' };
+          } else if (i >= 3) {
+            border.right = { style: 'thin' };
+          }
+          
+          cell.border = border;
           if (i >= 4) cell.alignment = { horizontal: 'right' };
         }
         currentRowIdx++;
-        if (row.children) addRows(row.children);
+        if (row.children) addRows(row.children, { large: currentLarge, middle: currentMiddle });
       });
     };
-    addRows(stats);
+    addRows(stats, { large: '', middle: '' });
     const footerRow = worksheet.getRow(currentRowIdx);
     footerRow.getCell(1).value = t('Grand Total');
     worksheet.mergeCells(currentRowIdx, 1, currentRowIdx, 3);
@@ -1138,7 +1186,10 @@ export async function exportTeacherStatisticsToExcel({
     let currentRowIdx = 4;
     stats.forEach((row, idx) => {
       const xlRow = worksheet.getRow(currentRowIdx);
-      const isFirstCourseRow = idx === 0 || stats[idx - 1].courseId !== row.courseId;
+      const prev = idx > 0 ? stats[idx - 1] : null;
+      const isFirstCourseRow = !prev || prev.courseId !== row.courseId;
+      const isSameLarge = !isFirstCourseRow && row.largeSubject && prev && prev.largeSubject === row.largeSubject;
+      const isSameMiddle = isSameLarge && row.middleSubject && prev && prev.middleSubject === row.middleSubject;
       
       xlRow.getCell(1).value = isFirstCourseRow ? row.courseName : '';
       xlRow.getCell(2).value = row.largeSubject;
@@ -1158,7 +1209,46 @@ export async function exportTeacherStatisticsToExcel({
 
       for (let i = 1; i <= 7; i++) {
         const cell = xlRow.getCell(i);
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        const border: any = {}; // No bottom border by default
+        
+        // Top Border
+        if (i === 1) {
+          if (isFirstCourseRow) border.top = { style: 'thin' };
+        } else if (i === 2) {
+          if (!isSameLarge) border.top = { style: 'thin' };
+        } else if (i === 3) {
+          if (!isSameMiddle) border.top = { style: 'thin' };
+        } else {
+          border.top = { style: 'thin' };
+        }
+
+        // Left Border
+        if (i === 1) {
+          border.left = { style: 'thin' };
+        } else if (i === 2) {
+          if (row.largeSubject) border.left = { style: 'thin' };
+        } else if (i === 3) {
+          if (row.middleSubject) border.left = { style: 'thin' };
+        } else if (i === 4) {
+          if (row.smallSubject) border.left = { style: 'thin' };
+        } else {
+          border.left = { style: 'thin' };
+        }
+
+        // Right Border
+        if (i === 1) {
+          if (row.largeSubject) border.right = { style: 'thin' };
+        } else if (i === 2) {
+          if (row.middleSubject) border.right = { style: 'thin' };
+        } else if (i === 3) {
+          if (row.smallSubject) border.right = { style: 'thin' };
+        } else if (i === 7) {
+          border.right = { style: 'thin' };
+        } else if (i >= 4) {
+          border.right = { style: 'thin' };
+        }
+        
+        cell.border = border;
         if (i >= 5) cell.alignment = { horizontal: 'right' };
       }
       currentRowIdx++;

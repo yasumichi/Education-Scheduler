@@ -233,13 +233,26 @@ export function TeacherStatistics({
             </thead>
             <tbody>
               {stats.rows.map((row, idx) => {
-                const isFirstCourseRow = idx === 0 || stats.rows[idx-1].courseId !== row.courseId;
+                const prev = idx > 0 ? stats.rows[idx - 1] : null;
+                const isFirstCourseRow = !prev || prev.courseId !== row.courseId;
+                
+                const isSameLarge = !isFirstCourseRow && row.largeSubject && prev && prev.largeSubject === row.largeSubject;
+                const isSameMiddle = isSameLarge && row.middleSubject && prev && prev.middleSubject === row.middleSubject;
+
                 return (
                   <tr key={`${row.courseId}-${idx}`} className={row.level === 3 ? 'course-subtotal' : ''}>
-                    <td className="col-course">{isFirstCourseRow ? row.courseName : ''}</td>
-                    <td className="col-large">{row.largeSubject}</td>
-                    <td className="col-middle">{row.middleSubject}</td>
-                    <td className="col-small">{row.smallSubject}</td>
+                    <td className={`col-course ${!isFirstCourseRow ? 'no-border-top' : ''} ${!row.largeSubject && !row.middleSubject && !row.smallSubject ? 'no-border-right' : ''}`}>
+                      {isFirstCourseRow ? row.courseName : ''}
+                    </td>
+                    <td className={`col-large ${isSameLarge ? 'no-border-top' : ''} ${!row.largeSubject ? 'no-border-left no-border-right' : (!row.middleSubject ? 'no-border-right' : '')}`}>
+                      {row.largeSubject}
+                    </td>
+                    <td className={`col-middle ${isSameMiddle ? 'no-border-top' : ''} ${!row.middleSubject ? 'no-border-left no-border-right' : (!row.smallSubject ? 'no-border-right' : '')}`}>
+                      {row.middleSubject}
+                    </td>
+                    <td className={`col-small ${!row.smallSubject ? 'no-border-left' : ''}`}>
+                      {row.smallSubject}
+                    </td>
                     <td className="col-main">{row.mainHours}</td>
                     <td className="col-sub">{row.subHours}</td>
                     <td className="col-total">{row.totalHours}</td>

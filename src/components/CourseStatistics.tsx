@@ -89,12 +89,24 @@ export function CourseStatistics({ course, subjects, lessons, periods, labels, o
   const renderRows = (rows: StatRow[]) => {
     const elements: any[] = [];
 
-    const traverse = (row: StatRow) => {
+    const traverse = (row: StatRow, context: { large: string, middle: string }) => {
+      const currentLarge = row.level === 1 ? row.name : context.large;
+      const currentMiddle = row.level === 2 ? row.name : context.middle;
+
+      const isSameLarge = row.level > 1 && currentLarge === context.large;
+      const isSameMiddle = row.level > 2 && currentMiddle === context.middle;
+
       elements.push(
         <tr key={row.id} className={`stat-level-${row.level} ${row.children.length > 0 ? 'stat-group' : 'stat-leaf'}`}>
-          <td className="col-large">{row.level === 1 ? row.name : ''}</td>
-          <td className="col-middle">{row.level === 2 ? row.name : ''}</td>
-          <td className="col-small">{row.level === 3 ? row.name : ''}</td>
+          <td className={`col-large ${isSameLarge ? 'no-border-top' : ''} ${row.level === 1 ? 'no-border-right' : ''}`}>
+            {row.level === 1 ? row.name : ''}
+          </td>
+          <td className={`col-middle ${isSameMiddle ? 'no-border-top' : ''} ${row.level === 1 ? 'no-border-left no-border-right' : row.level === 2 ? 'no-border-right' : ''}`}>
+            {row.level === 2 ? row.name : ''}
+          </td>
+          <td className={`col-small ${row.level <= 2 ? 'no-border-left' : ''}`}>
+            {row.level === 3 ? row.name : ''}
+          </td>
           <td className="col-assigned">{row.assigned}</td>
           <td className="col-scheduled">{row.scheduled}</td>
           <td className="col-diff">
@@ -104,10 +116,11 @@ export function CourseStatistics({ course, subjects, lessons, periods, labels, o
           </td>
         </tr>
       );
-      row.children.forEach(traverse);
+      
+      row.children.forEach(child => traverse(child, { large: currentLarge, middle: currentMiddle }));
     };
 
-    rows.forEach(traverse);
+    rows.forEach(row => traverse(row, { large: '', middle: '' }));
     return elements;
   };
 

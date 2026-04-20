@@ -47,7 +47,12 @@
 
 .stat-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #333;
+  border-top: 1px solid #333;
+  border-left: 1px solid #333;
+}
+
+.stat-table td:last-child {
+  border-right: 1px solid #333;
 }
 
 .stat-group {
@@ -55,7 +60,22 @@
   font-weight: bold;
 }
 
-.stat-level-1 td { border-top: 1px solid #444; }
+.stat-level-1 td.col-large,
+.stat-level-1 td.col-middle,
+.stat-level-1 td.col-small { border-top: 1px solid #444; }
+
+.no-border-top {
+  border-top: hidden !important;
+}
+
+.no-border-right {
+  border-right: hidden !important;
+}
+
+.no-border-left {
+  border-left: hidden !important;
+}
+
 .stat-level-2 td.col-middle { padding-left: 20px; }
 .stat-level-3 td.col-small { padding-left: 40px; }
 

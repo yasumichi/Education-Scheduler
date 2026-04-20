@@ -64,6 +64,18 @@
   text-align: left;
 }
 
+.no-border-top {
+  border-top: hidden !important;
+}
+
+.no-border-right {
+  border-right: hidden !important;
+}
+
+.no-border-left {
+  border-left: hidden !important;
+}
+
 .stat-table th {
   background: #333;
   position: sticky;
