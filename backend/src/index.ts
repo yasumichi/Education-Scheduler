@@ -710,6 +710,7 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
         await prisma.lesson.create({
           data: {
             subject: sL.subject,
+            subjectRef: sL.subjectId ? { connect: { id: sL.subjectId } } : undefined,
             startDate: sL.startDate,
             startPeriodId: sL.startPeriodId,
             endDate: sL.endDate,
