@@ -1149,7 +1149,7 @@ export async function exportTeacherStatisticsToExcel({
     // Title
     worksheet.mergeCells(1, 1, 1, 7);
     const titleCell = worksheet.getCell(1, 1);
-    titleCell.value = `${t('Teacher Statistics')}: ${teacherName} (${dateRange})`;
+    titleCell.value = `${t('{{resource}} Statistics', { resource: labels.teacher })}: ${teacherName} (${dateRange})`;
     titleCell.font = { bold: true, size: 14 };
     titleCell.alignment = { horizontal: 'center' };
 

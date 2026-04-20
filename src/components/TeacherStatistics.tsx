@@ -185,7 +185,7 @@ export function TeacherStatistics({
     <div className="teacher-statistics-overlay">
       <div className="teacher-statistics-box">
         <div className="dialog-header">
-          <h2>{t('Teacher Statistics')}: {teacher.name}</h2>
+          <h2>{t('{{resource}} Statistics', { resource: labels.teacher })}: {teacher.name}</h2>
           <div className="header-actions">
             <button 
               className="excel-export-btn" 
