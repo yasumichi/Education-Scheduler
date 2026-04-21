@@ -146,7 +146,7 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 - **CourseType:** `id, name, order, startDate, endDate`
 - **Subject:** `id, name, level, parentId, courseTypeId, totalPeriods, order`
 - **Lesson:** `id, subject, startDate, startPeriodId, endDate, endPeriodId, roomId, teacherId, courseId, location, subTeacherIds, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers`
-- **ScheduleEvent:** `id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, showInEventRow, resourceIds`
+- **ScheduleEvent:** `id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, remarks, showInEventRow, resourceIds`
 - **DeliveryMethod:** `id, name, color, order`
 - **TimePeriod:** `id, name, startTime, endTime, order` (IDは `p1`, `p2` ... 形式を維持)
 - **Holiday:** `id, name, date, start, end`

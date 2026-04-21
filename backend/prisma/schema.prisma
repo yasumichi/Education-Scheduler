@@ -124,6 +124,7 @@ model ScheduleEvent {
   endPeriodId    String
   color          String?
   location       String?
+  remarks        String?
   showInEventRow Boolean    @default(true)
   resources      Resource[] @relation("ResourceEvents")
 }

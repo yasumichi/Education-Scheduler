@@ -119,6 +119,7 @@ export interface ScheduleEvent {
   endPeriodId: string;
   color?: string;
   location?: string;
+  remarks?: string;
   resourceIds?: string[]; // Associated resource ID (teacher, room, etc.)
   resources?: { id: string }[]; // Relation from backend
   showInEventRow?: boolean; // Whether to show in event row (top)

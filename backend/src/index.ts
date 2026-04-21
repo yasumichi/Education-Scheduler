@@ -1115,6 +1115,7 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
       ics.push(`DTEND;TZID=Asia/Tokyo:${formatICSDate(e.endDate, e.endPeriodId, true)}`);
       ics.push(`SUMMARY:${e.name}`);
       if (e.location) ics.push(`LOCATION:${e.location}`);
+      if (e.remarks) ics.push(`DESCRIPTION:${e.remarks.replace(/\r?\n/g, '\\n')}`);
       ics.push('END:VEVENT');
     });
 
@@ -1135,7 +1136,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.TEACHER) {
     return res.status(403).json({ error: 'Access denied. Admin or Teacher role required.' });
   }
-  const { id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, showInEventRow, resourceIds } = req.body;
+  const { id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, remarks, showInEventRow, resourceIds } = req.body;
   try {
     const resourceConnect = resourceIds?.map((rid: string) => ({ id: rid })) || [];
     let event;
@@ -1152,6 +1153,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
           endPeriodId,
           color,
           location: location || null,
+          remarks: remarks || null,
           showInEventRow: showInEventRow ?? true,
           resources: {
             set: [], // Clear temporarily
@@ -1171,6 +1173,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
           endPeriodId,
           color,
           location: location || null,
+          remarks: remarks || null,
           showInEventRow: showInEventRow ?? true,
           resources: {
             connect: resourceConnect

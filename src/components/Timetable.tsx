@@ -483,7 +483,8 @@ export function Timetable({
 
     const tooltip = `${e.name}${e.location ? ` (${e.location})` : ''}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}` + 
                    (e.location ? `\n${t('Location')}: ${e.location}` : '') +
-                   (resNames ? `\n${labels.event}: ${resNames}` : '');
+                   (e.remarks ? `\n\n${t('Remarks')}:\n${e.remarks}` : '') +
+                   (resNames ? `\n\n${labels.event}: ${resNames}` : '');
 
     return (
       <div key={layout.id} className="event-card schedule-event-card"
@@ -646,7 +647,8 @@ export function Timetable({
 
           const startP = periods.find(p => p.id === e.startPeriodId)?.name || e.startPeriodId;
           const endP = periods.find(p => p.id === e.endPeriodId)?.name || e.endPeriodId;
-          const tooltip = `${e.name}${e.location ? ` (${e.location})` : ''}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}`;
+          const tooltip = `${e.name}${e.location ? ` (${e.location})` : ''}\n${e.startDate} ${startP} ～ ${e.endDate} ${endP}` +
+                          (e.remarks ? `\n\n${t('Remarks')}:\n${e.remarks}` : '');
 
           resourceRowItems.push(
             <div key={layout.id} className="event-card schedule-event-card resource-event-card"

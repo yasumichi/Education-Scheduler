@@ -27,6 +27,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
     endPeriodId: string;
     color: string;
     location: string;
+    remarks: string;
     showInEventRow: boolean;
     resourceIds: string[];
   }>({
@@ -38,6 +39,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
     endPeriodId: initialEvent?.endPeriodId || initialEvent?.startPeriodId || periods[periods.length - 1]?.id || 'p8',
     color: initialEvent?.color || eventThemes[0]?.background || '#3b82f6',
     location: initialEvent?.location || '',
+    remarks: initialEvent?.remarks || '',
     showInEventRow: initialEvent?.showInEventRow ?? true,
     resourceIds: initialEvent?.resourceIds || (initialEvent?.resources || []).map(r => r.id)
   });
@@ -190,6 +192,16 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
                 />
               </div>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>{t('Remarks')}</label>
+            <textarea 
+              value={formData.remarks} 
+              onInput={(e) => setFormData({ ...formData, remarks: e.currentTarget.value })}
+              placeholder={t('Any additional information...')}
+              rows={3}
+            />
           </div>
 
           <div className="form-group checkbox-group">
