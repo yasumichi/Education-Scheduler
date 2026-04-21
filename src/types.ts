@@ -63,6 +63,8 @@ export interface CourseType {
   id: string;
   name: string;
   order: number;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 export interface Subject {

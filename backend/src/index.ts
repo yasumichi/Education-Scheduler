@@ -1389,8 +1389,23 @@ app.post('/api/labels', verifyToken, async (req: AuthRequest, res) => {
 // --- CourseType Endpoints ---
 
 app.get('/api/course-types', verifyToken, async (req, res) => {
+  const { name, startDate, endDate } = req.query;
   try {
-    const types = await prisma.courseType.findMany({ orderBy: { order: 'asc' } });
+    const where: any = {};
+    if (name) {
+      where.name = { contains: name as string, mode: 'insensitive' };
+    }
+    if (startDate) {
+      where.startDate = { gte: startDate as string };
+    }
+    if (endDate) {
+      where.endDate = { lte: endDate as string };
+    }
+
+    const types = await prisma.courseType.findMany({ 
+      where,
+      orderBy: { order: 'asc' } 
+    });
     res.json(types);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch course types' });
@@ -1399,15 +1414,71 @@ app.get('/api/course-types', verifyToken, async (req, res) => {
 
 app.post('/api/course-types', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
-  const { id, name, order } = req.body;
+  const { id, name, order, startDate, endDate } = req.body;
   try {
-    const data = { name, order: order || 0 };
+    const data = { 
+      name, 
+      order: order || 0,
+      startDate: startDate || null,
+      endDate: endDate || null
+    };
     const result = id 
       ? await prisma.courseType.update({ where: { id }, data })
       : await prisma.courseType.create({ data });
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: 'Failed to save course type' });
+  }
+});
+
+app.post('/api/course-types/:id/duplicate', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  const { id } = req.params;
+  try {
+    const original = await prisma.courseType.findUnique({
+      where: { id },
+      include: { subjects: true }
+    });
+    if (!original) return res.status(404).json({ error: 'Course type not found' });
+
+    const maxOrderType = await prisma.courseType.findFirst({
+      orderBy: { order: 'desc' }
+    });
+
+    const newType = await prisma.courseType.create({
+      data: {
+        name: `${original.name} (Copy)`,
+        order: (maxOrderType?.order || 0) + 1,
+        startDate: original.startDate,
+        endDate: original.endDate
+      }
+    });
+
+    // Subject 複製 (階層維持)
+    const oldToNewId = new Map<string, string>();
+    
+    // Levelごとに複製
+    for (let level = 1; level <= 3; level++) {
+      const levelSubjects = original.subjects.filter(s => s.level === level);
+      for (const s of levelSubjects) {
+        const newSubject = await prisma.subject.create({
+          data: {
+            name: s.name,
+            level: s.level,
+            parentId: s.parentId ? oldToNewId.get(s.parentId) : null,
+            courseTypeId: newType.id,
+            totalPeriods: s.totalPeriods,
+            order: s.order
+          }
+        });
+        oldToNewId.set(s.id, newSubject.id);
+      }
+    }
+
+    res.json(newType);
+  } catch (error) {
+    console.error('Failed to duplicate course type:', error);
+    res.status(500).json({ error: 'Failed to duplicate course type' });
   }
 });
 

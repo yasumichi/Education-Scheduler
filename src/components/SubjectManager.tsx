@@ -19,6 +19,14 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
   const [editingSubject, setEditingSubject] = useState<Partial<Subject> | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [isModified, setIsModified] = useState(false);
+  const [systemSettings, setSystemSettings] = useState<any>(null);
+
+  // Filters for CourseType
+  const [typeFilters, setTypeFilters] = useState({
+    name: '',
+    startDate: '',
+    endDate: ''
+  });
 
   // For Drag and Drop
   const dragItemRef = useRef<{ id: string, parentId: string | null, level: number } | null>(null);
@@ -26,27 +34,92 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
 
   useEffect(() => {
     fetchData();
+    fetchSettings();
   }, []);
+
+  // Filter application
+  useEffect(() => {
+    fetchCourseTypes();
+  }, [typeFilters]);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/settings`, { credentials: 'include' });
+      if (res.ok) setSystemSettings(await res.json());
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+    }
+  };
 
   const fetchData = async () => {
     try {
-      const [typesRes, subjectsRes] = await Promise.all([
-        fetch(`${backendUrl}/course-types`, { credentials: 'include' }),
-        fetch(`${backendUrl}/subjects`, { credentials: 'include' })
-      ]);
-      if (typesRes.ok && subjectsRes.ok) {
-        const types = await typesRes.json();
+      const subjectsRes = await fetch(`${backendUrl}/subjects`, { credentials: 'include' });
+      if (subjectsRes.ok) {
         const subs = await subjectsRes.json();
-        setCourseTypes(types);
         setSubjects(subs.sort((a: Subject, b: Subject) => (a.order || 0) - (b.order || 0)));
+      }
+      await fetchCourseTypes();
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+    }
+    setIsModified(false);
+  };
+
+  const fetchCourseTypes = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (typeFilters.name) params.append('name', typeFilters.name);
+      if (typeFilters.startDate) params.append('startDate', typeFilters.startDate);
+      if (typeFilters.endDate) params.append('endDate', typeFilters.endDate);
+
+      const res = await fetch(`${backendUrl}/course-types?${params.toString()}`, { credentials: 'include' });
+      if (res.ok) {
+        const types = await res.json();
+        setCourseTypes(types);
         if (types.length > 0 && !selectedTypeId) {
           setSelectedTypeId(types[0].id);
         }
       }
     } catch (err) {
-      console.error('Failed to fetch data:', err);
+      console.error('Failed to fetch course types:', err);
     }
-    setIsModified(false);
+  };
+
+  const getDefaultDates = () => {
+    if (!systemSettings) return { start: '', end: '' };
+    const now = new Date();
+    let year = now.getFullYear();
+    const threshold = new Date(year, systemSettings.yearViewStartMonth - 1, systemSettings.yearViewStartDay);
+    if (now < threshold) year -= 1;
+
+    const start = new Date(year, systemSettings.yearViewStartMonth - 1, systemSettings.yearViewStartDay);
+    const end = new Date(year + 1, systemSettings.yearViewStartMonth - 1, systemSettings.yearViewStartDay);
+    end.setDate(end.getDate() - 1);
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return {
+      start: `${year}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
+      end: `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`
+    };
+  };
+
+  const handleDuplicateType = async (id: string) => {
+    if (!confirm(t('Are you sure you want to duplicate this course type and all its subjects?'))) return;
+    try {
+      const res = await fetch(`${backendUrl}/course-types/${id}/duplicate`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const newType = await res.json();
+        await fetchData();
+        setSelectedTypeId(newType.id);
+      } else {
+        alert(t('Failed to duplicate course type'));
+      }
+    } catch (err) {
+      console.error('Failed to duplicate course type:', err);
+    }
   };
 
   const toggleNode = (id: string) => {
@@ -346,13 +419,45 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
           <div className="type-section">
             <div className="section-header">
               <h3>{labels.courseType}</h3>
-              <button className="add-btn" onClick={() => setEditingType({ name: '', order: courseTypes.length + 1 })}>{t('Add')}</button>
+              <button className="add-btn" onClick={() => {
+                const dates = getDefaultDates();
+                setEditingType({ name: '', order: courseTypes.length + 1, startDate: dates.start, endDate: dates.end });
+              }}>{t('Add')}</button>
             </div>
+
+            <div className="type-filters">
+              <input 
+                type="text" 
+                placeholder={t('Filter by name')} 
+                value={typeFilters.name}
+                onInput={(e) => setTypeFilters({ ...typeFilters, name: e.currentTarget.value })}
+              />
+              <div className="date-filters">
+                <input 
+                  type="date" 
+                  value={typeFilters.startDate}
+                  onInput={(e) => setTypeFilters({ ...typeFilters, startDate: e.currentTarget.value })}
+                  title={t('Start Date')}
+                />
+                <span>~</span>
+                <input 
+                  type="date" 
+                  value={typeFilters.endDate}
+                  onInput={(e) => setTypeFilters({ ...typeFilters, endDate: e.currentTarget.value })}
+                  title={t('End Date')}
+                />
+              </div>
+            </div>
+
             <div className="item-list">
               {courseTypes.map(type => (
                 <div key={type.id} className={`manager-item ${selectedTypeId === type.id ? 'active' : ''}`} onClick={() => setSelectedTypeId(type.id)}>
-                  <span className="item-name">{type.name}</span>
+                  <div className="item-main">
+                    <span className="item-name">{type.name}</span>
+                    <span className="item-period">{type.startDate && type.endDate ? `${type.startDate} ~ ${type.endDate}` : t('No period')}</span>
+                  </div>
                   <div className="item-actions">
+                    <button className="icon-btn" title={t('Duplicate')} onClick={(e) => { e.stopPropagation(); handleDuplicateType(type.id); }}>⧉</button>
                     <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setEditingType(type); }}>✎</button>
                     <button className="icon-btn" onClick={(e) => { e.stopPropagation(); handleDeleteType(type.id); }}>×</button>
                   </div>
@@ -404,6 +509,16 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
             <div className="form-group">
               <label>{t('Name')}</label>
               <input type="text" value={editingType.name} onInput={(e) => setEditingType({ ...editingType, name: e.currentTarget.value })} />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>{t('Start Date')}</label>
+                <input type="date" value={editingType.startDate || ''} onInput={(e) => setEditingType({ ...editingType, startDate: e.currentTarget.value })} />
+              </div>
+              <div className="form-group">
+                <label>{t('End Date')}</label>
+                <input type="date" value={editingType.endDate || ''} onInput={(e) => setEditingType({ ...editingType, endDate: e.currentTarget.value })} />
+              </div>
             </div>
             <div className="form-group">
               <label>{t('Order')}</label>

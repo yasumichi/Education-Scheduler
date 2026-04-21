@@ -53,6 +53,8 @@ model CourseType {
   id        String     @id @default(uuid())
   name      String
   order     Int        @default(0)
+  startDate String?    // YYYY-MM-DD
+  endDate   String?    // YYYY-MM-DD
   subjects  Subject[]
   resources Resource[]
 }

@@ -101,9 +101,49 @@
   border-color: #747bff;
 }
 
-.item-name {
+.item-main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-name {
   font-size: 0.9rem;
+}
+
+.item-period {
+  font-size: 0.7rem;
+  color: #888;
+}
+
+.type-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+.type-filters input {
+  background: #333;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.date-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-filters input {
+  flex: 1;
 }
 
 .item-actions {
@@ -329,6 +369,9 @@
   .subject-manager-box { background: #fff; color: #333; }
   .subject-manager-header { border-bottom-color: #eee; }
   .type-section { border-right-color: #eee; }
+  .type-filters { background-color: #f9f9f9; }
+  .type-filters input { background: #fff; border-color: #ccc; color: #333; }
+  .item-period { color: #666; }
   .manager-item { background: #f9f9f9; border-color: #ddd; }
   .manager-item:hover { background: #f0f0f0; }
   .manager-item.active { background: #646cff; color: #fff; }

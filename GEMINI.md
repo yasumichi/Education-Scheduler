@@ -56,6 +56,7 @@
   - 最小単位の課目（または子項目を持たない上位課目）に対して「総時限数」を設定可能。
 - **講座タイプ (Course Type):** 
   - 講座を「講座タイプ」で分類し、タイプごとに有効な課目セットを定義可能。
+  - 各タイプには「使用期間（開始・終了日）」を設定可能。デフォルトはシステム設定の開始月日から1年間。
   - 講座編集時は、選択されたタイプに紐づく課目のみが階層構造を維持してリスト表示される。
 
 - **講師とユーザーの紐付け:** 講師リソースを特定のシステムユーザーと 1:1 で紐付け可能。
@@ -66,6 +67,9 @@
 - **CRUD 画面:** 時限、教室、講師、講座、授業、行事、祝日、授業方式、ユーザー、システム設定、カラーテーマの各管理画面。
   - **視覚的順序変更:** 教室・講師・講座・課目の各管理画面において、ドラッグ＆ドロップまたは矢印ボタンによる表示順序の入れ替えが可能。課目については同一階層（兄弟要素）内での並び替えに対応。
   - **講師検索:** 講師管理画面において、名前による動的なフィルタリングが可能。
+  - **講座タイプ管理:** 
+    - 講座タイプを名前や使用期間（任意）でフィルタリング可能。
+    - 既存の講座タイプを関連する課目構造を維持したまま複製可能。
   - **講座の年度フィルタ:** システム設定の開始月日に基づいた「年度」単位での表示絞り込みに対応。
   - **カラーテーママネージャー:** イベント、授業（担当講師の有無別）、休日の配色（前景色・背景色）をDBで一括管理。プレビュー機能付き。
 - **インポート機能:** 
@@ -139,7 +143,7 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 
 ### Main Entities
 - **Resource:** `id, name, type, order, userId, startDate, endDate, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel, courseTypeId`
-- **CourseType:** `id, name, order`
+- **CourseType:** `id, name, order, startDate, endDate`
 - **Subject:** `id, name, level, parentId, courseTypeId, totalPeriods, order`
 - **Lesson:** `id, subject, startDate, startPeriodId, endDate, endPeriodId, roomId, teacherId, courseId, location, subTeacherIds, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers`
 - **ScheduleEvent:** `id, name, startDate, startPeriodId, endDate, endPeriodId, color, location, showInEventRow, resourceIds`
