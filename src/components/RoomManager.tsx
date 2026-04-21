@@ -74,7 +74,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
         onUpdate();
         setEditingRoomId(null);
       } else {
-        alert(t('Failed to save room'));
+        alert(t('Failed to save {{resource}}', { resource: labels.room }));
       }
     } catch (err) {
       console.error('Error saving room:', err);
@@ -93,7 +93,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
         onUpdate();
         if (editingRoomId === id) setEditingRoomId(null);
       } else {
-        alert(t('Failed to delete room'));
+        alert(t('Failed to delete {{resource}}', { resource: labels.room }));
       }
     } catch (err) {
       console.error('Error deleting room:', err);
