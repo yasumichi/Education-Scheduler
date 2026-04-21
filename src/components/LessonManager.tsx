@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'preact/hooks';
+import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User } from '../types';
+import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User, Subject } from '../types';
 import { parseISO, differenceInDays } from 'date-fns';
 import './LessonManager.css';
 
@@ -11,14 +11,17 @@ interface Props {
   periods: TimePeriod[];
   resources: Resource[];
   lessons: Lesson[];
+  subjects: Subject[];
   labels: ResourceLabels;
   initialLesson?: Partial<Lesson>;
   user: User;
 }
 
-export function LessonManager({ backendUrl, onClose, onUpdate, periods, resources, lessons, labels, initialLesson, user }: Props) {
+export function LessonManager({ backendUrl, onClose, onUpdate, periods, resources, lessons, subjects, labels, initialLesson, user }: Props) {
   const { t } = useTranslation();
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<{
     id?: string;
@@ -55,6 +58,18 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     externalTeacher: initialLesson?.externalTeacher || '',
     externalSubTeachers: initialLesson?.externalSubTeachers || '',
   });
+
+  const [searchTerm, setSearchTerm] = useState(formData.subject);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchDeliveryMethods = async () => {
@@ -114,10 +129,44 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     const course = selectedCourse;
     if (!course || !course.subjects) return [];
 
-    return course.subjects.map(s => {
-      // 既存の授業から、この講座・この課目の時限数を合計
-      const scheduledPeriods = lessons
-        .filter(l => l.courseId === formData.courseId && (l.subjectId ? l.subjectId === s.subjectId : l.subject === s.name) && l.id !== formData.id)
+    // Course has associated subjects, which are usually leaf nodes.
+    // We want to reconstruct the tree based on master subjects.
+    
+    const courseSubjects = course.subjects;
+    const hierarchicalList: { 
+      id: string; 
+      name: string; 
+      level: number; 
+      parentId?: string | null;
+      order: number;
+      total: number; 
+      remaining: number;
+      isSelectable: boolean;
+    }[] = [];
+
+    // 1. Identify all master subjects involved (including parents)
+    const involvedSubjectIds = new Set<string>();
+    courseSubjects.forEach(cs => {
+      if (cs.subjectId) {
+        let currentId: string | undefined | null = cs.subjectId;
+        while (currentId) {
+          involvedSubjectIds.add(currentId);
+          const sub = subjects.find(s => s.id === currentId);
+          currentId = sub?.parentId;
+        }
+      }
+    });
+
+    // 2. Filter and sort master subjects
+    const filteredMasterSubjects = subjects
+      .filter(s => involvedSubjectIds.has(s.id))
+      .sort((a, b) => a.level - b.level || a.order - b.order);
+
+    // 3. Build a helper map for scheduling calculations
+    const scheduledPeriodsMap: Record<string, number> = {};
+    courseSubjects.forEach(cs => {
+      const scheduled = lessons
+        .filter(l => l.courseId === formData.courseId && (l.subjectId ? l.subjectId === cs.subjectId : l.subject === cs.name) && l.id !== formData.id)
         .reduce((sum, l) => {
           const sIdx = periods.findIndex(p => p.id === l.startPeriodId);
           const eIdx = periods.findIndex(p => p.id === l.endPeriodId);
@@ -130,15 +179,71 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
             return sum + (periods.length - sIdx) + (numDays - 1) * periods.length + (eIdx + 1);
           }
         }, 0);
-
-      return {
-        id: s.subjectId,
-        name: s.name,
-        total: s.totalPeriods || 0,
-        remaining: (s.totalPeriods || 0) - scheduledPeriods
-      };
+      
+      if (cs.subjectId) scheduledPeriodsMap[cs.subjectId] = scheduled;
     });
-  }, [formData.courseId, formData.id, lessons, courses, periods, selectedCourse]);
+
+    // 4. Recursive build
+    const addChildren = (parentId: string | null) => {
+      const children = filteredMasterSubjects
+        .filter(s => (s.parentId || null) === parentId)
+        .sort((a, b) => a.order - b.order);
+
+      children.forEach(s => {
+        const cs = courseSubjects.find(cs => cs.subjectId === s.id);
+        const scheduled = scheduledPeriodsMap[s.id] || 0;
+        const total = cs ? (cs.totalPeriods || 0) : (s.totalPeriods || 0);
+        
+        hierarchicalList.push({
+          id: s.id,
+          name: s.name,
+          level: s.level,
+          parentId: s.parentId,
+          order: s.order,
+          total: cs ? total : 0,
+          remaining: cs ? (total - scheduled) : 0,
+          isSelectable: !!cs
+        });
+        addChildren(s.id);
+      });
+    };
+
+    addChildren(null);
+
+    // Also add any subjects that were manually added and NOT in master list
+    courseSubjects.forEach(cs => {
+      if (!cs.subjectId && !hierarchicalList.some(h => h.name === cs.name)) {
+        const scheduled = lessons
+          .filter(l => l.courseId === formData.courseId && l.subject === cs.name && l.id !== formData.id)
+          .reduce((sum, l) => {
+            const sIdx = periods.findIndex(p => p.id === l.startPeriodId);
+            const eIdx = periods.findIndex(p => p.id === l.endPeriodId);
+            if (sIdx === -1 || eIdx === -1) return sum;
+            if (l.startDate === l.endDate) return sum + (eIdx - sIdx + 1);
+            const numDays = differenceInDays(parseISO(l.endDate), parseISO(l.startDate));
+            return sum + (periods.length - sIdx) + (numDays - 1) * periods.length + (eIdx + 1);
+          }, 0);
+
+        hierarchicalList.push({
+          id: '',
+          name: cs.name || '',
+          level: 1,
+          order: 999,
+          total: cs.totalPeriods || 0,
+          remaining: (cs.totalPeriods || 0) - scheduled,
+          isSelectable: true
+        });
+      }
+    });
+
+    return hierarchicalList;
+  }, [formData.courseId, formData.id, lessons, courses, periods, selectedCourse, subjects]);
+
+  const filteredSubjectOptions = useMemo(() => {
+    if (!searchTerm) return subjectOptions;
+    const lowerSearch = searchTerm.toLowerCase();
+    return subjectOptions.filter(opt => opt.name.toLowerCase().includes(lowerSearch));
+  }, [searchTerm, subjectOptions]);
 
   const handleSave = async () => {
     // Basic validation
@@ -299,7 +404,10 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
             {canManage ? (
               <select 
                 value={formData.courseId} 
-                onChange={(e) => setFormData({ ...formData, courseId: e.currentTarget.value, subject: '' })}
+                onChange={(e) => {
+                  setFormData({ ...formData, courseId: e.currentTarget.value, subject: '', subjectId: '' });
+                  setSearchTerm('');
+                }}
                 disabled={!canManage}
               >
                 <option value="">{t('Select Course')}</option>
@@ -313,26 +421,48 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           <div className="form-group">
             <label>{labels.subject} *</label>
             {canManage ? (
-              <select 
-                value={formData.subjectId || formData.subject} 
-                onChange={(e) => {
-                  const val = e.currentTarget.value;
-                  const opt = subjectOptions.find(o => o.id === val || o.name === val);
-                  setFormData({ 
-                    ...formData, 
-                    subject: opt ? (opt.name || '') : val,
-                    subjectId: opt ? (opt.id || '') : ''
-                  });
-                }}
-                disabled={!canManage || !formData.courseId}
-              >
-                <option value="">{t('Select {{resource}}', { resource: labels.subject })}</option>
-                {subjectOptions.map(s => (
-                  <option key={s.id || s.name} value={s.id || s.name || ''} disabled={s.remaining <= 0}>
-                    {s.name} ({t('Remaining')}: {s.remaining}/{s.total})
-                  </option>
-                ))}
-              </select>
+              <div className="searchable-combo-container" ref={dropdownRef}>
+                <input 
+                  type="text"
+                  className="combo-input"
+                  value={searchTerm}
+                  onInput={(e) => {
+                    const val = e.currentTarget.value;
+                    setSearchTerm(val);
+                    setFormData({ ...formData, subject: val, subjectId: '' });
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  placeholder={t('Search or enter {{resource}}', { resource: labels.subject })}
+                  disabled={!formData.courseId}
+                />
+                {isDropdownOpen && formData.courseId && (
+                  <div className="combo-dropdown">
+                    {filteredSubjectOptions.length > 0 ? (
+                      filteredSubjectOptions.map(opt => (
+                        <div 
+                          key={opt.id || opt.name}
+                          className={`combo-item level-${opt.level} ${!opt.isSelectable ? 'not-selectable' : ''} ${opt.remaining <= 0 && opt.isSelectable ? 'no-remaining' : ''}`}
+                          onClick={() => {
+                            if (opt.isSelectable) {
+                              setFormData({ ...formData, subject: opt.name, subjectId: opt.id });
+                              setSearchTerm(opt.name);
+                              setIsDropdownOpen(false);
+                            }
+                          }}
+                        >
+                          <span className="item-name">{opt.name}</span>
+                          {opt.isSelectable && (
+                            <span className="item-stats">({t('Remaining')}: {opt.remaining}/{opt.total})</span>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="combo-no-results">{t('No matches found')}</div>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <span className="readonly-value">{formData.subject || '-'}</span>
             )}

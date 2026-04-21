@@ -843,6 +843,7 @@ export function App() {
           periods={periods.value}
           resources={resources.value}
           lessons={lessons.value}
+          subjects={subjects.value}
           labels={resourceLabels.value}
           initialLesson={editingLesson.value || {}}
           user={user.value!}

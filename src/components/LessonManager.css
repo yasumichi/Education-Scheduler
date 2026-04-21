@@ -22,6 +22,82 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+.searchable-combo-container {
+  position: relative;
+  width: 100%;
+}
+
+.combo-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: 4px;
+  margin-top: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.combo-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.combo-item:hover {
+  background-color: #444;
+}
+
+.combo-item.not-selectable {
+  cursor: default;
+  color: #888;
+  font-weight: bold;
+  background-color: #2a2a2a;
+}
+
+.combo-item.no-remaining {
+  color: #888;
+}
+
+.combo-item.level-2 { padding-left: 24px; }
+.combo-item.level-3 { padding-left: 40px; }
+
+.item-stats {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+.combo-no-results {
+  padding: 10px;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: light) {
+  .combo-dropdown {
+    background-color: #fff;
+    border-color: #ccc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .combo-item:hover {
+    background-color: #f0f0f0;
+  }
+  .combo-item.not-selectable {
+    background-color: #f9f9f9;
+    color: #666;
+  }
 }
 
 .lesson-manager-header {
