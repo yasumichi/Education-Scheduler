@@ -839,11 +839,10 @@ export async function exportCourseWeeklyToExcel({
     if (!course) return;
 
     // 1. Course Name in Row 1
-    worksheet.mergeCells(1, 1, 1, 7);
     const titleCell = worksheet.getCell(1, 1);
     titleCell.value = t(course.name);
     titleCell.font = { bold: true, size: 14 };
-    titleCell.alignment = { horizontal: 'center' };
+    titleCell.alignment = { horizontal: 'left' };
 
     // Row 2, 3 are empty
 
@@ -862,7 +861,6 @@ export async function exportCourseWeeklyToExcel({
       const cell = headerRow.getCell(i + 1);
       cell.value = h;
       cell.font = { bold: true };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
       cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
     });
 
