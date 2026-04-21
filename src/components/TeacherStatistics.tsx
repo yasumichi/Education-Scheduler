@@ -227,7 +227,7 @@ export function TeacherStatistics({
         largeOrder: 999999,
         middleSubject: '',
         middleOrder: 999999,
-        smallSubject: t('Course Subtotal'),
+        smallSubject: t('{{resource}} Subtotal', { resource: labels.course }),
         smallOrder: 999999,
         mainHours: courseTotalMain,
         subHours: courseTotalSub,
