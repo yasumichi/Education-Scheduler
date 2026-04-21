@@ -1265,3 +1265,87 @@ export async function exportTeacherStatisticsToExcel({
     console.error('Teacher Statistics Export Error:', err);
   }
 }
+
+export async function exportAllTeacherStatisticsToExcel({
+  stats, grandTotalMain, grandTotalSub, labels, t, dateRange
+}: {
+  stats: any[];
+  grandTotalMain: number;
+  grandTotalSub: number;
+  labels: ResourceLabels;
+  t: (key: string, options?: any) => string;
+  dateRange: string;
+}) {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Teacher Statistics');
+
+    // Title
+    worksheet.mergeCells(1, 1, 1, 4);
+    const titleCell = worksheet.getCell(1, 1);
+    titleCell.value = `${t('{{resource}} Statistics', { resource: labels.teacher })} (${dateRange})`;
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: 'center' };
+
+    // Headers
+    const headers = [
+      labels.teacher,
+      labels.mainTeacher,
+      labels.subTeacher,
+      t('Subtotal')
+    ];
+    const headerRow = worksheet.getRow(3);
+    headers.forEach((h, i) => {
+      const cell = headerRow.getCell(i + 1);
+      cell.value = h;
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      cell.alignment = { horizontal: 'center' };
+    });
+
+    // Column Widths
+    worksheet.getColumn(1).width = 30;
+    worksheet.getColumn(2).width = 15;
+    worksheet.getColumn(3).width = 15;
+    worksheet.getColumn(4).width = 15;
+
+    // Data
+    let currentRowIdx = 4;
+    stats.forEach((row) => {
+      const xlRow = worksheet.getRow(currentRowIdx);
+      xlRow.getCell(1).value = row.teacherName;
+      xlRow.getCell(2).value = row.mainHours;
+      xlRow.getCell(3).value = row.subHours;
+      xlRow.getCell(4).value = row.totalHours;
+
+      for (let i = 1; i <= 4; i++) {
+        const cell = xlRow.getCell(i);
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        if (i >= 2) cell.alignment = { horizontal: 'right' };
+      }
+      currentRowIdx++;
+    });
+
+    // Grand Total
+    const footerRow = worksheet.getRow(currentRowIdx);
+    footerRow.getCell(1).value = t('Grand Total');
+    footerRow.getCell(2).value = grandTotalMain;
+    footerRow.getCell(3).value = grandTotalSub;
+    footerRow.getCell(4).value = grandTotalMain + grandTotalSub;
+    footerRow.font = { bold: true };
+
+    for (let i = 1; i <= 4; i++) {
+      const cell = footerRow.getCell(i);
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+      cell.border = { top: { style: 'medium' }, left: { style: 'thin' }, bottom: { style: 'medium' }, right: { style: 'thin' } };
+      if (i >= 2) cell.alignment = { horizontal: 'right' };
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `AllTeacherStatistics_${format(new Date(), 'yyyyMMdd')}.xlsx`);
+  } catch (err) {
+    console.error('All Teacher Statistics Export Error:', err);
+  }
+}
+

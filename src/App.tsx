@@ -19,6 +19,7 @@ import { ColorThemeManager } from './components/ColorThemeManager';
 import { SubjectManager } from './components/SubjectManager';
 import { CourseStatistics } from './components/CourseStatistics';
 import { TeacherStatistics } from './components/TeacherStatistics';
+import { AllTeacherStatistics } from './components/AllTeacherStatistics';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject } from './types';
@@ -59,6 +60,7 @@ export function App() {
   const selectedCourseIdForStats = useSignal<string | null>(null);
   const showTeacherStatistics = useSignal<boolean>(false);
   const selectedTeacherIdForStats = useSignal<string | null>(null);
+  const showAllTeacherStatistics = useSignal<boolean>(false);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const editingCourseId = useSignal<string | null>(null);
@@ -543,7 +545,7 @@ export function App() {
             <>
           <div className="control-group">
             <button 
-              className={viewMode.value === 'room' ? 'active' : ''} 
+              className={`room-view-btn ${viewMode.value === 'room' ? 'active' : ''}`} 
               onClick={() => viewMode.value = 'room'}
             >
               {resourceLabels.value.room}
@@ -553,6 +555,17 @@ export function App() {
               onClick={() => viewMode.value = 'teacher'}
             >
               {resourceLabels.value.teacher}
+            </button>
+            <button 
+              className="all-teacher-stats-btn"
+              onClick={() => showAllTeacherStatistics.value = true}
+              title={t('All {{resource}} Statistics', { resource: resourceLabels.value.teacher })}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
             </button>
             <button 
               className={viewMode.value === 'course' ? 'active' : ''} 
@@ -964,6 +977,45 @@ export function App() {
             onClose={() => {
               showTeacherStatistics.value = false;
               selectedTeacherIdForStats.value = null;
+            }}
+          />
+        );
+      })()}
+
+      {showAllTeacherStatistics.value && (() => {
+        const currentViewStart = startOfDay(currentDate.value);
+        let dayCount = 1;
+        
+        if (viewType.value === 'day') dayCount = 1;
+        else if (viewType.value === 'week') dayCount = 7;
+        else if (viewType.value === 'month') {
+          dayCount = differenceInDays(addMonths(currentViewStart, 1), currentViewStart);
+        }
+        else if (viewType.value === '3month' || viewType.value === '6month') {
+          const months = viewType.value === '3month' ? 3 : 6;
+          dayCount = differenceInDays(addMonths(currentViewStart, months), currentViewStart);
+        }
+        else if (viewType.value === 'year' || viewType.value === 'course_timeline') {
+          const month = systemSettings.value?.yearViewStartMonth ?? 4;
+          const day = systemSettings.value?.yearViewStartDay ?? 1;
+          const start = new Date(getYear(currentDate.value), month - 1, day);
+          const end = new Date(getYear(currentDate.value) + 1, month - 1, day);
+          dayCount = differenceInDays(end, start);
+        }
+
+        const initialStart = format(currentViewStart, 'yyyy-MM-dd');
+        const initialEnd = format(addDays(currentViewStart, dayCount - 1), 'yyyy-MM-dd');
+
+        return (
+          <AllTeacherStatistics
+            teachers={resources.value.filter(r => r.type === 'teacher')}
+            lessons={lessons.value}
+            periods={periods.value}
+            labels={resourceLabels.value}
+            initialStartDate={initialStart}
+            initialEndDate={initialEnd}
+            onClose={() => {
+              showAllTeacherStatistics.value = false;
             }}
           />
         );
