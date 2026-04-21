@@ -545,7 +545,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
               )}
             </div>
             <div className="form-group">
-              <label>{t('Location (if no room)')}</label>
+              <label>{t('Other locations')}</label>
               {canManage ? (
                 <input 
                   type="text" 
@@ -583,7 +583,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                   type="text" 
                   value={formData.externalTeacher} 
                   onInput={(e) => setFormData({ ...formData, externalTeacher: e.currentTarget.value })}
-                  placeholder={t('External Teacher (if not managed)')}
+                  placeholder={t('External {{resource}} (if not managed)', { resource: labels.mainTeacher })}
                   disabled={!canManage}
                   style={{ marginTop: '5px' }}
                 />
@@ -622,7 +622,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                   type="text" 
                   value={formData.externalSubTeachers} 
                   onInput={(e) => setFormData({ ...formData, externalSubTeachers: e.currentTarget.value })}
-                  placeholder={t('External Sub Teachers (comma separated)')}
+                  placeholder={t('External {{resource}} (comma separated)', { resource: labels.subTeacher })}
                   disabled={!canManage}
                   style={{ marginTop: '5px' }}
                 />
