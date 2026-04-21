@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { DeliveryMethod } from '../types';
+import { DeliveryMethod, ResourceLabels } from '../types';
 import './DeliveryMethodManager.css';
 
 interface Props {
   backendUrl: string;
   onClose: () => void;
   onUpdate: () => void;
+  labels: ResourceLabels;
 }
 
-export function DeliveryMethodManager({ backendUrl, onClose, onUpdate }: Props) {
+export function DeliveryMethodManager({ backendUrl, onClose, onUpdate, labels }: Props) {
   const { t } = useTranslation();
   const [methods, setMethods] = useState<Partial<DeliveryMethod>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +76,7 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate }: Props) 
     <div className="delivery-method-manager-overlay">
       <div className="delivery-method-manager-box">
         <div className="delivery-method-manager-header">
-          <h2>{t('Manage Delivery Methods')}</h2>
+          <h2>{t('Manage {{resource}}', { resource: labels.deliveryMethod })}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
         
@@ -83,7 +84,7 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate }: Props) 
           {methods.map((m, index) => (
             <div key={index} className="method-row">
               <div className="method-field">
-                <label>{t('Method Name')}</label>
+                <label>{t('{{resource}} Name', { resource: labels.deliveryMethod })}</label>
                 <input 
                   type="text" 
                   value={m.name} 
@@ -107,12 +108,12 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate }: Props) 
             </div>
           ))}
           {methods.length === 0 && (
-            <div className="empty-message">{t('No delivery methods defined.')}</div>
+            <div className="empty-message">{t('No {{resource}} defined.', { resource: labels.deliveryMethod })}</div>
           )}
         </div>
 
         <div className="delivery-method-manager-footer">
-          <button className="add-button" onClick={handleAdd}>{t('Add Method')}</button>
+          <button className="add-button" onClick={handleAdd}>{t('Add {{resource}}', { resource: labels.deliveryMethod })}</button>
           <div className="footer-actions">
             <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
             <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
@@ -122,3 +123,4 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate }: Props) 
     </div>
   );
 }
+

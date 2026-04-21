@@ -903,6 +903,7 @@ export function App() {
           backendUrl={BACKEND_URL} 
           onClose={() => showDeliveryMethodManager.value = false}
           onUpdate={fetchData}
+          labels={resourceLabels.value}
         />
       )}
 
