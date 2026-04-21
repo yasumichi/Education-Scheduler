@@ -105,6 +105,10 @@
   font-weight: bold;
 }
 
+.col-subtotal-label {
+  text-align: center;
+}
+
 .grand-total {
   background: #444;
   font-weight: bold;

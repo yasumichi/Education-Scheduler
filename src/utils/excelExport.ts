@@ -1186,15 +1186,42 @@ export async function exportTeacherStatisticsToExcel({
     let currentRowIdx = 4;
     stats.forEach((row, idx) => {
       const xlRow = worksheet.getRow(currentRowIdx);
-      const prev = idx > 0 ? stats[idx - 1] : null;
-      const isFirstCourseRow = !prev || prev.courseId !== row.courseId;
-      const isSameLarge = !isFirstCourseRow && row.largeSubject && prev && prev.largeSubject === row.largeSubject;
-      const isSameMiddle = isSameLarge && row.middleSubject && prev && prev.middleSubject === row.middleSubject;
       
-      xlRow.getCell(1).value = isFirstCourseRow ? row.courseName : '';
-      xlRow.getCell(2).value = row.largeSubject;
-      xlRow.getCell(3).value = row.middleSubject;
-      xlRow.getCell(4).value = row.smallSubject;
+      // Course name with merge
+      if (row.courseSpan !== undefined) {
+        xlRow.getCell(1).value = row.courseName;
+        if (row.courseSpan > 1) {
+          worksheet.mergeCells(currentRowIdx, 1, currentRowIdx + row.courseSpan - 1, 1);
+        }
+      } else if (row.level === 3 && (idx === 0 || stats[idx-1].courseId !== row.courseId)) {
+        // Case where a course only has a subtotal row (unlikely but for safety)
+        xlRow.getCell(1).value = row.courseName;
+      }
+
+      if (row.level === 3) {
+        // Subtotal row
+        xlRow.getCell(2).value = row.smallSubject;
+        worksheet.mergeCells(currentRowIdx, 2, currentRowIdx, 4);
+        xlRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+      } else {
+        // Subject columns with merge
+        if (row.largeSpan !== undefined) {
+          xlRow.getCell(2).value = row.largeSubject;
+          if (row.largeSpan > 1) {
+            worksheet.mergeCells(currentRowIdx, 2, currentRowIdx + row.largeSpan - 1, 2);
+          }
+        }
+
+        if (row.middleSpan !== undefined) {
+          xlRow.getCell(3).value = row.middleSubject;
+          if (row.middleSpan > 1) {
+            worksheet.mergeCells(currentRowIdx, 3, currentRowIdx + row.middleSpan - 1, 3);
+          }
+        }
+
+        xlRow.getCell(4).value = row.smallSubject;
+      }
+
       xlRow.getCell(5).value = row.mainHours;
       xlRow.getCell(6).value = row.subHours;
       xlRow.getCell(7).value = row.totalHours;
@@ -1209,47 +1236,11 @@ export async function exportTeacherStatisticsToExcel({
 
       for (let i = 1; i <= 7; i++) {
         const cell = xlRow.getCell(i);
-        const border: any = {}; // No bottom border by default
-        
-        // Top Border
-        if (i === 1) {
-          if (isFirstCourseRow) border.top = { style: 'thin' };
-        } else if (i === 2) {
-          if (!isSameLarge) border.top = { style: 'thin' };
-        } else if (i === 3) {
-          if (!isSameMiddle) border.top = { style: 'thin' };
-        } else {
-          border.top = { style: 'thin' };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        if (i >= 5) cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        else if (i !== 2 || row.level !== 3) {
+           cell.alignment = { ...cell.alignment, vertical: 'middle' };
         }
-
-        // Left Border
-        if (i === 1) {
-          border.left = { style: 'thin' };
-        } else if (i === 2) {
-          if (row.largeSubject) border.left = { style: 'thin' };
-        } else if (i === 3) {
-          if (row.middleSubject) border.left = { style: 'thin' };
-        } else if (i === 4) {
-          if (row.smallSubject) border.left = { style: 'thin' };
-        } else {
-          border.left = { style: 'thin' };
-        }
-
-        // Right Border
-        if (i === 1) {
-          if (row.largeSubject) border.right = { style: 'thin' };
-        } else if (i === 2) {
-          if (row.middleSubject) border.right = { style: 'thin' };
-        } else if (i === 3) {
-          if (row.smallSubject) border.right = { style: 'thin' };
-        } else if (i === 7) {
-          border.right = { style: 'thin' };
-        } else if (i >= 4) {
-          border.right = { style: 'thin' };
-        }
-        
-        cell.border = border;
-        if (i >= 5) cell.alignment = { horizontal: 'right' };
       }
       currentRowIdx++;
     });

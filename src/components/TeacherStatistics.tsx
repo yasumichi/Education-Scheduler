@@ -20,13 +20,20 @@ interface Props {
 interface TeacherStatRow {
   courseId: string;
   courseName: string;
+  courseOrder: number;
   largeSubject: string;
+  largeOrder: number;
   middleSubject: string;
+  middleOrder: number;
   smallSubject: string;
+  smallOrder: number;
   mainHours: number;
   subHours: number;
   totalHours: number;
   level: number; // 1: Course, 2: Subject Row, 3: Course Subtotal
+  courseSpan?: number;
+  largeSpan?: number;
+  middleSpan?: number;
 }
 
 export function TeacherStatistics({ 
@@ -98,7 +105,15 @@ export function TeacherStatistics({
     let grandTotalMain = 0;
     let grandTotalSub = 0;
 
-    Object.entries(groupedData).forEach(([courseId, subjectGroups]) => {
+    // Sort courses by order
+    const sortedCourseIds = Object.keys(groupedData).sort((a, b) => {
+      const courseA = courses.find(c => c.id === a);
+      const courseB = courses.find(c => c.id === b);
+      return (courseA?.order || 0) - (courseB?.order || 0);
+    });
+
+    sortedCourseIds.forEach(courseId => {
+      const subjectGroups = groupedData[courseId];
       const course = courses.find(c => c.id === courseId)!;
       let courseTotalMain = 0;
       let courseTotalSub = 0;
@@ -112,22 +127,35 @@ export function TeacherStatistics({
         let large = '';
         let middle = '';
         let small = '';
+        let largeOrder = 0;
+        let middleOrder = 0;
+        let smallOrder = 0;
 
         if (subject) {
           if (subject.level === 3) {
             small = subject.name;
+            smallOrder = subject.order;
             const mid = subjects.find(s => s.id === subject.parentId);
             if (mid) {
               middle = mid.name;
+              middleOrder = mid.order;
               const lrg = subjects.find(s => s.id === mid.parentId);
-              if (lrg) large = lrg.name;
+              if (lrg) {
+                large = lrg.name;
+                largeOrder = lrg.order;
+              }
             }
           } else if (subject.level === 2) {
             middle = subject.name;
+            middleOrder = subject.order;
             const lrg = subjects.find(s => s.id === subject.parentId);
-            if (lrg) large = lrg.name;
+            if (lrg) {
+              large = lrg.name;
+              largeOrder = lrg.order;
+            }
           } else if (subject.level === 1) {
             large = subject.name;
+            largeOrder = subject.order;
           }
         } else {
           large = subjectId; // Fallback
@@ -136,9 +164,13 @@ export function TeacherStatistics({
         courseRows.push({
           courseId,
           courseName: course.name,
+          courseOrder: course.order || 0,
           largeSubject: large,
+          largeOrder,
           middleSubject: middle,
+          middleOrder,
           smallSubject: small,
+          smallOrder,
           mainHours: hours.main,
           subHours: hours.sub,
           totalHours: hours.main + hours.sub,
@@ -149,37 +181,71 @@ export function TeacherStatistics({
         courseTotalSub += hours.sub;
       });
 
-      // Sort subjects: Large -> Middle -> Small
+      // Sort subjects: Large Order -> Middle Order -> Small Order
       courseRows.sort((a, b) => 
-        a.largeSubject.localeCompare(b.largeSubject) || 
-        a.middleSubject.localeCompare(b.middleSubject) || 
-        a.smallSubject.localeCompare(b.smallSubject)
+        a.largeOrder - b.largeOrder || 
+        a.middleOrder - b.middleOrder || 
+        a.smallOrder - b.smallOrder
       );
 
-      // Add Course Header (optional, but requested Course subtotal)
-      // Actually, standard is Course | Subject | Main | Sub | Total
-      // Let's add all subject rows, then a Course subtotal row.
-      
+      // Calculate rowSpans within courseRows
+      for (let i = 0; i < courseRows.length; i++) {
+        // Large Span
+        let lSpan = 1;
+        while (i + lSpan < courseRows.length && 
+               courseRows[i + lSpan].largeSubject === courseRows[i].largeSubject && 
+               courseRows[i].largeSubject !== '') {
+          lSpan++;
+        }
+        courseRows[i].largeSpan = lSpan;
+
+        // Middle Span (must be within same Large group)
+        for (let j = 0; j < lSpan; j++) {
+          let mSpan = 1;
+          const currentM = courseRows[i + j].middleSubject;
+          if (currentM !== '') {
+            while (i + j + mSpan < i + lSpan && 
+                   courseRows[i + j + mSpan].middleSubject === currentM) {
+              mSpan++;
+            }
+          }
+          courseRows[i + j].middleSpan = mSpan;
+          j += mSpan - 1;
+        }
+        i += lSpan - 1;
+      }
+
+      // Add Subject rows
       rows.push(...courseRows);
 
+      // Add Course Subtotal row
       rows.push({
         courseId,
         courseName: course.name,
+        courseOrder: course.order || 0,
         largeSubject: '',
+        largeOrder: 999999,
         middleSubject: '',
+        middleOrder: 999999,
         smallSubject: t('Course Subtotal'),
+        smallOrder: 999999,
         mainHours: courseTotalMain,
         subHours: courseTotalSub,
         totalHours: courseTotalMain + courseTotalSub,
         level: 3
       });
 
+      // Set Course Span (on the first row of the course)
+      const numCourseRows = courseRows.length + 1; // +1 for subtotal row
+      const firstCourseRowIndex = rows.length - numCourseRows;
+      rows[firstCourseRowIndex].courseSpan = numCourseRows;
+
       grandTotalMain += courseTotalMain;
       grandTotalSub += courseTotalSub;
     });
 
     return { rows, grandTotalMain, grandTotalSub };
-  }, [teacher, courses, subjects, lessons, periods, startDate, endDate]);
+  }, [teacher, courses, subjects, lessons, periods, startDate, endDate, t]);
 
   return (
     <div className="teacher-statistics-overlay">
@@ -235,24 +301,44 @@ export function TeacherStatistics({
               {stats.rows.map((row, idx) => {
                 const prev = idx > 0 ? stats.rows[idx - 1] : null;
                 const isFirstCourseRow = !prev || prev.courseId !== row.courseId;
-                
-                const isSameLarge = !isFirstCourseRow && row.largeSubject && prev && prev.largeSubject === row.largeSubject;
-                const isSameMiddle = isSameLarge && row.middleSubject && prev && prev.middleSubject === row.middleSubject;
 
                 return (
                   <tr key={`${row.courseId}-${idx}`} className={row.level === 3 ? 'course-subtotal' : ''}>
-                    <td className={`col-course ${!isFirstCourseRow ? 'no-border-top' : ''} ${!row.largeSubject && !row.middleSubject && !row.smallSubject ? 'no-border-right' : ''}`}>
-                      {isFirstCourseRow ? row.courseName : ''}
-                    </td>
-                    <td className={`col-large ${isSameLarge ? 'no-border-top' : ''} ${!row.largeSubject ? 'no-border-left no-border-right' : (!row.middleSubject ? 'no-border-right' : '')}`}>
-                      {row.largeSubject}
-                    </td>
-                    <td className={`col-middle ${isSameMiddle ? 'no-border-top' : ''} ${!row.middleSubject ? 'no-border-left no-border-right' : (!row.smallSubject ? 'no-border-right' : '')}`}>
-                      {row.middleSubject}
-                    </td>
-                    <td className={`col-small ${!row.smallSubject ? 'no-border-left' : ''}`}>
-                      {row.smallSubject}
-                    </td>
+                    {row.courseSpan !== undefined ? (
+                      <td 
+                        className="col-course" 
+                        rowSpan={row.courseSpan}
+                      >
+                        {row.courseName}
+                      </td>
+                    ) : null}
+                    
+                    {row.level === 3 ? (
+                      <>
+                        <td colSpan={3} className="col-subtotal-label">
+                          {row.smallSubject}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        {row.largeSpan !== undefined ? (
+                          <td className="col-large" rowSpan={row.largeSpan}>
+                            {row.largeSubject}
+                          </td>
+                        ) : null}
+                        
+                        {row.middleSpan !== undefined ? (
+                          <td className="col-middle" rowSpan={row.middleSpan}>
+                            {row.middleSubject}
+                          </td>
+                        ) : null}
+
+                        <td className="col-small">
+                          {row.smallSubject}
+                        </td>
+                      </>
+                    )}
+                    
                     <td className="col-main">{row.mainHours}</td>
                     <td className="col-sub">{row.subHours}</td>
                     <td className="col-total">{row.totalHours}</td>
