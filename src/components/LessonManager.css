@@ -258,7 +258,19 @@
     background: #eee;
   }
   .lesson-manager-box { background-color: #fff; color: #333; }
-  .form-group input, .form-group select, .sub-teacher-list, .delivery-method-list { background-color: #f5f5f5; border-color: #ccc; color: #333; }
+  .form-group input, .form-group select, .form-group textarea, .sub-teacher-list, .delivery-method-list { 
+    background-color: #f5f5f5 !important; 
+    border-color: #ccc !important; 
+    color: #333 !important;
+    color-scheme: light;
+  }
+  .teacher-selection input, .sub-teacher-container input { 
+    background-color: #f5f5f5 !important; 
+    border-color: #ccc !important; 
+    color: #333 !important;
+    color-scheme: light;
+  }
+  .combo-input { background-color: #f5f5f5 !important; border-color: #ccc !important; color: #333 !important; color-scheme: light; }
   .sub-teacher-item, .delivery-method-item { background: #eee; color: #333; }
   .sub-teacher-item.selected, .delivery-method-item.selected { background: #646cff; color: #fff; }
   .lesson-manager-header, .lesson-manager-footer { border-color: #eee; }
