@@ -295,6 +295,7 @@ export function App() {
       events: events.value,
       viewMode: viewMode.value,
       viewType: viewType.value,
+      isTimelineReduced: isTimelineReduced.value,
       baseDate: currentDate.value,
       holidays: holidays.value,
       labels: resourceLabels.value,

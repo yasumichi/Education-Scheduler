@@ -14,6 +14,7 @@ interface ExportParams {
   events: ScheduleEvent[];
   viewMode: ResourceType;
   viewType: ViewType;
+  isTimelineReduced?: boolean;
   baseDate: Date;
   holidays: Holiday[];
   labels: ResourceLabels;
@@ -43,7 +44,7 @@ const getThemeColor = (themes: ColorTheme[], category: ColorCategory, keyOrId: s
 };
 
 export async function exportTimetableToExcel({
-  periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings, colorThemes, t
+  periods, resources, lessons, events, viewMode, viewType, isTimelineReduced = false, baseDate, holidays, labels, systemSettings, colorThemes, t
 }: ExportParams) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Timetable');
@@ -134,7 +135,7 @@ export async function exportTimetableToExcel({
   // Header Setup
   worksheet.getColumn(1).width = 25;
   for (let i = 0; i < displayDates.length * effectivePeriods.length; i++) {
-    worksheet.getColumn(i + 2).width = isCourseTimeline ? 4 : 12;
+    worksheet.getColumn(i + 2).width = isCourseTimeline ? (isTimelineReduced ? 2 : 4) : 12;
   }
 
   const locale = navigator.language;
@@ -143,7 +144,7 @@ export async function exportTimetableToExcel({
   const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
 
-  let headerRowsCount = isCourseTimeline ? 3 : 2;
+  let headerRowsCount = isCourseTimeline ? (isTimelineReduced ? 1 : 3) : 2;
 
   if (isCourseTimeline) {
     // Row 1: Months
@@ -163,6 +164,7 @@ export async function exportTimetableToExcel({
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
           cell.font = { bold: true };
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
         }
         currentMonth = monthLabel;
         startCol = dIdx + 2;
@@ -179,35 +181,38 @@ export async function exportTimetableToExcel({
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.font = { bold: true };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
     }
 
-    // Row 2 & 3: Day and Weekday
-    const dayRow = worksheet.getRow(2);
-    const wkdayRow = worksheet.getRow(3);
-    dayRow.height = 20;
-    wkdayRow.height = 20;
+    if (!isTimelineReduced) {
+      // Row 2 & 3: Day and Weekday
+      const dayRow = worksheet.getRow(2);
+      const wkdayRow = worksheet.getRow(3);
+      dayRow.height = 20;
+      wkdayRow.height = 20;
 
-    displayDates.forEach((date, dIdx) => {
-      const col = dIdx + 2;
-      const dCell = worksheet.getCell(2, col);
-      const wCell = worksheet.getCell(3, col);
-      dCell.value = dayFormatter.format(date);
-      wCell.value = weekdayFormatter.format(date);
-      
-      const hTheme = getHolidayOrWeekendTheme(date);
-      
-      [dCell, wCell].forEach(c => {
-        c.alignment = { horizontal: 'center', vertical: 'middle' };
-        c.font = { size: 9 };
+      displayDates.forEach((date, dIdx) => {
+        const col = dIdx + 2;
+        const dCell = worksheet.getCell(2, col);
+        const wCell = worksheet.getCell(3, col);
+        dCell.value = dayFormatter.format(date);
+        wCell.value = weekdayFormatter.format(date);
         
-        if (hTheme) {
-          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
-          c.font = { ...c.font, color: { argb: hexToARGB(hTheme.foreground) } };
-        }
+        const hTheme = getHolidayOrWeekendTheme(date);
         
-        c.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
+        [dCell, wCell].forEach(c => {
+          c.alignment = { horizontal: 'center', vertical: 'middle' };
+          c.font = { size: 9 };
+          
+          if (hTheme) {
+            c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToARGB(hTheme.background) } };
+            c.font = { ...c.font, color: { argb: hexToARGB(hTheme.foreground) } };
+          }
+          
+          c.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
+        });
       });
-    });
+    }
   } else {
     // Normal Header (Row 1: Date, Row 2: Period)
     const dateRow = worksheet.getRow(1);
@@ -327,6 +332,7 @@ export async function exportTimetableToExcel({
   eventLabelCell.value = labels.event;
   eventLabelCell.alignment = { vertical: 'middle', horizontal: 'left' };
   eventLabelCell.font = { bold: true };
+  eventLabelCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
   if (row3MaxLevel > 1) {
     worksheet.mergeCells(currentRow, 1, currentRow + row3MaxLevel - 1, 1);
   }
@@ -334,7 +340,7 @@ export async function exportTimetableToExcel({
   // Fill background grid
   for (let l = 0; l < row3MaxLevel; l++) {
     const row = worksheet.getRow(currentRow + l);
-    row.height = 35;
+    row.height = isCourseTimeline && isTimelineReduced ? 20 : 35;
     displayDates.forEach((date, dIdx) => {
       const hTheme = getHolidayOrWeekendTheme(date);
       
@@ -345,7 +351,12 @@ export async function exportTimetableToExcel({
       
       effectivePeriods.forEach((_, pIdx) => {
         const cell = worksheet.getCell(currentRow + l, dIdx * effectivePeriods.length + pIdx + 2);
-        cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
+        const borderStyle: any = { bottom: { style: 'thin' }, top: { style: 'thin' } };
+        if (!isTimelineReduced) {
+          borderStyle.left = { style: 'thin' };
+          borderStyle.right = { style: 'thin' };
+        }
+        cell.border = borderStyle;
         if (bgColor !== 'FFFFFFFF') {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
         }
@@ -460,12 +471,13 @@ export async function exportTimetableToExcel({
     resCell.value = t(res.name);
     resCell.alignment = { vertical: 'middle', horizontal: 'left' };
     resCell.font = { bold: true };
+    resCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
     if (maxLevel > 1) worksheet.mergeCells(currentRow, 1, currentRow + maxLevel - 1, 1);
 
     // Fill background grid
     for (let l = 0; l < maxLevel; l++) {
       const row = worksheet.getRow(currentRow + l);
-      row.height = isCourseTimeline ? 60 : 35;
+      row.height = isCourseTimeline ? (isTimelineReduced ? 30 : 60) : 35;
       displayDates.forEach((date, dIdx) => {
         const hTheme = getHolidayOrWeekendTheme(date);
         let bgColor = 'FFFFFFFF';
@@ -474,7 +486,12 @@ export async function exportTimetableToExcel({
         }
         effectivePeriods.forEach((_, pIdx) => {
           const cell = worksheet.getCell(currentRow + l, dIdx * effectivePeriods.length + pIdx + 2);
-          cell.border = { bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' }, top: { style: 'thin' } };
+          const borderStyle: any = { bottom: { style: 'thin' }, top: { style: 'thin' } };
+          if (!isTimelineReduced) {
+            borderStyle.left = { style: 'thin' };
+            borderStyle.right = { style: 'thin' };
+          }
+          cell.border = borderStyle;
           if (bgColor !== 'FFFFFFFF') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
         });
       });
@@ -490,19 +507,23 @@ export async function exportTimetableToExcel({
       
       if (item.type === 'course') {
         const c = item.data as Resource;
-        const days = eachDayOfInterval({ start: parseISO(c.startDate!), end: parseISO(c.endDate!) });
-        const workDays = days.filter(d => !isWeekend(d) && !getHoliday(d)).length;
-        const chiefTeacher = resources.find(r => r.id === c.chiefTeacherId);
-        const subIds = [...(c.assistantTeacherIds || []), ...(c.assistantTeachers || []).map((at: any) => at.id)];
-        const assistantNames = subIds.map(id => resources.find(r => r.id === id)?.name).filter(Boolean).map(name => t(name!)).join(', ');
-        
-        const mLabel = c.mainTeacherLabel || labels.mainTeacher;
-        const sLabel = c.subTeacherLabel || labels.subTeacher;
+        if (isTimelineReduced) {
+          cell.value = t(c.name);
+        } else {
+          const days = eachDayOfInterval({ start: parseISO(c.startDate!), end: parseISO(c.endDate!) });
+          const workDays = days.filter(d => !isWeekend(d) && !getHoliday(d)).length;
+          const chiefTeacher = resources.find(r => r.id === c.chiefTeacherId);
+          const subIds = [...(c.assistantTeacherIds || []), ...(c.assistantTeachers || []).map((at: any) => at.id)];
+          const assistantNames = subIds.map(id => resources.find(r => r.id === id)?.name).filter(Boolean).map(name => t(name!)).join(', ');
+          
+          const mLabel = c.mainTeacherLabel || labels.mainTeacher;
+          const sLabel = c.subTeacherLabel || labels.subTeacher;
 
-        cell.value = `${t(c.name)}\n` +
-                     `${mLabel}: ${chiefTeacher ? t(chiefTeacher.name) : '-'}\n` +
-                     (assistantNames ? `${sLabel}: ${assistantNames}\n` : '') +
-                     `${c.startDate} ～ ${c.endDate} (${workDays}${t('days')} / ${workDays * periods.length}${t('periods')})`;
+          cell.value = `${t(c.name)}\n` +
+                       `${mLabel}: ${chiefTeacher ? t(chiefTeacher.name) : '-'}\n` +
+                       (assistantNames ? `${sLabel}: ${assistantNames}\n` : '') +
+                       `${c.startDate} ～ ${c.endDate} (${workDays}${t('days')} / ${workDays * periods.length}${t('periods')})`;
+        }
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD0E0FF' } }; // LightBlue equivalent
       } else if (item.type === 'event') {
         const e = item.data as ScheduleEvent;
