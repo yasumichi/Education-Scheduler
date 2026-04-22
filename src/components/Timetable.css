@@ -672,6 +672,36 @@
   color: #4ade80;
 }
 
+/* Reduced Timeline View Styles */
+.course-timeline-card.reduced {
+  border-width: 1px;
+}
+
+.course-timeline-card.reduced .course-card-content {
+  padding: 2px 4px;
+}
+
+.course-timeline-card.reduced .course-card-name {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.timeline-dotted-line {
+  border-right: 1px dotted #888;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.timetable-container.is-reduced .grid-cell {
+  border-right: none;
+}
+
+@media (prefers-color-scheme: light) {
+  .timeline-dotted-line {
+    border-right-color: #aaa;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   .course-timeline-card {
     background: #f0f7ff;

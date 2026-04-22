@@ -61,6 +61,7 @@ export function App() {
   const showTeacherStatistics = useSignal<boolean>(false);
   const selectedTeacherIdForStats = useSignal<string | null>(null);
   const showAllTeacherStatistics = useSignal<boolean>(false);
+  const isTimelineReduced = useSignal<boolean>(false);
   const editingEvent = useSignal<Partial<ScheduleEvent> | null>(null);
   const editingLesson = useSignal<Partial<Lesson> | null>(null);
   const editingCourseId = useSignal<string | null>(null);
@@ -618,6 +619,15 @@ export function App() {
             >
               {t('{{course}} Timeline', { course: resourceLabels.value.course })}
             </button>
+            {viewType.value === 'course_timeline' && (
+              <button 
+                className={isTimelineReduced.value ? 'active' : ''} 
+                onClick={() => isTimelineReduced.value = !isTimelineReduced.value}
+                title={t('Reduced View')}
+              >
+                {t('Reduced')}
+              </button>
+            )}
           </div>
             </>
           )}
@@ -699,6 +709,7 @@ export function App() {
             events={events.value}
             viewMode={viewMode.value}
             viewType={viewType.value}
+            isTimelineReduced={isTimelineReduced.value}
             baseDate={currentDate.value}
             holidays={holidays.value}
             labels={resourceLabels.value}

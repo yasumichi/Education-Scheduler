@@ -12,6 +12,7 @@ interface Props {
   events: ScheduleEvent[];
   viewMode: ResourceType;
   viewType: ViewType;
+  isTimelineReduced?: boolean;
   baseDate: Date;
   holidays: Holiday[];
   labels: ResourceLabels;
@@ -30,7 +31,7 @@ interface Props {
 }
 
 export function Timetable({ 
-  periods, resources, lessons, events, viewMode, viewType, baseDate, holidays, labels, systemSettings,
+  periods, resources, lessons, events, viewMode, viewType, isTimelineReduced = false, baseDate, holidays, labels, systemSettings,
   colorThemes, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onRoomClick, onTeacherClick,
   onViewWeekly, onViewStats, onViewTeacherStats, onEmptyResourceCellClick 
 }: Props) {
@@ -138,6 +139,10 @@ export function Timetable({
   const viewStartStr = format(currentViewStart, 'yyyy-MM-dd');
   const viewEndStr = format(currentViewEnd, 'yyyy-MM-dd');
 
+  const isDayView = viewType === 'day';
+  const isCourseTimeline = viewType === 'course_timeline';
+  const effectivePeriods = isCourseTimeline ? [{ id: 'p-all', name: '', startTime: '', endTime: '', order: 0 }] : periods;
+
   const allResourcesOfMode = resources
     .filter(r => {
       if (r.type !== viewMode) return false;
@@ -172,21 +177,19 @@ export function Timetable({
     hiddenResourceIds.value = next;
   };
 
-  const isDayView = viewType === 'day';
-  const isCourseTimeline = viewType === 'course_timeline';
-  const effectivePeriods = isCourseTimeline ? [{ id: 'p-all', name: '', startTime: '', endTime: '', order: 0 }] : periods;
-
-  const colWidthNum = isDayView ? 60 : 50;
+  const colWidthNum = isDayView ? 60 : (isCourseTimeline && isTimelineReduced ? 5 : 50);
   const colWidth = isDayView ? '1fr' : `${colWidthNum}px`;
   const totalCols = displayDates.length * effectivePeriods.length;
   const totalWidth = 150 + totalCols * colWidthNum;
 
-  const eventRowIdx = isCourseTimeline ? 4 : 3;
-  const resourceBaseRowIdx = isCourseTimeline ? 5 : 4;
-  const headerHeight = isCourseTimeline ? 90 : 70;
+  const eventRowIdx = isCourseTimeline ? (isTimelineReduced ? 2 : 4) : 3;
+  const resourceBaseRowIdx = isCourseTimeline ? (isTimelineReduced ? 3 : 5) : 4;
+  const headerHeight = isCourseTimeline ? (isTimelineReduced ? 30 : 90) : 70;
 
   const gridRows = isCourseTimeline 
-    ? `30px 30px 30px 80px repeat(${filteredResources.length || 0}, 120px)` 
+    ? (isTimelineReduced 
+        ? `30px 40px repeat(${filteredResources.length || 0}, 60px)` 
+        : `30px 30px 30px 80px repeat(${filteredResources.length || 0}, 120px)`)
     : `40px 30px 80px repeat(${filteredResources.length || 0}, 80px)`;
 
   const gridStyle = {
@@ -199,13 +202,15 @@ export function Timetable({
   } as JSX.CSSProperties;
 
   const stickyLeft = { position: 'sticky', left: 0 } as JSX.CSSProperties;
+  const eventRowHeight = isCourseTimeline && isTimelineReduced ? 40 : 80;
+  const stickyTop = { position: 'sticky', top: `${headerHeight + eventRowHeight}px` } as JSX.CSSProperties;
 
   const handleIntentionalClick = (callback: () => void) => {
     callback();
   };
 
   const filterButton = (
-    <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: isCourseTimeline ? "1 / span 3" : "1 / span 2", zIndex: 100 }}>
+    <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: isCourseTimeline ? (isTimelineReduced ? "1 / span 2" : "1 / span 4") : "1 / span 3", zIndex: 100 }}>
       <button 
         className="resource-filter-btn" 
         onClick={() => showFilterPopup.value = !showFilterPopup.value}
@@ -258,7 +263,7 @@ export function Timetable({
               {m.label}
             </div>
           ))}
-          {displayDates.map((date, i) => {
+          {!isTimelineReduced && displayDates.map((date, i) => {
             const holiday = getHoliday(date);
             const isWknd = isWeekend(date);
             let baseClass = "date-header";
@@ -344,7 +349,7 @@ export function Timetable({
   );
 
   const eventLabel = (
-    <div key="label-event" className="event-label" style={{ ...stickyLeft, top: `${headerHeight}px`, gridColumn: 1, gridRow: eventRowIdx }}>
+    <div key="label-event" className="event-label" style={{ ...stickyLeft, top: `${headerHeight}px`, gridColumn: 1, gridRow: eventRowIdx, height: isCourseTimeline && isTimelineReduced ? '40px' : '80px' }}>
       {labels.event}
     </div>
   );
@@ -367,7 +372,7 @@ export function Timetable({
     return effectivePeriods.map((p, pIdx) => (
       <div key={`event-cell-${dIdx}-${pIdx}`} 
            className={className} 
-           style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: eventRowIdx, top: `${headerHeight}px` }}
+           style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: eventRowIdx, top: `${headerHeight}px`, height: isCourseTimeline && isTimelineReduced ? '40px' : '80px' }}
            onDblClick={() => handleIntentionalClick(() => onEmptyEventClick?.(dateStr, p.id))} />
     ));
   });
@@ -437,10 +442,11 @@ export function Timetable({
   });
 
   const row3Layouts = calculateLayout(row3Items);
+
   const holidayItems = row3Layouts.filter(l => row3Items.find(i => i.id === l.id)?.type === 'holiday').map(layout => {
     const item = row3Items.find(i => i.id === layout.id)!;
     const h = item.data;
-    const unitHeight = (80 - 8) / layout.maxLevelInGroup;
+    const unitHeight = (eventRowHeight - 8) / layout.maxLevelInGroup;
     const itemHeight = unitHeight - 8;
     const top = headerHeight + 4 + (layout.level * unitHeight);
 
@@ -466,7 +472,7 @@ export function Timetable({
 
   const globalEventItems = row3Layouts.filter(l => row3Items.find(i => i.id === l.id)?.type === 'event').map(layout => {
     const e = row3Items.find(i => i.id === layout.id)!.data as ScheduleEvent;
-    const unitHeight = (80 - 8) / layout.maxLevelInGroup;
+    const unitHeight = (eventRowHeight - 8) / layout.maxLevelInGroup;
     const itemHeight = unitHeight - 8;
     const top = headerHeight + 4 + (layout.level * unitHeight);
 
@@ -536,7 +542,7 @@ export function Timetable({
       const layouts = calculateLayout(courseItems);
       layouts.forEach(layout => {
         const c = courseItems.find(i => i.id === layout.id)!.data;
-        const unitHeight = 120 / layout.maxLevelInGroup;
+        const unitHeight = (isCourseTimeline && isTimelineReduced ? 60 : 120) / layout.maxLevelInGroup;
         const itemHeight = unitHeight - 8;
         const top = 4 + (layout.level * unitHeight);
 
@@ -558,7 +564,7 @@ export function Timetable({
                         `${t('Work Days')}: ${workDays}${t('days')} (${totalPeriods} ${t('periods')})`;
 
         resourceRowItems.push(
-          <div key={layout.id} className="course-timeline-card"
+          <div key={layout.id} className={`course-timeline-card ${isTimelineReduced ? 'reduced' : ''}`}
                title={tooltip}
                onDblClick={() => handleIntentionalClick(() => onCourseClick?.(c))}
                style={{ 
@@ -572,16 +578,20 @@ export function Timetable({
                }}>
             <div className="course-card-content">
               <div className="course-card-name">{t(c.name)}</div>
-              <div className="course-card-teachers">
-                <div>{mLabel}: {chiefTeacher ? t(chiefTeacher.name) : '-'}</div>
-                {assistantNames && <div>{sLabel}: {assistantNames}</div>}
-              </div>
-              <div className="course-card-footer">
-                <span className="course-card-dates">{c.startDate} ～ {c.endDate}</span>
-                <span className="course-card-stats">
-                  {t('Work Days')}: {workDays}{t('days')} ({totalPeriods} {t('periods')})
-                </span>
-              </div>
+              {!isTimelineReduced && (
+                <>
+                  <div className="course-card-teachers">
+                    <div>{mLabel}: {chiefTeacher ? t(chiefTeacher.name) : '-'}</div>
+                    {assistantNames && <div>{sLabel}: {assistantNames}</div>}
+                  </div>
+                  <div className="course-card-footer">
+                    <span className="course-card-dates">{c.startDate} ～ {c.endDate}</span>
+                    <span className="course-card-stats">
+                      {t('Work Days')}: {workDays}{t('days')} ({totalPeriods} {t('periods')})
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         );
@@ -751,7 +761,7 @@ export function Timetable({
     };
 
     return (
-      <div key={`label-${r.id}`} className="grid-label" style={{ ...stickyLeft, gridColumn: 1, gridRow: idx + resourceBaseRowIdx, height: isCourseTimeline ? '120px' : '80px' }}>
+      <div key={`label-${r.id}`} className="grid-label" style={{ ...stickyLeft, ...stickyTop, gridColumn: 1, gridRow: idx + resourceBaseRowIdx, height: isCourseTimeline ? (isTimelineReduced ? '60px' : '120px') : '80px' }}>
         <span className="label-name"
               onClick={() => handleIntentionalClick(handleLabelClick)}
               style={{ cursor: 'pointer' }}
@@ -827,7 +837,7 @@ export function Timetable({
     <div className={`timetable-wrapper holiday-theme-${holidayTheme}`} style={wrapperStyle}>
       <div 
         key={`grid-${viewType}-${baseDate.getTime()}-${viewMode}-${filteredResources.length}-${totalCols}`}
-        className="timetable-container" 
+        className={`timetable-container ${isTimelineReduced ? 'is-reduced' : ''}`} 
         style={gridStyle}
       >
         {filterButton}
@@ -841,7 +851,7 @@ export function Timetable({
             if (holiday) cellClass += ' is-holiday';
 
             const hTheme = getHolidayOrWeekendTheme(date);
-            const style: any = {};
+            const style: any = { ...stickyTop };
             if (hTheme) {
               style.backgroundColor = hTheme.background;
             }
@@ -862,6 +872,18 @@ export function Timetable({
         {globalEventItems}
         {resourceRowItems}
         {resourceLabels}
+        {isCourseTimeline && isTimelineReduced && displayDates.map((_, i) => {
+          if ((i + 1) % 10 === 0) {
+            return (
+              <div 
+                key={`dotted-line-${i}`} 
+                className="timeline-dotted-line" 
+                style={{ gridColumn: i + 2, gridRow: `1 / span ${resourceBaseRowIdx + filteredResources.length - 1}` }} 
+              />
+            );
+          }
+          return null;
+        })}
       </div>
     </div>
   );
