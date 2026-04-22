@@ -81,14 +81,15 @@ export function AllTeacherStatistics({
     });
 
     const rows: AllTeacherStatRow[] = teachers
+      .slice()
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name))
       .map(teacher => ({
         teacherId: teacher.id,
         teacherName: teacher.name,
         mainHours: teacherStats[teacher.id].main,
         subHours: teacherStats[teacher.id].sub,
         totalHours: teacherStats[teacher.id].main + teacherStats[teacher.id].sub
-      }))
-      .sort((a, b) => b.totalHours - a.totalHours || a.teacherName.localeCompare(b.teacherName));
+      }));
 
     const grandTotalMain = rows.reduce((sum, r) => sum + r.mainHours, 0);
     const grandTotalSub = rows.reduce((sum, r) => sum + r.subHours, 0);
