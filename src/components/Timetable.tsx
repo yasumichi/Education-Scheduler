@@ -210,7 +210,7 @@ export function Timetable({
   };
 
   const filterButton = (
-    <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: isCourseTimeline ? (isTimelineReduced ? "1 / span 2" : "1 / span 4") : "1 / span 3", zIndex: 100 }}>
+    <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: isCourseTimeline ? (isTimelineReduced ? "1 / span 1" : "1 / span 3") : "1 / span 2", zIndex: 100 }}>
       <button 
         className="resource-filter-btn" 
         onClick={() => showFilterPopup.value = !showFilterPopup.value}
