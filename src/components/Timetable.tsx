@@ -203,7 +203,8 @@ export function Timetable({
 
   const stickyLeft = { position: 'sticky', left: 0 } as JSX.CSSProperties;
   const eventRowHeight = isCourseTimeline && isTimelineReduced ? 40 : 80;
-  const stickyTop = { position: 'sticky', top: `${headerHeight + eventRowHeight}px` } as JSX.CSSProperties;
+  const resourceStickyTop = `${headerHeight + eventRowHeight}px`;
+  const stickyTop = { position: 'sticky', top: resourceStickyTop } as JSX.CSSProperties;
 
   const handleIntentionalClick = (callback: () => void) => {
     callback();
@@ -761,7 +762,7 @@ export function Timetable({
     };
 
     return (
-      <div key={`label-${r.id}`} className="grid-label" style={{ ...stickyLeft, ...stickyTop, gridColumn: 1, gridRow: idx + resourceBaseRowIdx, height: isCourseTimeline ? (isTimelineReduced ? '60px' : '120px') : '80px' }}>
+      <div key={`label-${r.id}`} className="grid-label" style={{ ...stickyLeft, gridColumn: 1, gridRow: idx + resourceBaseRowIdx, height: isCourseTimeline ? (isTimelineReduced ? '60px' : '120px') : '80px' }}>
         <span className="label-name"
               onClick={() => handleIntentionalClick(handleLabelClick)}
               style={{ cursor: 'pointer' }}
@@ -851,7 +852,7 @@ export function Timetable({
             if (holiday) cellClass += ' is-holiday';
 
             const hTheme = getHolidayOrWeekendTheme(date);
-            const style: any = { ...stickyTop };
+            const style: any = {};
             if (hTheme) {
               style.backgroundColor = hTheme.background;
             }
