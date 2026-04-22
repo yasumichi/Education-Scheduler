@@ -146,6 +146,14 @@ export async function exportTimetableToExcel({
 
   let headerRowsCount = isCourseTimeline ? (isTimelineReduced ? 1 : 3) : 2;
 
+  // Corner Cell (1,1)
+  if (headerRowsCount > 1) {
+    worksheet.mergeCells(1, 1, headerRowsCount, 1);
+  }
+  const cornerCell = worksheet.getCell(1, 1);
+  cornerCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+  cornerCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+
   if (isCourseTimeline) {
     // Row 1: Months
     const monthRow = worksheet.getRow(1);
