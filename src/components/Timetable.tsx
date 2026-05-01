@@ -885,7 +885,7 @@ export function Timetable({
   return (
     <div className={`timetable-wrapper holiday-theme-${holidayTheme}`} style={wrapperStyle}>
       <div 
-        key={`grid-${viewType}-${baseDate.getTime()}-${viewMode}-${filteredResources.length}-${totalCols}`}
+        key={`grid-${viewType}-${baseDate.getTime()}-${viewMode}`}
         className={`timetable-container ${isTimelineReduced ? 'is-reduced' : ''}`} 
         style={gridStyle}
       >
@@ -906,7 +906,7 @@ export function Timetable({
             }
 
             return effectivePeriods.map((p, pIdx) => (
-              <div key={`cell-${rIdx}-${dIdx}-${pIdx}`} 
+              <div key={`cell-${res.id}-${dIdx}-${pIdx}`} 
                    className={cellClass} 
                    style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: rIdx + resourceBaseRowIdx }}
                    onDblClick={() => !isCourseTimeline && handleIntentionalClick(() => onEmptyResourceCellClick?.(res.id, dateStr, p.id))} />
