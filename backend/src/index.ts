@@ -1737,6 +1737,54 @@ app.delete('/api/color-themes/:id', verifyToken, async (req: AuthRequest, res) =
   }
 });
 
+// --- SavedFilter Endpoints ---
+
+app.get('/api/saved-filters', verifyToken, async (req, res) => {
+  try {
+    if (!(prisma as any).savedFilter) {
+      throw new Error('Prisma model "savedFilter" is not defined. Please restart the server or regenerate Prisma client.');
+    }
+    const filters = await prisma.savedFilter.findMany({
+      orderBy: { order: 'asc' }
+    });
+    res.json(filters);
+  } catch (error: any) {
+    console.error('Failed to fetch saved filters:', error);
+    res.status(500).json({ error: 'Failed to fetch saved filters', details: error.message });
+  }
+});
+
+app.post('/api/saved-filters', verifyToken, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const { id, name, resourceType, resourceIds, order } = req.body;
+  try {
+    const data = {
+      name,
+      resourceType,
+      resourceIds,
+      order: order || 0
+    };
+    const result = id
+      ? await prisma.savedFilter.update({ where: { id }, data })
+      : await prisma.savedFilter.create({ data });
+    res.json(result);
+  } catch (error: any) {
+    console.error('Failed to save filter:', error);
+    res.status(500).json({ error: 'Failed to save filter', details: error.message });
+  }
+});
+
+app.delete('/api/saved-filters/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const { id } = req.params;
+  try {
+    await prisma.savedFilter.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete saved filter' });
+  }
+});
+
 app.listen(Number(port), host, () => {
   console.log(`Backend server is running on http://${host}:${port}`);
 });

@@ -22,7 +22,7 @@ import { TeacherStatistics } from './components/TeacherStatistics';
 import { AllTeacherStatistics } from './components/AllTeacherStatistics';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
-import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject } from './types';
+import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject, SavedFilter } from './types';
 import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, differenceInDays, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
 
@@ -40,6 +40,7 @@ export function App() {
   const periods = useSignal<TimePeriod[]>([]);
   const systemSettings = useSignal<SystemSetting | null>(null);
   const colorThemes = useSignal<ColorTheme[]>([]);
+  const savedFilters = useSignal<SavedFilter[]>([]);
   const isHolidayMode = useSignal<boolean>(false);
   const showPeriodManager = useSignal<boolean>(false);
   const showLabelManager = useSignal<boolean>(false);
@@ -128,7 +129,8 @@ export function App() {
         fetch(`${BACKEND_URL}/labels`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/settings`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/color-themes`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/subjects`, { credentials: 'include' })
+        fetch(`${BACKEND_URL}/subjects`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/saved-filters`, { credentials: 'include' })
       ]);
 
       const failed = responses.find(r => !r.ok);
@@ -142,10 +144,10 @@ export function App() {
         return;
       }
 
-      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels, resSettings, resThemes, resSubjects] = responses;
+      const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels, resSettings, resThemes, resSubjects, resFilters] = responses;
 
       // すべてのJSONパースを並列で行う
-      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels, dataSettings, dataThemes, dataSubjects] = await Promise.all([
+      const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels, dataSettings, dataThemes, dataSubjects, dataFilters] = await Promise.all([
         resResources.json(),
         resLessons.json(),
         resEvents.json(),
@@ -154,7 +156,8 @@ export function App() {
         resLabels.json(),
         resSettings.json(),
         resThemes.json(),
-        resSubjects.json()
+        resSubjects.json(),
+        resFilters.json()
       ]);
 
       resources.value = dataResources;
@@ -166,10 +169,46 @@ export function App() {
       systemSettings.value = dataSettings;
       colorThemes.value = dataThemes;
       subjects.value = dataSubjects;
+      savedFilters.value = dataFilters;
 
       console.log('Successfully fetched all data from backend');
     } catch (err) {
       console.error('Failed to fetch data from backend:', err);
+    }
+  };
+
+  const handleSaveFilter = async (filter: Partial<SavedFilter>) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/saved-filters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(filter),
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        if (filter.id) {
+          savedFilters.value = savedFilters.value.map(f => f.id === updated.id ? updated : f);
+        } else {
+          savedFilters.value = [...savedFilters.value, updated];
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save filter:', err);
+    }
+  };
+
+  const handleDeleteFilter = async (id: string) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/saved-filters/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        savedFilters.value = savedFilters.value.filter(f => f.id !== id);
+      }
+    } catch (err) {
+      console.error('Failed to delete filter:', err);
     }
   };
 
@@ -703,7 +742,7 @@ export function App() {
             }}
           />
         ) : (
-          <Timetable 
+          <Timetable
             periods={periods.value}
             resources={resources.value}
             lessons={lessons.value}
@@ -716,7 +755,11 @@ export function App() {
             labels={resourceLabels.value}
             systemSettings={systemSettings.value}
             colorThemes={colorThemes.value}
+            savedFilters={savedFilters.value}
+            onSaveFilter={handleSaveFilter}
+            onDeleteFilter={handleDeleteFilter}
             onEventClick={(event) => {
+
               editingEvent.value = event;
               showEventManager.value = true;
             }}

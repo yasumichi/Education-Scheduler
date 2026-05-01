@@ -193,6 +193,122 @@
   }
 }
 
+.filter-section-title {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #888;
+  margin-top: 5px;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.saved-filters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.saved-filter-item {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.apply-filter-btn {
+  flex: 1;
+  background: #333;
+  color: #eee;
+  border: 1px solid #444;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apply-filter-btn:hover {
+  background: #444;
+  border-color: #666;
+}
+
+.delete-filter-btn {
+  background: transparent;
+  color: #f66;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.delete-filter-btn:hover {
+  color: #f33;
+}
+
+.save-filter-form {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.save-filter-form input {
+  flex: 1;
+  background: #111;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+.save-filter-form button {
+  background: #252;
+  color: #dfd;
+  border: 1px solid #363;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.save-filter-form button:hover {
+  background: #363;
+}
+
+.filter-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (prefers-color-scheme: light) {
+  .apply-filter-btn {
+    background: #f5f5f5;
+    color: #333;
+    border-color: #ccc;
+  }
+  .apply-filter-btn:hover {
+    background: #eee;
+  }
+  .save-filter-form input {
+    background: #fff;
+    color: #000;
+    border-color: #ccc;
+  }
+  .save-filter-form button {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+  .save-filter-form button:hover {
+    background: #bbf7d0;
+  }
+}
+
 /* 日付ヘッダー (z-index: 35) */
 .date-header {
   background-color: #222;

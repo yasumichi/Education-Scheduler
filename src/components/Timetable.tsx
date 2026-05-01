@@ -1,4 +1,4 @@
-import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday, ResourceLabels, ScheduleEvent, SystemSetting, ColorTheme, ColorCategory } from '../types';
+import { TimePeriod, Resource, Lesson, ResourceType, ViewType, Holiday, ResourceLabels, ScheduleEvent, SystemSetting, ColorTheme, ColorCategory, SavedFilter } from '../types';
 import { format, addDays, addMonths, isSameDay, parseISO, getYear, differenceInDays, isWithinInterval, isBefore, isAfter, startOfDay, differenceInCalendarDays, eachDayOfInterval } from 'date-fns';
 import './Timetable.css';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,9 @@ interface Props {
   labels: ResourceLabels;
   systemSettings: SystemSetting | null;
   colorThemes: ColorTheme[];
+  savedFilters: SavedFilter[];
+  onSaveFilter: (filter: Partial<SavedFilter>) => Promise<void>;
+  onDeleteFilter: (id: string) => Promise<void>;
   onEventClick?: (event: ScheduleEvent) => void;
   onEmptyEventClick?: (date: string, periodId: string) => void;
   onLessonClick?: (lesson: Lesson) => void;
@@ -32,7 +35,7 @@ interface Props {
 
 export function Timetable({ 
   periods, resources, lessons, events, viewMode, viewType, isTimelineReduced = false, baseDate, holidays, labels, systemSettings,
-  colorThemes, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onRoomClick, onTeacherClick,
+  colorThemes, savedFilters, onSaveFilter, onDeleteFilter, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onRoomClick, onTeacherClick,
   onViewWeekly, onViewStats, onViewTeacherStats, onEmptyResourceCellClick 
 }: Props) {
   const { t } = useTranslation();
@@ -44,6 +47,7 @@ export function Timetable({
 
   const showFilterPopup = useSignal(false);
   const hiddenResourceIds = useSignal<Set<string>>(new Set());
+  const newFilterName = useSignal("");
 
   const getResourceName = (id: string) => {
     const res = resources.find(r => r.id === id);
@@ -210,6 +214,29 @@ export function Timetable({
     callback();
   };
 
+  const applyFilter = (filter: SavedFilter) => {
+    const visibleIds = new Set(filter.resourceIds);
+    const nextHidden = new Set<string>();
+    allResourcesOfMode.forEach(r => {
+      if (!visibleIds.has(r.id)) nextHidden.add(r.id);
+    });
+    hiddenResourceIds.value = nextHidden;
+  };
+
+  const handleSaveCurrentFilter = () => {
+    if (!newFilterName.value) return;
+    const visibleIds = allResourcesOfMode
+      .filter(r => !hiddenResourceIds.value.has(r.id))
+      .map(r => r.id);
+    
+    onSaveFilter({
+      name: newFilterName.value,
+      resourceType: viewMode,
+      resourceIds: visibleIds
+    });
+    newFilterName.value = "";
+  };
+
   const filterButton = (
     <div className="grid-corner" style={{ ...stickyLeft, gridColumn: 1, gridRow: isCourseTimeline ? (isTimelineReduced ? "1 / span 1" : "1 / span 3") : "1 / span 2", zIndex: 100 }}>
       <button 
@@ -223,20 +250,41 @@ export function Timetable({
       </button>
       {showFilterPopup.value && (
         <div className="resource-filter-popup">
+          <div className="filter-section-title">{t('Saved Filters')}</div>
+          <div className="saved-filters-list">
+            {savedFilters.filter(f => f.resourceType === viewMode).map(f => (
+              <div key={f.id} className="saved-filter-item">
+                <button className="apply-filter-btn" onClick={() => applyFilter(f)}>{f.name}</button>
+                <button className="delete-filter-btn" onClick={() => onDeleteFilter(f.id)}>×</button>
+              </div>
+            ))}
+          </div>
+          <div className="save-filter-form">
+            <input 
+              type="text" 
+              placeholder={t('Filter Name')} 
+              value={newFilterName.value} 
+              onInput={(e) => newFilterName.value = (e.target as HTMLInputElement).value}
+            />
+            <button onClick={handleSaveCurrentFilter}>{t('Save')}</button>
+          </div>
+          <hr />
           <div className="filter-actions">
             <button onClick={showAllResources}>{t('Select All')}</button>
             <button onClick={hideAllResources}>{t('Deselect All')}</button>
           </div>
-          {allResourcesOfMode.map(r => (
-            <label key={r.id} className="filter-item">
-              <input 
-                type="checkbox" 
-                checked={!hiddenResourceIds.value.has(r.id)} 
-                onChange={() => toggleResource(r.id)}
-              />
-              {t(r.name)}
-            </label>
-          ))}
+          <div className="filter-items-list">
+            {allResourcesOfMode.map(r => (
+              <label key={r.id} className="filter-item">
+                <input 
+                  type="checkbox" 
+                  checked={!hiddenResourceIds.value.has(r.id)} 
+                  onChange={() => toggleResource(r.id)}
+                />
+                {t(r.name)}
+              </label>
+            ))}
+          </div>
         </div>
       )}
     </div>

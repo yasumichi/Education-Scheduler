@@ -156,6 +156,14 @@ export interface Holiday {
   name: string;
 }
 
+export interface SavedFilter {
+  id: string;
+  name: string;
+  resourceType: ResourceType;
+  resourceIds: string[];
+  order: number;
+}
+
 const generateResources = (): Resource[] => {
   const resources: Resource[] = [];
   for (let i = 1; i <= 20; i++) {

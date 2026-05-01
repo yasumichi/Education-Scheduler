@@ -181,6 +181,14 @@ model ColorTheme {
   order      Int           @default(0)
 }
 
+model SavedFilter {
+  id           String       @id @default(uuid())
+  name         String
+  resourceType ResourceType
+  resourceIds  String[]
+  order        Int          @default(0)
+}
+
 enum ColorCategory {
   EVENT
   LESSON
