@@ -17,12 +17,13 @@ import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { ColorThemeManager } from './components/ColorThemeManager';
 import { SubjectManager } from './components/SubjectManager';
+import { AuditLogManager } from './components/AuditLogManager';
 import { CourseStatistics } from './components/CourseStatistics';
 import { TeacherStatistics } from './components/TeacherStatistics';
 import { AllTeacherStatistics } from './components/AllTeacherStatistics';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
-import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject, SavedFilter } from './types';
+import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject, SavedFilter, AuditLog } from './types';
 import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, differenceInDays, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
 
@@ -57,6 +58,7 @@ export function App() {
   const showDeliveryMethodManager = useSignal<boolean>(false);
   const showColorThemeManager = useSignal<boolean>(false);
   const showSubjectManager = useSignal<boolean>(false);
+  const showAuditLogManager = useSignal<boolean>(false);
   const showCourseStatistics = useSignal<boolean>(false);
   const selectedCourseIdForStats = useSignal<string | null>(null);
   const showTeacherStatistics = useSignal<boolean>(false);
@@ -74,6 +76,7 @@ export function App() {
   const lessons = useSignal<Lesson[]>([]);
   const events = useSignal<ScheduleEvent[]>([]);
   const subjects = useSignal<Subject[]>([]);
+  const auditLogs = useSignal<AuditLog[]>([]);
   const sessionRestored = useSignal<boolean>(false);
 
   // Auth signals
@@ -209,6 +212,17 @@ export function App() {
       }
     } catch (err) {
       console.error('Failed to delete filter:', err);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/audit-logs`, { credentials: 'include' });
+      if (res.ok) {
+        auditLogs.value = await res.json();
+      }
+    } catch (err) {
+      console.error('Failed to fetch audit logs:', err);
     }
   };
 
@@ -489,8 +503,8 @@ export function App() {
                       >
                         {t('Manage Users')}
                       </button>
-                      <button 
-                        className="dropdown-item" 
+                      <button
+                        className="dropdown-item"
                         onClick={() => {
                           showSystemSettingManager.value = true;
                           showSettingsDropdown.value = false;
@@ -498,6 +512,17 @@ export function App() {
                       >
                         {t('System Settings')}
                       </button>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => {
+                          fetchAuditLogs();
+                          showAuditLogManager.value = true;
+                          showSettingsDropdown.value = false;
+                        }}
+                      >
+                        {t('Audit Logs')}
+                      </button>
+
                     </div>
                   )}
                 </div>
@@ -1076,6 +1101,13 @@ export function App() {
           />
         );
       })()}
+
+      {showAuditLogManager.value && (
+        <AuditLogManager
+          logs={auditLogs.value}
+          onClose={() => showAuditLogManager.value = false}
+        />
+      )}
     </div>
   );
 }

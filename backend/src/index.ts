@@ -20,6 +20,23 @@ const host = process.env.HOST || '0.0.0.0';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+// --- Audit Log Helper ---
+const createAuditLog = async (req: AuthRequest, tableName: string, action: string, data: any) => {
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user?.id,
+        userEmail: req.user?.email,
+        tableName,
+        action,
+        data: typeof data === 'string' ? data : JSON.stringify(data)
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create audit log:', error);
+  }
+};
+
 app.use(cors({
   origin: FRONTEND_URL,
   credentials: true
@@ -72,6 +89,7 @@ app.post('/api/auth/register', async (req, res) => {
         role: role || UserRole.STUDENT
       }
     });
+    await createAuditLog(req as AuthRequest, 'User', 'REGISTER', { id: user.id, email: user.email, role: user.role });
     res.json({ message: 'User created successfully', userId: user.id });
   } catch (error) {
     res.status(400).json({ error: 'User already exists or invalid data' });
@@ -95,6 +113,7 @@ app.post('/api/auth/change-password', verifyToken, async (req: AuthRequest, res)
       where: { id: user.id },
       data: { password: hashedPassword }
     });
+    await createAuditLog(req, 'User', 'CHANGE_PASSWORD', { id: user.id, email: user.email });
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to change password' });
@@ -114,7 +133,7 @@ app.post('/api/auth/login', async (req, res) => {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
     
     // Save to Cookie
     res.cookie('auth_token', token, {
@@ -223,6 +242,7 @@ app.post('/api/users', verifyToken, async (req: AuthRequest, res) => {
         data,
         select: { id: true, email: true, role: true }
       });
+      await createAuditLog(req, 'User', 'UPDATE', user);
     } else {
       // Create
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -230,6 +250,7 @@ app.post('/api/users', verifyToken, async (req: AuthRequest, res) => {
         data: { email, password: hashedPassword, role },
         select: { id: true, email: true, role: true }
       });
+      await createAuditLog(req, 'User', 'CREATE', user);
     }
     res.json(user);
   } catch (error) {
@@ -248,7 +269,8 @@ app.delete('/api/users/:id', verifyToken, async (req: AuthRequest, res) => {
     if (req.user.id === id) {
       return res.status(400).json({ error: 'Cannot delete yourself' });
     }
-    await prisma.user.delete({ where: { id } });
+    const user = await prisma.user.delete({ where: { id } });
+    await createAuditLog(req, 'User', 'DELETE', { id, email: user.email });
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete user' });
@@ -264,10 +286,11 @@ app.post('/api/users/:id/reset-password', verifyToken, async (req: AuthRequest, 
   const { newPassword } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { id },
       data: { password: hashedPassword }
     });
+    await createAuditLog(req, 'User', 'RESET_PASSWORD', { id, email: user.email });
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to reset password' });
@@ -321,6 +344,7 @@ app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
         data
       });
     }
+    await createAuditLog(req, 'SystemSetting', 'UPDATE', settings);
     res.json(settings);
   } catch (error) {
     res.status(500).json({ error: 'Failed to save settings' });
@@ -343,6 +367,7 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
           order: order || 0
         }
       });
+      await createAuditLog(req, 'Resource', 'UPDATE_ROOM', room);
     } else {
       room = await prisma.resource.create({
         data: {
@@ -351,6 +376,7 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
           order: order || 0
         }
       });
+      await createAuditLog(req, 'Resource', 'CREATE_ROOM', room);
     }
     res.json(room);
   } catch (error) {
@@ -374,6 +400,7 @@ app.post('/api/rooms/reorder', verifyToken, async (req: AuthRequest, res) => {
         })
       )
     );
+    await createAuditLog(req, 'Resource', 'REORDER_ROOMS', orders);
     res.json({ message: 'Order updated successfully' });
   } catch (error) {
     console.error('Failed to update room order:', error);
@@ -388,9 +415,10 @@ app.delete('/api/rooms/:id', verifyToken, async (req: AuthRequest, res) => {
   }
   const { id } = req.params;
   try {
-    await prisma.resource.delete({
+    const room = await prisma.resource.delete({
       where: { id }
     });
+    await createAuditLog(req, 'Resource', 'DELETE_ROOM', room);
     res.json({ message: 'Room deleted successfully' });
   } catch (error) {
     console.error('Failed to delete room:', error);
@@ -415,6 +443,7 @@ app.post('/api/teachers', verifyToken, async (req: AuthRequest, res) => {
           userId: userId || null
         }
       });
+      await createAuditLog(req, 'Resource', 'UPDATE_TEACHER', teacher);
     } else {
       teacher = await prisma.resource.create({
         data: {
@@ -424,6 +453,7 @@ app.post('/api/teachers', verifyToken, async (req: AuthRequest, res) => {
           userId: userId || null
         }
       });
+      await createAuditLog(req, 'Resource', 'CREATE_TEACHER', teacher);
     }
     res.json(teacher);
   } catch (error) {
@@ -447,6 +477,7 @@ app.post('/api/teachers/reorder', verifyToken, async (req: AuthRequest, res) => 
         })
       )
     );
+    await createAuditLog(req, 'Resource', 'REORDER_TEACHERS', orders);
     res.json({ message: 'Order updated successfully' });
   } catch (error) {
     console.error('Failed to update teacher order:', error);
@@ -461,9 +492,10 @@ app.delete('/api/teachers/:id', verifyToken, async (req: AuthRequest, res) => {
   }
   const { id } = req.params;
   try {
-    await prisma.resource.delete({
+    const teacher = await prisma.resource.delete({
       where: { id }
     });
+    await createAuditLog(req, 'Resource', 'DELETE_TEACHER', teacher);
     res.json({ message: 'Teacher deleted successfully' });
   } catch (error) {
     console.error('Failed to delete teacher:', error);
@@ -514,6 +546,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
         },
         include: { subjects: true, assistantTeachers: true }
       });
+      await createAuditLog(req, 'Resource', 'UPDATE_COURSE', course);
     } else {
       // Create
       course = await prisma.resource.create({
@@ -533,6 +566,7 @@ app.post('/api/courses', verifyToken, async (req: AuthRequest, res) => {
         },
         include: { subjects: true, assistantTeachers: true }
       });
+      await createAuditLog(req, 'Resource', 'CREATE_COURSE', course);
     }
     res.json(course);
   } catch (error) {
@@ -548,9 +582,10 @@ app.delete('/api/courses/:id', verifyToken, async (req: AuthRequest, res) => {
   }
   const { id } = req.params;
   try {
-    await prisma.resource.delete({
+    const course = await prisma.resource.delete({
       where: { id }
     });
+    await createAuditLog(req, 'Resource', 'DELETE_COURSE', course);
     res.json({ message: 'Course deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete course' });
@@ -572,6 +607,7 @@ app.post('/api/courses/reorder', verifyToken, async (req: AuthRequest, res) => {
         })
       )
     );
+    await createAuditLog(req, 'Resource', 'REORDER_COURSES', orders);
     res.json({ message: 'Order updated successfully' });
   } catch (error) {
     console.error('Failed to update course order:', error);
@@ -638,6 +674,7 @@ app.post('/api/courses/:id/duplicate', verifyToken, async (req: AuthRequest, res
       });
     });
 
+    await createAuditLog(req, 'Resource', 'DUPLICATE_COURSE', { originalId: id, duplicatedId: duplicated?.id });
     res.json(duplicated);
   } catch (error) {
     console.error('Failed to duplicate course:', error);
@@ -730,6 +767,7 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
       }
     }
 
+    await createAuditLog(req, 'Lesson', 'DUPLICATE_LESSONS', { sourceCourseId, destinationCourseId, startDate, endDate, count });
     res.json({ message: `Successfully duplicated ${count} lessons.`, count });
   } catch (error) {
     console.error('Failed to duplicate lessons:', error);
@@ -890,6 +928,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         data,
         include: { subTeachers: true, deliveryMethods: true }
       });
+      await createAuditLog(req, 'Lesson', 'UPDATE_LESSON', lesson);
       res.json(lesson);
     } else {
       // Create (Create)
@@ -915,6 +954,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         data,
         include: { subTeachers: true, deliveryMethods: true }
       });
+      await createAuditLog(req, 'Lesson', 'CREATE_LESSON', lesson);
       res.json(lesson);
     }
   } catch (error) {
@@ -973,6 +1013,7 @@ app.post('/api/delivery-methods', verifyToken, async (req: AuthRequest, res) => 
     const updated = await prisma.deliveryMethod.findMany({
       orderBy: { order: 'asc' }
     });
+    await createAuditLog(req, 'DeliveryMethod', 'BULK_UPDATE', updated);
     res.json(updated);
   } catch (error) {
     console.error('Failed to save delivery methods:', error);
@@ -992,6 +1033,7 @@ app.delete('/api/lessons/:id', verifyToken, async (req: AuthRequest, res) => {
     if (!hasPermission) return res.status(403).json({ error: 'Access denied.' });
 
     await prisma.lesson.delete({ where: { id } });
+    await createAuditLog(req, 'Lesson', 'DELETE_LESSON', lesson);
     res.json({ message: 'Lesson deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete lesson' });
@@ -1162,6 +1204,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
         },
         include: { resources: true }
       });
+      await createAuditLog(req, 'ScheduleEvent', 'UPDATE_EVENT', event);
     } else {
       // Create
       event = await prisma.scheduleEvent.create({
@@ -1181,6 +1224,7 @@ app.post('/api/events', verifyToken, async (req: AuthRequest, res) => {
         },
         include: { resources: true }
       });
+      await createAuditLog(req, 'ScheduleEvent', 'CREATE_EVENT', event);
     }
     res.json(event);
   } catch (error) {
@@ -1196,9 +1240,10 @@ app.delete('/api/events/:id', verifyToken, async (req: AuthRequest, res) => {
   }
   const { id } = req.params;
   try {
-    await prisma.scheduleEvent.delete({
+    const event = await prisma.scheduleEvent.delete({
       where: { id }
     });
+    await createAuditLog(req, 'ScheduleEvent', 'DELETE_EVENT', event);
     res.json({ message: 'Event deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete event' });
@@ -1223,6 +1268,7 @@ app.post('/api/holidays', verifyToken, async (req: AuthRequest, res) => {
     const holiday = await prisma.holiday.create({
       data: { name, date, start, end }
     });
+    await createAuditLog(req, 'Holiday', 'CREATE_HOLIDAY', holiday);
     res.json(holiday);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create holiday' });
@@ -1239,6 +1285,7 @@ app.put('/api/holidays/:id', verifyToken, async (req: AuthRequest, res) => {
       where: { id },
       data: { name, date, start, end }
     });
+    await createAuditLog(req, 'Holiday', 'UPDATE_HOLIDAY', holiday);
     res.json(holiday);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update holiday' });
@@ -1250,7 +1297,8 @@ app.delete('/api/holidays/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Forbidden' });
   const { id } = req.params;
   try {
-    await prisma.holiday.delete({ where: { id } });
+    const holiday = await prisma.holiday.delete({ where: { id } });
+    await createAuditLog(req, 'Holiday', 'DELETE_HOLIDAY', holiday);
     res.json({ message: 'Holiday deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete holiday' });
@@ -1274,6 +1322,7 @@ app.post('/api/holidays/import-nager', verifyToken, async (req: AuthRequest, res
         }
       })
     ));
+    await createAuditLog(req, 'Holiday', 'IMPORT_NAGER', { year, countryCode, count: holidays.length });
     res.json(holidays);
   } catch (error) {
     res.status(500).json({ error: 'Failed to import holidays from Nager.Date' });
@@ -1293,6 +1342,7 @@ app.post('/api/holidays/import-json', verifyToken, async (req: AuthRequest, res)
         }
       })
     ));
+    await createAuditLog(req, 'Holiday', 'IMPORT_JSON', { count: holidays.length });
     res.json(holidays);
   } catch (error) {
     res.status(500).json({ error: 'Failed to import holidays from JSON' });
@@ -1335,6 +1385,7 @@ app.post('/api/periods', verifyToken, async (req: AuthRequest, res) => {
     const newPeriods = await prisma.timePeriod.findMany({
       orderBy: { order: 'asc' }
     });
+    await createAuditLog(req, 'TimePeriod', 'BULK_UPDATE', newPeriods);
     res.json(newPeriods);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update time periods' });
@@ -1382,6 +1433,7 @@ app.post('/api/labels', verifyToken, async (req: AuthRequest, res) => {
         data: labelData
       });
     }
+    await createAuditLog(req, 'ResourceLabel', 'UPDATE', updated);
     res.json(updated);
   } catch (error) {
     console.error('Failed to update resource labels:', error);
@@ -1428,6 +1480,7 @@ app.post('/api/course-types', verifyToken, async (req: AuthRequest, res) => {
     const result = id 
       ? await prisma.courseType.update({ where: { id }, data })
       : await prisma.courseType.create({ data });
+    await createAuditLog(req, 'CourseType', id ? 'UPDATE' : 'CREATE', result);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: 'Failed to save course type' });
@@ -1478,6 +1531,7 @@ app.post('/api/course-types/:id/duplicate', verifyToken, async (req: AuthRequest
       }
     }
 
+    await createAuditLog(req, 'CourseType', 'DUPLICATE', { originalId: id, duplicatedId: newType.id });
     res.json(newType);
   } catch (error) {
     console.error('Failed to duplicate course type:', error);
@@ -1487,8 +1541,10 @@ app.post('/api/course-types/:id/duplicate', verifyToken, async (req: AuthRequest
 
 app.delete('/api/course-types/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  const { id } = req.params;
   try {
-    await prisma.courseType.delete({ where: { id: req.params.id } });
+    const courseType = await prisma.courseType.delete({ where: { id } });
+    await createAuditLog(req, 'CourseType', 'DELETE', courseType);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete course type' });
@@ -1502,6 +1558,7 @@ app.post('/api/course-types/:id/reorder', verifyToken, async (req: AuthRequest, 
     await prisma.$transaction(
       orders.map((o: any) => prisma.courseType.update({ where: { id: o.id }, data: { order: o.order } }))
     );
+    await createAuditLog(req, 'CourseType', 'REORDER', orders);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to reorder course types' });
@@ -1620,6 +1677,7 @@ app.post('/api/course-types/:id/import-subjects', verifyToken, async (req: AuthR
     });
 
     res.json({ success: true });
+    await createAuditLog(req, 'Subject', 'IMPORT', { courseTypeId, rowCount: rows.length });
   } catch (error) {
     console.error('Failed to import subjects:', error);
     res.status(500).json({ error: 'Failed to import subjects' });
@@ -1649,6 +1707,7 @@ app.post('/api/subjects', verifyToken, async (req: AuthRequest, res) => {
       ? await prisma.subject.update({ where: { id }, data })
       : await prisma.subject.create({ data });
     res.json(result);
+    await createAuditLog(req, 'Subject', id ? 'UPDATE' : 'CREATE', result);
   } catch (error) {
     res.status(500).json({ error: 'Failed to save subject' });
   }
@@ -1656,9 +1715,11 @@ app.post('/api/subjects', verifyToken, async (req: AuthRequest, res) => {
 
 app.delete('/api/subjects/:id', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Admin only' });
+  const { id } = req.params;
   try {
-    await prisma.subject.delete({ where: { id: req.params.id } });
+    await prisma.subject.delete({ where: { id } });
     res.json({ success: true });
+    await createAuditLog(req, 'Subject', 'DELETE', { id });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete subject' });
   }
@@ -1672,6 +1733,7 @@ app.post('/api/subjects/reorder', verifyToken, async (req: AuthRequest, res) => 
       orders.map((o: any) => prisma.subject.update({ where: { id: o.id }, data: { order: o.order } }))
     );
     res.json({ success: true });
+    await createAuditLog(req, 'Subject', 'REORDER', { count: orders.length });
   } catch (error) {
     res.status(500).json({ error: 'Failed to reorder subjects' });
   }
@@ -1715,6 +1777,7 @@ app.post('/api/color-themes', verifyToken, async (req: AuthRequest, res) => {
       })
     );
     res.json(results);
+    await createAuditLog(req, 'ColorTheme', 'BULK_UPDATE', { count: themes.length });
   } catch (error) {
     console.error('Failed to update color themes:', error);
     res.status(500).json({ error: 'Failed to update color themes' });
@@ -1732,6 +1795,7 @@ app.delete('/api/color-themes/:id', verifyToken, async (req: AuthRequest, res) =
       where: { id }
     });
     res.json({ message: 'Color theme deleted successfully' });
+    await createAuditLog(req, 'ColorTheme', 'DELETE', { id });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete color theme' });
   }
@@ -1768,6 +1832,7 @@ app.post('/api/saved-filters', verifyToken, async (req: AuthRequest, res) => {
       ? await prisma.savedFilter.update({ where: { id }, data })
       : await prisma.savedFilter.create({ data });
     res.json(result);
+    await createAuditLog(req, 'SavedFilter', id ? 'UPDATE' : 'CREATE', result);
   } catch (error: any) {
     console.error('Failed to save filter:', error);
     res.status(500).json({ error: 'Failed to save filter', details: error.message });
@@ -1780,8 +1845,26 @@ app.delete('/api/saved-filters/:id', verifyToken, async (req: AuthRequest, res) 
   try {
     await prisma.savedFilter.delete({ where: { id } });
     res.json({ success: true });
+    await createAuditLog(req, 'SavedFilter', 'DELETE', { id });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete saved filter' });
+  }
+});
+
+// --- AuditLog Endpoints ---
+
+app.get('/api/audit-logs', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN) {
+    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  }
+  try {
+    const logs = await prisma.auditLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100 // Limit to latest 100 for performance
+    });
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch audit logs' });
   }
 });
 

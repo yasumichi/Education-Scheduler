@@ -52,6 +52,7 @@
 - **リソースのフィルター機能:** grid-corner に配置されたフィルターボタンから、表示するリソース（行）をチェックボックスで動的に絞り込み可能。
 - **表示ラベルの動的変更:** リソース名や「メイン講師」「補佐講師」「課目 (Subject)」等のラベルをDBで一括管理・変更可能。
 - **共有フィルター:** Room View および Teacher View において、表示するリソースの絞り込み条件（フィルター）に名前を付けて保存し、全ユーザーで共有可能。フィルターボタンのポップアップから保存済みのフィルターを選択・適用、および現在の選択状態を新規保存できる。
+- **監査証跡 (Audit Trail):** システム内で行われたデータベース操作（作成・更新・削除）を自動的に記録。操作者、対象テーブル、操作種別、日時、および変更内容を保持し、管理者画面（Settingsメニュー）から閲覧可能。
 - **課目の階層管理 (Subject Hierarchy):** 
   - 課目を最大3階層（大・中・小課目）で集中管理可能。
   - 各階層の名称（ラベル）はシステム設定で変更可能。
@@ -162,6 +163,7 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 - **ResourceLabels:** `room, teacher, course, event, mainTeacher, subTeacher, mainRoom, deliveryMethod, subject, courseType, subjectLarge, subjectMiddle, subjectSmall`
 - **ColorTheme:** `id, name, category, key, background, foreground, order`
 - **SavedFilter:** `id, name, resourceType, resourceIds, order`
+- **AuditLog:** `id, userId, userEmail, tableName, action, data, createdAt`
 
 ---
 

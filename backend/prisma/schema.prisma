@@ -189,6 +189,16 @@ model SavedFilter {
   order        Int          @default(0)
 }
 
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  userEmail String?
+  tableName String
+  action    String
+  data      String   @db.Text
+  createdAt DateTime @default(now())
+}
+
 enum ColorCategory {
   EVENT
   LESSON

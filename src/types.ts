@@ -164,6 +164,16 @@ export interface SavedFilter {
   order: number;
 }
 
+export interface AuditLog {
+  id: string;
+  userId?: string;
+  userEmail?: string;
+  tableName: string;
+  action: string;
+  data: string;
+  createdAt: string;
+}
+
 const generateResources = (): Resource[] => {
   const resources: Resource[] = [];
   for (let i = 1; i <= 20; i++) {
