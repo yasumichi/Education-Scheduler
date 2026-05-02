@@ -120,6 +120,19 @@ export function App() {
     restoreSession();
   }, []);
 
+  // Ensure dropdowns are exclusive
+  useEffect(() => {
+    if (showSettingsDropdown.value) {
+      showUserDropdown.value = false;
+    }
+  }, [showSettingsDropdown.value]);
+
+  useEffect(() => {
+    if (showUserDropdown.value) {
+      showSettingsDropdown.value = false;
+    }
+  }, [showUserDropdown.value]);
+
   const fetchData = async () => {
     if (!user.value) return;
     try {
