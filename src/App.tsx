@@ -24,7 +24,7 @@ import { AllTeacherStatistics } from './components/AllTeacherStatistics';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject, SavedFilter, AuditLog } from './types';
-import { format, addDays, addMonths, getYear, getMonth, parseISO, differenceInMonths, differenceInDays, startOfDay, startOfWeek } from 'date-fns';
+import { format, addDays, addMonths, getYear, parseISO, differenceInMonths, differenceInDays, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -42,7 +42,6 @@ export function App() {
   const systemSettings = useSignal<SystemSetting | null>(null);
   const colorThemes = useSignal<ColorTheme[]>([]);
   const savedFilters = useSignal<SavedFilter[]>([]);
-  const isHolidayMode = useSignal<boolean>(false);
   const showPeriodManager = useSignal<boolean>(false);
   const showLabelManager = useSignal<boolean>(false);
   const showCourseManager = useSignal<boolean>(false);
