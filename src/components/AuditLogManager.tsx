@@ -13,6 +13,9 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalLogs, setTotalLogs] = useState(0);
   const [filters, setFilters] = useState({
     date: '',
     user: '',
@@ -20,7 +23,7 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
     action: ''
   });
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (pageNum: number = 1) => {
     setLoading(true);
     try {
       const query = new URLSearchParams();
@@ -28,11 +31,16 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
       if (filters.user) query.append('user', filters.user);
       if (filters.table) query.append('table', filters.table);
       if (filters.action) query.append('action', filters.action);
+      query.append('page', pageNum.toString());
+      query.append('limit', '50'); // Reduced default limit for pagination
 
       const res = await fetch(`${backendUrl}/audit-logs?${query.toString()}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        setLogs(data);
+        setLogs(data.logs);
+        setTotalPages(data.totalPages);
+        setTotalLogs(data.total);
+        setPage(data.page);
       }
     } catch (err) {
       console.error('Failed to fetch audit logs:', err);
@@ -42,31 +50,35 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
   };
 
   useEffect(() => {
-    fetchLogs();
+    fetchLogs(1);
   }, []);
 
   const handleSearch = (e: Event) => {
     e.preventDefault();
-    fetchLogs();
+    fetchLogs(1);
   };
 
   const handleReset = () => {
     setFilters({ date: '', user: '', table: '', action: '' });
-    // We'll need to fetch again after state update, but useEffect doesn't watch filters
-    // to avoid too many requests. So we call it manually after a short delay or use another state.
   };
 
   useEffect(() => {
     if (filters.date === '' && filters.user === '' && filters.table === '' && filters.action === '') {
-      fetchLogs();
+      fetchLogs(1);
     }
   }, [filters]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchLogs(newPage);
+    }
+  };
 
   return (
     <div className="modal-overlay">
       <div className="modal-box audit-log-manager">
         <div className="modal-header">
-          <h2>{t('Audit Logs')}</h2>
+          <h2>{t('Audit Logs')} ({totalLogs})</h2>
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
         <div className="modal-content">
@@ -160,6 +172,28 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
               </tbody>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="audit-log-pagination">
+              <button 
+                className="pagination-btn" 
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1 || loading}
+              >
+                &laquo; {t('Prev')}
+              </button>
+              <span className="pagination-info">
+                {t('Page {{current}} of {{total}}', { current: page, total: totalPages })}
+              </span>
+              <button 
+                className="pagination-btn" 
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages || loading}
+              >
+                {t('Next')} &raquo;
+              </button>
+            </div>
+          )}
         </div>
         <div className="modal-footer">
           <button className="cancel-btn" onClick={onClose}>{t('Close')}</button>

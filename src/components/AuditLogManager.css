@@ -129,6 +129,40 @@
   overflow-y: auto;
 }
 
+.audit-log-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 0 0;
+  border-top: 1px solid #444;
+  margin-top: 10px;
+}
+
+.pagination-btn {
+  padding: 6px 12px;
+  background: #444;
+  border: 1px solid #555;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #555;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -221,5 +255,16 @@
   .reset-btn {
     background: #ddd;
     color: #333;
+  }
+  .audit-log-pagination {
+    border-color: #eee;
+  }
+  .pagination-btn {
+    background: #f0f0f0;
+    border-color: #ddd;
+    color: #333;
+  }
+  .pagination-info {
+    color: #666;
   }
 }
