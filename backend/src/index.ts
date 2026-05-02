@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import { PrismaClient, UserRole, ResourceType } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
+import iconv from 'iconv-lite';
 import { verifyToken, AuthRequest } from './authMiddleware';
 
 const app = express();
@@ -1170,6 +1171,131 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
   } catch (error) {
     console.error('Failed to export iCalendar:', error);
     res.status(500).json({ error: 'Failed to export iCalendar' });
+  }
+});
+
+// Export CSV (Shift-JIS)
+app.get('/api/resources/:id/csv', verifyToken, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const { id } = req.params;
+  const { start, end } = req.query;
+
+  try {
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      include: { user: true }
+    });
+
+    if (!resource) return res.status(404).json({ error: 'Resource not found' });
+
+    // Permission check: ADMIN or the user themselves
+    if (req.user.role !== UserRole.ADMIN && resource.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+
+    // Get lessons and events within range
+    const whereClause: any = {};
+    if (start && end) {
+      whereClause.startDate = { gte: String(start) };
+      whereClause.endDate = { lte: String(end) };
+    }
+
+    const [lessons, events, periods] = await Promise.all([
+      prisma.lesson.findMany({
+        where: { 
+          ...whereClause,
+          OR: [
+            { teacherId: id },
+            { subTeachers: { some: { id } } }
+          ]
+        },
+        include: { 
+          course: true,
+          room: true
+        }
+      }),
+      prisma.scheduleEvent.findMany({
+        where: {
+          ...whereClause,
+          resources: { some: { id } }
+        }
+      }),
+      prisma.timePeriod.findMany({ orderBy: { order: 'asc' } })
+    ]);
+
+    const headers = [
+      'ユーザー/組織システムＩＤ', '氏名/組織名', 'ＩＤ（システムＩＤ：自動発番）', 
+      '開始日', '開始時刻', '終了日', '終了時刻', 
+      '予定', '予定詳細', '場所', '場所詳細', 
+      '内容', '情報公開レベル', '外出区分', '重要度', '予約種別', 
+      'フラグ', 'アイコン番号', '承認依頼', '確認通知メール', 
+      '通知の方法：伝言', '所有者ID', '所有者名'
+    ];
+
+    const rows = [headers];
+
+    const formatCSVDate = (dateStr: string) => dateStr.replace(/-/g, '/');
+    const getStartTime = (periodId: string) => periods.find(p => p.id === periodId)?.startTime || '00:00';
+    const getEndTime = (periodId: string) => periods.find(p => p.id === periodId)?.endTime || '23:59';
+
+    // Combine and sort lessons and events
+    const items = [
+      ...lessons.map(l => {
+        let location = l.location || '';
+        if (l.room) {
+          location = location ? `${l.room.name} (${location})` : l.room.name;
+        }
+        return {
+          startDate: l.startDate,
+          startPeriodId: l.startPeriodId,
+          endDate: l.endDate,
+          endPeriodId: l.endPeriodId,
+          title: `${l.subject} (${l.course.name})${l.externalTeacher ? ` - ${l.externalTeacher}` : ''}`,
+          location: location,
+          remarks: l.remarks || ''
+        };
+      }),
+      ...events.map(e => ({
+        startDate: e.startDate,
+        startPeriodId: e.startPeriodId,
+        endDate: e.endDate,
+        endPeriodId: e.endPeriodId,
+        title: e.name,
+        location: e.location || '',
+        remarks: e.remarks || ''
+      }))
+    ];
+
+    items.sort((a, b) => {
+      if (a.startDate !== b.startDate) return a.startDate.localeCompare(b.startDate);
+      const orderA = periods.find(p => p.id === a.startPeriodId)?.order || 0;
+      const orderB = periods.find(p => p.id === b.startPeriodId)?.order || 0;
+      return orderA - orderB;
+    });
+
+    items.forEach(item => {
+      const row = Array(23).fill('');
+      row[3] = formatCSVDate(item.startDate);
+      row[4] = getStartTime(item.startPeriodId);
+      row[5] = formatCSVDate(item.endDate);
+      row[6] = getEndTime(item.endPeriodId);
+      row[7] = item.title;
+      row[8] = item.remarks;
+      row[9] = item.location;
+      rows.push(row);
+    });
+
+    // Generate CSV content
+    const csvContent = rows.map(row => row.map(cell => `"${(cell || '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const sjisBuffer = iconv.encode(csvContent, 'Shift_JIS');
+
+    res.setHeader('Content-Type', 'text/csv; charset=shift_jis');
+    res.setHeader('Content-Disposition', `attachment; filename="schedule-${id}.csv"`);
+    res.send(sjisBuffer);
+
+  } catch (error) {
+    console.error('Failed to export CSV:', error);
+    res.status(500).json({ error: 'Failed to export CSV' });
   }
 });
 

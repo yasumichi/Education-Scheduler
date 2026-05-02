@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { User } from '../types';
 import './ProfileManager.css';
 
-export type ProfileMode = 'profile' | 'password' | 'export';
+export type ProfileMode = 'profile' | 'password' | 'export' | 'csv_export';
 
 interface Props {
   backendUrl: string;
@@ -33,6 +33,12 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
   const handleExportICal = () => {
     if (!user.resourceId) return;
     const url = `${backendUrl}/resources/${user.resourceId}/icalendar?start=${exportDates.start}&end=${exportDates.end}`;
+    window.open(url, '_blank');
+  };
+
+  const handleExportCSV = () => {
+    if (!user.resourceId) return;
+    const url = `${backendUrl}/resources/${user.resourceId}/csv?start=${exportDates.start}&end=${exportDates.end}`;
     window.open(url, '_blank');
   };
 
@@ -71,6 +77,7 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
   const getTitle = () => {
     if (mode === 'password') return t('Change Password');
     if (mode === 'export') return t('Export Schedule (iCalendar)');
+    if (mode === 'csv_export') return t('Export Schedule (CSV)');
     return t('My Profile');
   };
 
@@ -118,7 +125,7 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
              </div>
           </div>
           )}
-          {mode === 'export' && user.resourceId && (
+          {(mode === 'export' || mode === 'csv_export') && user.resourceId && (
             <div className="ical-export-section">
               <p className="section-desc">{t('Select period to export')}</p>
               <div className="form-row">
@@ -139,9 +146,15 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
                   />
                 </div>
               </div>
-              <button className="ical-download-button" onClick={handleExportICal}>
-                📅 {t('Download')} (.ics)
-              </button>
+              {mode === 'export' ? (
+                <button className="ical-download-button" onClick={handleExportICal}>
+                  📅 {t('Download')} (.ics)
+                </button>
+              ) : (
+                <button className="ical-download-button" onClick={handleExportCSV}>
+                  📄 {t('Download')} (.csv)
+                </button>
+              )}
             </div>
           )}
         </div>

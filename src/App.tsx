@@ -585,6 +585,18 @@ export function App() {
                         {t('Export Schedule (iCalendar)')}
                       </button>
                     )}
+                    {user.value?.resourceId && (
+                      <button 
+                        className="dropdown-item" 
+                        onClick={() => {
+                          profileMode.value = 'csv_export';
+                          showProfileManager.value = true;
+                          showUserDropdown.value = false;
+                        }}
+                      >
+                        {t('Export Schedule (CSV)')}
+                      </button>
+                    )}
                     <div className="dropdown-divider" />
                     <button className="dropdown-item logout-item" onClick={handleLogout}>
                       {t('Sign Out')}
