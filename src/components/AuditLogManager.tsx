@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import { AuditLog } from '../types';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
@@ -23,7 +23,7 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
     action: ''
   });
 
-  const fetchLogs = async (pageNum: number = 1) => {
+  const fetchLogs = useCallback(async (pageNum: number = 1) => {
     setLoading(true);
     try {
       const query = new URLSearchParams();
@@ -47,11 +47,11 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [backendUrl, filters]);
 
   useEffect(() => {
     fetchLogs(1);
-  }, []);
+  }, [fetchLogs]);
 
   const handleSearch = (e: Event) => {
     e.preventDefault();
@@ -66,7 +66,7 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
     if (filters.date === '' && filters.user === '' && filters.table === '' && filters.action === '') {
       fetchLogs(1);
     }
-  }, [filters]);
+  }, [filters, fetchLogs]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {

@@ -144,7 +144,7 @@ export async function exportTimetableToExcel({
   const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
 
-  let headerRowsCount = isCourseTimeline ? (isTimelineReduced ? 1 : 3) : 2;
+  const headerRowsCount = isCourseTimeline ? (isTimelineReduced ? 1 : 3) : 2;
 
   // Corner Cell (1,1)
   if (headerRowsCount > 1) {
@@ -1068,8 +1068,8 @@ export async function exportCourseStatisticsToExcel({
     let totalAssigned = 0;
     let totalScheduled = 0;
 
-    let lastLarge = '';
-    let lastMiddle = '';
+    const lastLarge = '';
+    const lastMiddle = '';
 
     const addRows = (rows: any[], context: { large: string, middle: string }) => {
       rows.forEach(row => {

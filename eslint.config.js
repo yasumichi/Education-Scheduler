@@ -31,7 +31,7 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       ...react.configs.recommended.rules,
       "react/react-in-jsx-scope": "off", // Preact doesn't need React in scope
-      "react/no-unknown-property": ["error", { ignore: ["class"] }], // Preact uses 'class' instead of 'className'
+      "react/no-unknown-property": ["error", { ignore: ["class", "onDblClick"] }], // Preact uses 'class' and 'onDblClick'
     },
   }
 );
