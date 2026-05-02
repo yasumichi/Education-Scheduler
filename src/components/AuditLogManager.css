@@ -56,8 +56,77 @@
 
 .modal-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: hidden; /* Changed to hidden to allow internal scroll */
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.audit-log-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: #333;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 6px 10px;
+  background: #222;
+  border: 1px solid #444;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.search-btn,
+.reset-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: opacity 0.2s;
+}
+
+.search-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.reset-btn {
+  background: #666;
+  color: white;
+}
+
+.search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.audit-log-table-container {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .modal-footer {
@@ -136,5 +205,21 @@
   }
   .close-btn:hover {
     color: #000;
+  }
+  .audit-log-filters {
+    background: #f5f5f5;
+  }
+  .filter-group label {
+    color: #666;
+  }
+  .filter-group input,
+  .filter-group select {
+    background: #fff;
+    border-color: #ddd;
+    color: #333;
+  }
+  .reset-btn {
+    background: #ddd;
+    color: #333;
   }
 }

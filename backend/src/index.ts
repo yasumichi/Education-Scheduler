@@ -1983,13 +1983,34 @@ app.get('/api/audit-logs', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
+  const { date, user: userQuery, table, action } = req.query;
+
   try {
+    const where: any = {};
+    if (date) {
+      where.createdAt = {
+        gte: new Date(`${date}T00:00:00.000Z`),
+        lte: new Date(`${date}T23:59:59.999Z`)
+      };
+    }
+    if (userQuery) {
+      where.userEmail = { contains: String(userQuery), mode: 'insensitive' };
+    }
+    if (table) {
+      where.tableName = { contains: String(table), mode: 'insensitive' };
+    }
+    if (action) {
+      where.action = String(action);
+    }
+
     const logs = await prisma.auditLog.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       take: 100 // Limit to latest 100 for performance
     });
     res.json(logs);
   } catch (error) {
+    console.error('Failed to fetch audit logs:', error);
     res.status(500).json({ error: 'Failed to fetch audit logs' });
   }
 });

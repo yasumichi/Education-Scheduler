@@ -1116,7 +1116,7 @@ export function App() {
 
       {showAuditLogManager.value && (
         <AuditLogManager
-          logs={auditLogs.value}
+          backendUrl={BACKEND_URL}
           onClose={() => showAuditLogManager.value = false}
         />
       )}
