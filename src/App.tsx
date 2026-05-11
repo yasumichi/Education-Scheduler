@@ -17,6 +17,7 @@ import { SystemSettingManager } from './components/SystemSettingManager';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { ColorThemeManager } from './components/ColorThemeManager';
 import { SubjectManager } from './components/SubjectManager';
+import { EquipmentManager } from './components/EquipmentManager';
 import { AuditLogManager } from './components/AuditLogManager';
 import { CourseStatistics } from './components/CourseStatistics';
 import { TeacherStatistics } from './components/TeacherStatistics';
@@ -57,6 +58,7 @@ export function App() {
   const showDeliveryMethodManager = useSignal<boolean>(false);
   const showColorThemeManager = useSignal<boolean>(false);
   const showSubjectManager = useSignal<boolean>(false);
+  const showEquipmentManager = useSignal<boolean>(false);
   const showAuditLogManager = useSignal<boolean>(false);
   const showCourseStatistics = useSignal<boolean>(false);
   const selectedCourseIdForStats = useSignal<string | null>(null);
@@ -452,14 +454,23 @@ export function App() {
                         {t('Manage {{resource}}', { resource: resourceLabels.value.subject })}
                       </button>
 
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showRoomManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
+                      <button
+                       className="dropdown-item"
+                       onClick={() => {
+                         showEquipmentManager.value = true;
+                         showSettingsDropdown.value = false;
+                       }}
                       >
-                        {t('Manage {{resource}}', { resource: resourceLabels.value.room })}
+                       {t('Manage {{resource}}', { resource: resourceLabels.value.equipment })}
+                      </button>
+
+                      <button
+                       className="dropdown-item"
+                       onClick={() => {
+                         showRoomManager.value = true;
+                         showSettingsDropdown.value = false;
+                       }}
+                      >                        {t('Manage {{resource}}', { resource: resourceLabels.value.room })}
                       </button>
                       <button 
                         className="dropdown-item" 
@@ -537,6 +548,16 @@ export function App() {
 
                     </div>
                   )}
+                </div>
+              )}
+              {user.value.role === 'EQUIPMENT_MANAGER' && (
+                <div className="settings-container">
+                  <button
+                    className="settings-button"
+                    onClick={() => showEquipmentManager.value = true}
+                  >
+                    {t('Manage {{resource}}', { resource: resourceLabels.value.equipment })}
+                  </button>
                 </div>
               )}
               <div className="user-dropdown-container">
@@ -1127,11 +1148,18 @@ export function App() {
       })()}
 
       {showAuditLogManager.value && (
-        <AuditLogManager
-          backendUrl={BACKEND_URL}
-          onClose={() => showAuditLogManager.value = false}
-        />
+       <AuditLogManager
+         backendUrl={BACKEND_URL}
+         onClose={() => showAuditLogManager.value = false}
+       />
       )}
-    </div>
-  );
+
+      {showEquipmentManager.value && (
+       <EquipmentManager
+         backendUrl={BACKEND_URL}
+         onClose={() => showEquipmentManager.value = false}
+         labels={resourceLabels.value}
+       />
+      )}
+      </div>  );
 }

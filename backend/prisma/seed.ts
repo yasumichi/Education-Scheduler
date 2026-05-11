@@ -47,7 +47,8 @@ async function main() {
       subTeacher: 'Sub Teacher',
       mainRoom: 'Main Room',
       deliveryMethod: 'Delivery Method',
-      subject: 'Subject'
+      subject: 'Subject',
+      equipment: 'Equipment'
     }
   });
 

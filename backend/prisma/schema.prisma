@@ -145,6 +145,13 @@ model TimePeriod {
   order     Int    @default(0)
 }
 
+model Equipment {
+  id      String @id @default(uuid())
+  name    String
+  remarks String?
+  order   Int    @default(0)
+}
+
 model ResourceLabel {
   id             String @id @default(uuid())
   room           String @default("Room")
@@ -160,6 +167,7 @@ model ResourceLabel {
   subjectLarge   String @default("Subject (Large)")
   subjectMiddle  String @default("Subject (Middle)")
   subjectSmall   String @default("Subject (Small)")
+  equipment      String @default("Equipment")
 }
 
 model SystemSetting {

@@ -1533,8 +1533,8 @@ app.get('/api/labels', verifyToken, async (req, res) => {
       if (!label.subjectLarge) (label as any).subjectLarge = "Subject (Large)";
       if (!label.subjectMiddle) (label as any).subjectMiddle = "Subject (Middle)";
       if (!label.subjectSmall) (label as any).subjectSmall = "Subject (Small)";
-    }
-    res.json(label);
+      if (!label.equipment) (label as any).equipment = "Equipment";
+      }    res.json(label);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch resource labels' });
   }
@@ -2027,6 +2027,89 @@ app.get('/api/audit-logs', verifyToken, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Failed to fetch audit logs:', error);
     res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+// --- Equipment Endpoints ---
+
+// Fetch equipment (Auth required)
+app.get('/api/equipments', verifyToken, async (req, res) => {
+  try {
+    const equipments = await prisma.equipment.findMany({
+      orderBy: { order: 'asc' }
+    });
+    res.json(equipments);
+  } catch (error) {
+    console.error('Failed to fetch equipments:', error);
+    res.status(500).json({ error: 'Failed to fetch equipments' });
+  }
+});
+
+// Create/Update equipment (ADMIN or EQUIPMENT_MANAGER required)
+app.post('/api/equipments', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.EQUIPMENT_MANAGER) {
+    return res.status(403).json({ error: 'Access denied. Admin or Equipment Manager role required.' });
+  }
+  const { id, name, remarks, order } = req.body;
+  try {
+    let equipment;
+    if (id) {
+      equipment = await prisma.equipment.update({
+        where: { id },
+        data: { name, remarks, order: order || 0 }
+      });
+      await createAuditLog(req, 'Equipment', 'UPDATE', equipment);
+    } else {
+      equipment = await prisma.equipment.create({
+        data: { name, remarks, order: order || 0 }
+      });
+      await createAuditLog(req, 'Equipment', 'CREATE', equipment);
+    }
+    res.json(equipment);
+  } catch (error) {
+    console.error('Failed to save equipment:', error);
+    res.status(500).json({ error: 'Failed to save equipment' });
+  }
+});
+
+// Reorder equipment (ADMIN or EQUIPMENT_MANAGER required)
+app.post('/api/equipments/reorder', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.EQUIPMENT_MANAGER) {
+    return res.status(403).json({ error: 'Access denied. Admin or Equipment Manager role required.' });
+  }
+  const { orders } = req.body; // Array of { id: string, order: number }
+  try {
+    await prisma.$transaction(
+      orders.map((item: { id: string, order: number }) =>
+        prisma.equipment.update({
+          where: { id: item.id },
+          data: { order: item.order }
+        })
+      )
+    );
+    await createAuditLog(req, 'Equipment', 'REORDER', orders);
+    res.json({ message: 'Equipment order updated successfully' });
+  } catch (error) {
+    console.error('Failed to update equipment order:', error);
+    res.status(500).json({ error: 'Failed to update equipment order' });
+  }
+});
+
+// Delete equipment (ADMIN or EQUIPMENT_MANAGER required)
+app.delete('/api/equipments/:id', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.EQUIPMENT_MANAGER) {
+    return res.status(403).json({ error: 'Access denied. Admin or Equipment Manager role required.' });
+  }
+  const { id } = req.params;
+  try {
+    const equipment = await prisma.equipment.delete({
+      where: { id }
+    });
+    await createAuditLog(req, 'Equipment', 'DELETE', equipment);
+    res.json({ message: 'Equipment deleted successfully' });
+  } catch (error) {
+    console.error('Failed to delete equipment:', error);
+    res.status(500).json({ error: 'Failed to delete equipment' });
   }
 });
 

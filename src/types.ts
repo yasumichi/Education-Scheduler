@@ -21,6 +21,13 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface Equipment {
+  id: string;
+  name: string;
+  remarks?: string | null;
+  order: number;
+}
+
 export type ResourceLabels = {
   room: string;
   teacher: string;
@@ -35,6 +42,7 @@ export type ResourceLabels = {
   subjectLarge: string;
   subjectMiddle: string;
   subjectSmall: string;
+  equipment: string;
 }
 
 export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
