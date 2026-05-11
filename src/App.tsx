@@ -24,6 +24,7 @@ import { TeacherStatistics } from './components/TeacherStatistics';
 import { AllTeacherStatistics } from './components/AllTeacherStatistics';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
+import { RoomEquipmentView } from './components/RoomEquipmentView';
 import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject, SavedFilter, AuditLog } from './types';
 import { format, addDays, addMonths, getYear, parseISO, differenceInMonths, differenceInDays, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
@@ -37,6 +38,8 @@ export function App() {
   const showPersonalMonthly = useSignal<boolean>(false);
   const showCourseWeekly = useSignal<boolean>(false);
   const selectedCourseIdForWeekly = useSignal<string | null>(null);
+  const showRoomEquipmentView = useSignal<boolean>(false);
+  const selectedRoomIdForEquipment = useSignal<string | null>(null);
   const currentDate = useSignal<Date>(new Date());
   const holidays = useSignal<Holiday[]>([]);
   const periods = useSignal<TimePeriod[]>([]);
@@ -859,8 +862,11 @@ export function App() {
               selectedTeacherIdForStats.value = teacherId;
               showTeacherStatistics.value = true;
             }}
-            onRoomClick={(room) => {
-              editingRoomId.value = room.id;
+            onViewRoomEquipment={(roomId) => {
+              selectedRoomIdForEquipment.value = roomId;
+              showRoomEquipmentView.value = true;
+            }}
+            onRoomClick={(room) => {              editingRoomId.value = room.id;
               showRoomManager.value = true;
             }}
             onTeacherClick={(teacher) => {
@@ -1156,11 +1162,24 @@ export function App() {
       )}
 
       {showEquipmentManager.value && (
-       <EquipmentManager
-         backendUrl={BACKEND_URL}
-         onClose={() => showEquipmentManager.value = false}
-         labels={resourceLabels.value}
-       />
+        <EquipmentManager
+          backendUrl={BACKEND_URL}
+          onClose={() => showEquipmentManager.value = false}
+          labels={resourceLabels.value}
+        />
       )}
-      </div>  );
-}
+
+      {showRoomEquipmentView.value && selectedRoomIdForEquipment.value && (() => {
+        const room = resources.value.find(r => r.id === selectedRoomIdForEquipment.value);
+        if (!room) return null;
+        return (
+          <RoomEquipmentView
+            room={room}
+            onClose={() => showRoomEquipmentView.value = false}
+            labels={resourceLabels.value}
+          />
+        );
+      })()}
+      </div>
+      );
+      }

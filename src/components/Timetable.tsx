@@ -30,15 +30,15 @@ interface Props {
   onViewWeekly?: (courseId: string) => void;
   onViewStats?: (courseId: string) => void;
   onViewTeacherStats?: (teacherId: string) => void;
+  onViewRoomEquipment?: (roomId: string) => void;
   onEmptyResourceCellClick?: (resourceId: string, date: string, periodId: string) => void;
-}
+  }
 
-export function Timetable({ 
+  export function Timetable({
   periods, resources, lessons, events, viewMode, viewType, isTimelineReduced = false, baseDate, holidays, labels, systemSettings,
   colorThemes, savedFilters, onSaveFilter, onDeleteFilter, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onRoomClick, onTeacherClick,
-  onViewWeekly, onViewStats, onViewTeacherStats, onEmptyResourceCellClick 
-}: Props) {
-  const { t } = useTranslation();
+  onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onEmptyResourceCellClick
+  }: Props) {  const { t } = useTranslation();
   const locale = navigator.language;
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
   const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' });
@@ -817,6 +817,26 @@ export function Timetable({
               title={t(r.name)}>
           {t(r.name)}
         </span>
+
+        {viewMode === 'room' && (
+          <div className="label-actions">
+            <button 
+              className="equipment-view-btn" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewRoomEquipment?.(r.id);
+              }}
+              title={t('{{resource}} List', { resource: labels.equipment })}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="9" x2="9" y2="21"></line>
+              </svg>
+            </button>
+          </div>
+        )}
 
         {viewMode === 'course' && (
           <div className="label-actions">

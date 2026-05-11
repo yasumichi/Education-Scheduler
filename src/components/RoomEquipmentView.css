@@ -1,0 +1,66 @@
+.room-equipment-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.room-equipment-box {
+  background-color: #242424;
+  color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.room-equipment-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.room-equipment-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.room-equipment-table th, .room-equipment-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.room-equipment-table th {
+  background-color: #1a1a1a;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.quantity-cell {
+  text-align: center !important;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: light) {
+  .room-equipment-box { background-color: #fff; color: #333; }
+  .room-equipment-table th { background-color: #f9f9f9; color: #666; }
+  .room-equipment-table td { border-bottom-color: #eee; }
+}
