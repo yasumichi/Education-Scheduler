@@ -606,7 +606,7 @@ export function App() {
                           showUserDropdown.value = false;
                         }}
                       >
-                        {t('Export Schedule (CSV)')}
+                        {t("Export Schedule (desknet's NEO)")}
                       </button>
                     )}
                     <div className="dropdown-divider" />

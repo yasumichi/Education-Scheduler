@@ -77,7 +77,7 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
   const getTitle = () => {
     if (mode === 'password') return t('Change Password');
     if (mode === 'export') return t('Export Schedule (iCalendar)');
-    if (mode === 'csv_export') return t('Export Schedule (CSV)');
+    if (mode === 'csv_export') return t("Export Schedule (desknet's NEO)");
     return t('My Profile');
   };
 
