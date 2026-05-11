@@ -162,6 +162,7 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 - **Holiday:** `id, name, date, start, end`
 - **ResourceLabels:** `room, teacher, course, event, mainTeacher, subTeacher, mainRoom, deliveryMethod, subject, courseType, subjectLarge, subjectMiddle, subjectSmall, equipment`
 - **Equipment:** `id, name, remarks, order`
+- **RoomEquipment:** `id, resourceId, equipmentId, quantity`
 - **ColorTheme:** `id, name, category, key, background, foreground, order`
 - **SavedFilter:** `id, name, resourceType, resourceIds, order`
 - **AuditLog:** `id, userId, userEmail, tableName, action, data, createdAt`
@@ -194,6 +195,7 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 - [x] 講座への課目一括反映機能（講座タイプ連動、表示順序反映）
 - [x] 翻訳データの外部JSON化と非同期ロード対応
 - [x] 物品マスター管理機能（物品名・備考のCRUD、表示順序変更、Equipment Managerロール対応）
+- [x] 教室（Room）への物品割り当て機能（複数物品の追加、個数設定、Room Managerからの管理）
 - [x] 講座ごとの配当時間・割当済時間の統計機能（階層別小計・総計対応、Excel出力対応）
 - [x] イベント行の表示崩れ修正およびリソース行の重なり回避ロジックの改善
 - [x] 講座タイムラインビューの縮小表示機能（10日ごとの点線、Sticky固定強化）

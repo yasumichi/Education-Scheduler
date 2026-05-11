@@ -100,6 +100,14 @@ export interface DeliveryMethod {
   order: number;
 }
 
+export interface RoomEquipment {
+  id: string;
+  resourceId: string;
+  equipmentId: string;
+  quantity: number;
+  equipment?: Equipment;
+}
+
 export interface Resource {
   id: string;
   name: string;
@@ -116,6 +124,7 @@ export interface Resource {
   mainTeacherLabel?: string;
   subTeacherLabel?: string;
   courseTypeId?: string | null;
+  equipments?: RoomEquipment[];
 }
 
 export interface ScheduleEvent {

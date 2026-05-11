@@ -199,7 +199,10 @@ app.get('/api/resources', verifyToken, async (req, res) => {
           include: { subject: true }
         },
         assistantTeachers: { select: { id: true } },
-        courseType: true
+        courseType: true,
+        equipments: {
+          include: { equipment: true }
+        }
       },
       orderBy: { order: 'asc' }
     });
@@ -357,7 +360,7 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { id, name, order } = req.body;
+  const { id, name, order, equipments } = req.body;
   try {
     let room;
     if (id) {
@@ -365,8 +368,16 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
         where: { id },
         data: {
           name,
-          order: order || 0
-        }
+          order: order || 0,
+          equipments: {
+            deleteMany: {},
+            create: equipments?.map((e: any) => ({
+              equipmentId: e.equipmentId,
+              quantity: e.quantity || 1
+            })) || []
+          }
+        },
+        include: { equipments: { include: { equipment: true } } }
       });
       await createAuditLog(req, 'Resource', 'UPDATE_ROOM', room);
     } else {
@@ -374,8 +385,15 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
         data: {
           name,
           type: ResourceType.room,
-          order: order || 0
-        }
+          order: order || 0,
+          equipments: {
+            create: equipments?.map((e: any) => ({
+              equipmentId: e.equipmentId,
+              quantity: e.quantity || 1
+            })) || []
+          }
+        },
+        include: { equipments: { include: { equipment: true } } }
       });
       await createAuditLog(req, 'Resource', 'CREATE_ROOM', room);
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Resource, ResourceLabels } from '../types';
+import { Resource, ResourceLabels, Equipment } from '../types';
 import './RoomManager.css';
 
 interface Props {
@@ -17,12 +17,15 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
   const { t } = useTranslation();
   const [editingRoomId, setEditingRoomId] = useState<string | null>(initialRoomId || null);
   const [roomsList, setRoomsList] = useState<Resource[]>([]);
+  const [equipmentsMaster, setEquipmentsMaster] = useState<Equipment[]>([]);
   const [formData, setFormData] = useState<{
     name: string;
     order: number;
+    equipments: { equipmentId: string; quantity: number }[];
   }>({
     name: '',
-    order: 0
+    order: 0,
+    equipments: []
   });
 
   // ドラッグ&ドロップ用の参照
@@ -36,18 +39,38 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
   }, [resources]);
 
   useEffect(() => {
+    const fetchEquipments = async () => {
+      try {
+        const res = await fetch(`${backendUrl}/equipments`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setEquipmentsMaster(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch equipments master:', err);
+      }
+    };
+    fetchEquipments();
+  }, [backendUrl]);
+
+  useEffect(() => {
     if (editingRoomId && editingRoomId !== 'new') {
       const room = rooms.find(r => r.id === editingRoomId);
       if (room) {
         setFormData({
           name: room.name,
-          order: room.order || 0
+          order: room.order || 0,
+          equipments: room.equipments?.map(re => ({
+            equipmentId: re.equipmentId,
+            quantity: re.quantity
+          })) || []
         });
       }
     } else {
       setFormData({
         name: '',
-        order: (rooms.length + 1)
+        order: (rooms.length + 1),
+        equipments: []
       });
     }
   }, [editingRoomId, resources]);
@@ -79,6 +102,31 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
     } catch (err) {
       console.error('Error saving room:', err);
     }
+  };
+
+  const handleAddEquipment = () => {
+    setFormData({
+      ...formData,
+      equipments: [...formData.equipments, { equipmentId: '', quantity: 1 }]
+    });
+  };
+
+  const handleEquipmentChange = (index: number, equipmentId: string) => {
+    const newEquipments = [...formData.equipments];
+    newEquipments[index].equipmentId = equipmentId;
+    setFormData({ ...formData, equipments: newEquipments });
+  };
+
+  const handleQuantityChange = (index: number, quantity: number) => {
+    const newEquipments = [...formData.equipments];
+    newEquipments[index].quantity = quantity;
+    setFormData({ ...formData, equipments: newEquipments });
+  };
+
+  const handleRemoveEquipment = (index: number) => {
+    const newEquipments = [...formData.equipments];
+    newEquipments.splice(index, 1);
+    setFormData({ ...formData, equipments: newEquipments });
   };
 
   const handleDelete = async (id: string) => {
@@ -246,6 +294,48 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
                   readOnly={!isAdmin}
                 />
               </div>
+
+              <div className="room-equipments-section">
+                <div className="section-header">
+                  <label>{labels.equipment}</label>
+                  {isAdmin && (
+                    <button className="add-equipment-btn" onClick={handleAddEquipment}>
+                      + {t('Add')}
+                    </button>
+                  )}
+                </div>
+                <div className="equipment-items">
+                  {formData.equipments.map((item, idx) => (
+                    <div key={idx} className="equipment-item-row">
+                      <select
+                        value={item.equipmentId}
+                        onChange={(e) => handleEquipmentChange(idx, e.currentTarget.value)}
+                        disabled={!isAdmin}
+                      >
+                        <option value="">-- {t('Select {{resource}}', { resource: labels.equipment })} --</option>
+                        {equipmentsMaster.map(e => (
+                          <option key={e.id} value={e.id}>{e.name}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onInput={(e) => handleQuantityChange(idx, parseInt(e.currentTarget.value) || 1)}
+                        className="quantity-input"
+                        readOnly={!isAdmin}
+                      />
+                      {isAdmin && (
+                        <button className="remove-item-btn" onClick={() => handleRemoveEquipment(idx)}>×</button>
+                      )}
+                    </div>
+                  ))}
+                  {formData.equipments.length === 0 && (
+                    <div className="empty-text">{t('No {{resource}} defined.', { resource: labels.equipment })}</div>
+                  )}
+                </div>
+              </div>
+
               <div className="form-actions">
                 <button className="cancel-button" onClick={() => isAdmin ? setEditingRoomId(null) : onClose()}>
                   {isAdmin ? t('Cancel') : t('Close')}

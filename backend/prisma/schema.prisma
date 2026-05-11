@@ -29,6 +29,7 @@ model Resource {
   user             User?           @relation("UserResource", fields: [userId], references: [id])
   events           ScheduleEvent[] @relation("ResourceEvents")
   lessonsAsSub     Lesson[]        @relation("SubTeacherLessons")
+  equipments       RoomEquipment[] @relation("RoomEquipments")
 
   // 追加: メイン教室・教官設定
   mainRoomId       String?
@@ -150,6 +151,16 @@ model Equipment {
   name    String
   remarks String?
   order   Int    @default(0)
+  rooms   RoomEquipment[] @relation("EquipmentRooms")
+}
+
+model RoomEquipment {
+  id          String    @id @default(uuid())
+  resourceId  String
+  equipmentId String
+  quantity    Int       @default(1)
+  resource    Resource  @relation("RoomEquipments", fields: [resourceId], references: [id], onDelete: Cascade)
+  equipment   Equipment @relation("EquipmentRooms", fields: [equipmentId], references: [id], onDelete: Cascade)
 }
 
 model ResourceLabel {
