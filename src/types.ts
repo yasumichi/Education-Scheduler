@@ -7,7 +7,7 @@ export interface TimePeriod {
 }
 
 export type ResourceType = 'room' | 'teacher' | 'course';
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'EQUIPMENT_MANAGER';
 
 export interface User {
   id: string;

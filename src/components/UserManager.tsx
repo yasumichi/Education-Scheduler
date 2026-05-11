@@ -230,6 +230,7 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
                       <option value="ADMIN">ADMIN</option>
                       <option value="TEACHER">TEACHER</option>
                       <option value="STUDENT">STUDENT</option>
+                      <option value="EQUIPMENT_MANAGER">EQUIPMENT_MANAGER</option>
                     </select>
                   </div>
                   <div className="form-actions">

@@ -104,7 +104,7 @@
     - Excel エクスポートに対応。
 - **システム設定:** 一般ユーザーのサインアップ可否や、1年ビューの開始月日のカスタマイズが可能。
 - **ユーザー管理 & 権限:** 
-  - ロール（ADMIN, TEACHER, STUDENT）による RBAC。
+  - ロール（ADMIN, TEACHER, STUDENT, EQUIPMENT_MANAGER）による RBAC。
   - **講師の授業管理:** 
     - 講座 of 「主任講師」または「副主任講師」は、その講座の授業をフル管理（追加・編集・削除）可能。
     - **課目選択の改善:** 授業登録・編集時の課目選択において、講座に紐づく課目を階層構造（ツリー形式）で表示し、インクリメンタルサーチによる絞り込みが可能なコンボボックス形式を採用。各課目の「総時限数」と「残り時限数」をリアルタイムに表示。
@@ -147,7 +147,7 @@
 ```typescript
 export type ViewType = 'day' | 'week' | 'month' | '3month' | '6month' | 'year' | 'course_timeline';
 export type ResourceType = 'room' | 'teacher' | 'course';
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'EQUIPMENT_MANAGER';
 export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 ```
 

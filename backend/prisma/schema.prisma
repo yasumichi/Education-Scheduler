@@ -215,4 +215,5 @@ enum UserRole {
   ADMIN
   TEACHER
   STUDENT
+  EQUIPMENT_MANAGER
 }
