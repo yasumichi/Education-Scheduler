@@ -50,7 +50,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
         
         <div className="period-list">
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Room</label>
+            <label>{t('Room')}</label>
             <input 
               type="text" 
               value={labels.room} 
@@ -58,7 +58,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Teacher</label>
+            <label>{t('Teacher')}</label>
             <input 
               type="text" 
               value={labels.teacher} 
@@ -66,7 +66,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Course</label>
+            <label>{t('Course')}</label>
             <input 
               type="text" 
               value={labels.course} 
@@ -74,7 +74,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Event</label>
+            <label>{t('Event')}</label>
             <input 
               type="text" 
               value={labels.event} 
@@ -82,7 +82,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Main Teacher</label>
+            <label>{t('Main Teacher')}</label>
             <input 
               type="text" 
               value={labels.mainTeacher} 
@@ -90,7 +90,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Sub Teacher</label>
+            <label>{t('Sub Teacher')}</label>
             <input 
               type="text" 
               value={labels.subTeacher} 
@@ -98,7 +98,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Main Room</label>
+            <label>{t('Main Room')}</label>
             <input 
               type="text" 
               value={labels.mainRoom} 
@@ -106,7 +106,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Delivery Method</label>
+            <label>{t('Delivery Method')}</label>
             <input 
               type="text" 
               value={labels.deliveryMethod} 
@@ -114,7 +114,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Subject</label>
+            <label>{t('Subject')}</label>
             <input 
               type="text" 
               value={labels.subject} 
@@ -122,7 +122,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Course Type</label>
+            <label>{t('Course Type')}</label>
             <input 
               type="text" 
               value={labels.courseType} 
@@ -130,7 +130,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Subject (Large)</label>
+            <label>{t('Subject (Large)')}</label>
             <input 
               type="text" 
               value={labels.subjectLarge} 
@@ -138,7 +138,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Subject (Middle)</label>
+            <label>{t('Subject (Middle)')}</label>
             <input 
               type="text" 
               value={labels.subjectMiddle} 
@@ -146,11 +146,19 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
             />
           </div>
           <div className="period-field" style={{ marginBottom: '15px' }}>
-            <label>Subject (Small)</label>
+            <label>{t('Subject (Small)')}</label>
             <input 
               type="text" 
               value={labels.subjectSmall} 
               onInput={(e) => handleChange('subjectSmall', e.currentTarget.value)}
+            />
+          </div>
+          <div className="period-field" style={{ marginBottom: '15px' }}>
+            <label>{t('Equipment')}</label>
+            <input 
+              type="text" 
+              value={labels.equipment} 
+              onInput={(e) => handleChange('equipment', e.currentTarget.value)}
             />
           </div>
         </div>

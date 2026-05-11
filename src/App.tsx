@@ -98,7 +98,8 @@ export function App() {
     courseType: '',
     subjectLarge: '',
     subjectMiddle: '',
-    subjectSmall: ''
+    subjectSmall: '',
+    equipment: ''
   });
 
   // 初期化時に /auth/me でセッション復元
