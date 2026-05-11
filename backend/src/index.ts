@@ -1224,7 +1224,7 @@ app.get('/api/resources/:id/csv', verifyToken, async (req: AuthRequest, res) => 
     ]);
 
     const headers = [
-      'ユーザー/組織システムＩＤ', '氏名/組織名', 'ＩＤ（システムＩＤ：自動発番）', 
+      'ＩＤ（システムＩＤ：自動発番）', 
       '開始日', '開始時刻', '終了日', '終了時刻', 
       '予定', '予定詳細', '場所', '場所詳細', 
       '内容', '情報公開レベル', '外出区分', '重要度', '予約種別', 
@@ -1246,6 +1246,7 @@ app.get('/api/resources/:id/csv', verifyToken, async (req: AuthRequest, res) => 
           location = location ? `${l.room.name} (${location})` : l.room.name;
         }
         return {
+          type: 'lesson',
           startDate: l.startDate,
           startPeriodId: l.startPeriodId,
           endDate: l.endDate,
@@ -1256,6 +1257,7 @@ app.get('/api/resources/:id/csv', verifyToken, async (req: AuthRequest, res) => 
         };
       }),
       ...events.map(e => ({
+        type: 'event',
         startDate: e.startDate,
         startPeriodId: e.startPeriodId,
         endDate: e.endDate,
@@ -1274,14 +1276,15 @@ app.get('/api/resources/:id/csv', verifyToken, async (req: AuthRequest, res) => 
     });
 
     items.forEach(item => {
-      const row = Array(23).fill('');
-      row[3] = formatCSVDate(item.startDate);
-      row[4] = getStartTime(item.startPeriodId);
-      row[5] = formatCSVDate(item.endDate);
-      row[6] = getEndTime(item.endPeriodId);
-      row[7] = item.title;
-      row[8] = item.remarks;
-      row[9] = item.location;
+      const row = Array(21).fill('');
+      row[1] = formatCSVDate(item.startDate);
+      row[2] = getStartTime(item.startPeriodId);
+      row[3] = formatCSVDate(item.endDate);
+      row[4] = getEndTime(item.endPeriodId);
+      row[5] = item.type === 'lesson' ? '授業' : '行事';
+      row[6] = item.title;
+      row[7] = item.location;
+      row[9] = item.remarks;
       rows.push(row);
     });
 
