@@ -15,7 +15,7 @@ export function RoomEquipmentView({ room, onClose, labels }: Props) {
     <div className="room-equipment-overlay">
       <div className="room-equipment-box">
         <div className="dialog-header">
-          <h2>{t('{{resource}} List', { resource: labels.equipment })} - {room.name}</h2>
+          <h2>{room.name}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
@@ -28,7 +28,7 @@ export function RoomEquipmentView({ room, onClose, labels }: Props) {
           <table className="room-equipment-table">
             <thead>
               <tr>
-                <th>{t('Equipment Name')}</th>
+                <th>{t('{{resource}} Name', { resource: labels.equipment })}</th>
                 <th style={{ width: '80px' }}>{t('Quantity')}</th>
               </tr>
             </thead>
