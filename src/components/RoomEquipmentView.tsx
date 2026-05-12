@@ -19,6 +19,11 @@ export function RoomEquipmentView({ room, onClose, labels }: Props) {
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
+        <div className="room-info">
+          <span className="info-label">{t('Capacity')}: </span>
+          <span className="info-value">{room.capacity || '-'}</span>
+        </div>
+
         <div className="room-equipment-content">
           <table className="room-equipment-table">
             <thead>
