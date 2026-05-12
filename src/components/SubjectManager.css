@@ -203,11 +203,16 @@
   gap: 10px;
 }
 
-.drag-handle {
+.tree-node .drag-handle {
   color: #666;
   cursor: grab;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+
+.tree-node .drag-handle svg {
+  display: block;
 }
 
 .node-toggle {

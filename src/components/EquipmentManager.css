@@ -39,6 +39,7 @@
   padding: 10px;
   border-bottom: 1px solid #444;
   text-align: left;
+  vertical-align: bottom;
 }
 
 .equipment-form .form-group {
@@ -70,9 +71,14 @@
   background-color: #333;
 }
 
-.drag-handle {
+.equipment-list .drag-handle {
   cursor: grab;
   color: #666;
+  text-align: center;
+}
+
+.equipment-list .drag-handle svg {
+  vertical-align: middle;
 }
 
 .move-buttons {

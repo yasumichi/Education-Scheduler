@@ -68,6 +68,7 @@
   text-align: left;
   padding: 10px;
   border-bottom: 1px solid #444;
+  vertical-align: bottom;
 }
 
 .draggable-row {
@@ -79,9 +80,14 @@
   background-color: #333;
 }
 
-.drag-handle {
+.room-list .drag-handle {
   color: #666;
   cursor: grab;
+  text-align: center;
+}
+
+.room-list .drag-handle svg {
+  vertical-align: middle;
 }
 
 .move-buttons {

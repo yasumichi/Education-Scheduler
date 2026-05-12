@@ -556,8 +556,14 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                             onDragOver={(e) => isAdmin && e.preventDefault()}
                             className={`draggable-row ${!isAdmin ? 'non-draggable' : ''}`}
                         >
-                          {isAdmin && <td className="drag-handle">⋮⋮</td>}
                           {isAdmin && (
+                            <td className="drag-handle">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="9" cy="5" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="9" cy="19" r="1" />
+                                <circle cx="15" cy="5" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="15" cy="19" r="1" />
+                              </svg>
+                            </td>
+                          )}                          {isAdmin && (
                             <td>
                               <div className="move-buttons">
                                 <button className="move-btn" onClick={() => moveItem(listIdx, 'up')} disabled={listIdx === 0}>↑</button>

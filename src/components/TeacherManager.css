@@ -126,7 +126,7 @@
 .teacher-list td {
   padding: 10px;
   border-bottom: 1px solid #333;
-  vertical-align: middle;
+  vertical-align: bottom;
   font-size: 0.9rem;
 }
 
@@ -134,10 +134,14 @@
   background-color: #2a2a2a;
 }
 
-.drag-handle {
+.teacher-list .drag-handle {
   cursor: grab;
   color: #666;
   text-align: center;
+}
+
+.teacher-list .drag-handle svg {
+  vertical-align: middle;
 }
 
 .move-buttons {

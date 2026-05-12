@@ -123,7 +123,7 @@
 .course-list td {
   padding: 10px;
   border-bottom: 1px solid #333;
-  vertical-align: middle;
+  vertical-align: bottom;
 }
 
 .draggable-row {
@@ -134,13 +134,17 @@
   background-color: #2a2a2a;
 }
 
-.drag-handle {
+.course-list .drag-handle {
   cursor: grab;
   color: #666;
   text-align: center;
 }
 
-.drag-handle:active {
+.course-list .drag-handle svg {
+  vertical-align: middle;
+}
+
+.course-list .drag-handle:active {
   cursor: grabbing;
 }
 
