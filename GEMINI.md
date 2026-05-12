@@ -152,7 +152,7 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 ```
 
 ### Main Entities
-- **Resource:** `id, name, type, order, userId, startDate, endDate, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel, courseTypeId`
+- **Resource:** `id, name, type, order, userId, startDate, endDate, mainRoomId, chiefTeacherId, assistantTeacherIds, mainTeacherLabel, subTeacherLabel, courseTypeId, capacity`
 - **CourseType:** `id, name, order, startDate, endDate`
 - **Subject:** `id, name, level, parentId, courseTypeId, totalPeriods, order`
 - **Lesson:** `id, subject, startDate, startPeriodId, endDate, endPeriodId, roomId, teacherId, courseId, location, subTeacherIds, deliveryMethodIds, remarks, externalTeacher, externalSubTeachers`

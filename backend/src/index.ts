@@ -360,7 +360,7 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { id, name, order, equipments } = req.body;
+  const { id, name, order, equipments, capacity } = req.body;
   try {
     let room;
     if (id) {
@@ -369,6 +369,7 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
         data: {
           name,
           order: order || 0,
+          capacity: capacity ? parseInt(capacity) : null,
           equipments: {
             deleteMany: {},
             create: equipments?.map((e: any) => ({
@@ -386,6 +387,7 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
           name,
           type: ResourceType.room,
           order: order || 0,
+          capacity: capacity ? parseInt(capacity) : null,
           equipments: {
             create: equipments?.map((e: any) => ({
               equipmentId: e.equipmentId,

@@ -125,6 +125,7 @@ export interface Resource {
   subTeacherLabel?: string;
   courseTypeId?: string | null;
   equipments?: RoomEquipment[];
+  capacity?: number;
 }
 
 export interface ScheduleEvent {

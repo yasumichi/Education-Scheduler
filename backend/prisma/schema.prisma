@@ -48,6 +48,8 @@ model Resource {
 
   courseTypeId     String?
   courseType       CourseType?     @relation(fields: [courseTypeId], references: [id])
+
+  capacity         Int?
 }
 
 model CourseType {

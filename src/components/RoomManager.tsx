@@ -21,10 +21,12 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
   const [formData, setFormData] = useState<{
     name: string;
     order: number;
+    capacity: number | '';
     equipments: { equipmentId: string; quantity: number }[];
   }>({
     name: '',
     order: 0,
+    capacity: '',
     equipments: []
   });
 
@@ -60,6 +62,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
         setFormData({
           name: room.name,
           order: room.order || 0,
+          capacity: room.capacity || '',
           equipments: room.equipments?.map(re => ({
             equipmentId: re.equipmentId,
             quantity: re.quantity
@@ -70,6 +73,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
       setFormData({
         name: '',
         order: (rooms.length + 1),
+        capacity: '',
         equipments: []
       });
     }
@@ -225,6 +229,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
                       {isAdmin && <th style={{ width: '40px' }}></th>}
                       {isAdmin && <th style={{ width: '80px' }}>{t('Move')}</th>}
                       <th>{t('Name')}</th>
+                      <th style={{ width: '100px' }}>{t('Capacity')}</th>
                       <th style={{ width: '120px' }}>{t('Actions')}</th>
                     </tr>
                   </thead>
@@ -255,6 +260,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
                           </td>
                         )}
                         <td>{r.name}</td>
+                        <td style={{ textAlign: 'right' }}>{r.capacity || '-'}</td>
                         <td>
                           <div className="action-buttons">
                             <button className="edit-btn" onClick={() => setEditingRoomId(r.id)}>{isAdmin ? t('Edit') : t('View')}</button>
@@ -291,6 +297,16 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
                   type="number" 
                   value={formData.order} 
                   onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
+                  readOnly={!isAdmin}
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('Capacity')}</label>
+                <input 
+                  type="number" 
+                  min="0"
+                  value={formData.capacity} 
+                  onInput={(e) => setFormData({ ...formData, capacity: e.currentTarget.value === '' ? '' : parseInt(e.currentTarget.value) || 0 })}
                   readOnly={!isAdmin}
                 />
               </div>
