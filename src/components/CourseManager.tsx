@@ -531,7 +531,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   </select>
                 </div>
               </div>
-              <div className="course-list">
+              <div className="manager-list">
                 <table>
                   <thead>
                     <tr>

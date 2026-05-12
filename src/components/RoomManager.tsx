@@ -222,7 +222,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
                   </button>
                 </div>
               )}
-              <div className="room-list">
+              <div className="manager-list">
                 <table>
                   <thead>
                     <tr>

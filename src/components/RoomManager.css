@@ -59,18 +59,6 @@
   cursor: pointer;
 }
 
-.room-list table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.room-list th, .room-list td {
-  text-align: left;
-  padding: 10px;
-  border-bottom: 1px solid #444;
-  vertical-align: bottom;
-}
-
 .draggable-row {
   cursor: grab;
 }
@@ -78,16 +66,6 @@
 .draggable-row:active {
   cursor: grabbing;
   background-color: #333;
-}
-
-.room-list .drag-handle {
-  color: #666;
-  cursor: grab;
-  text-align: center;
-}
-
-.room-list .drag-handle svg {
-  vertical-align: middle;
 }
 
 .move-buttons {
@@ -279,7 +257,6 @@
 
 @media (prefers-color-scheme: light) {
   .room-manager-box { background-color: #fff; color: #333; }
-  .room-list th, .room-list td, .room-form h3 { border-color: #eee; }
   .room-form input { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .move-btn { background-color: #f0f0f0; color: #333; border-color: #ccc; }
   .room-manager-header { border-color: #eee; }

@@ -213,7 +213,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
                   {searchQuery && <button className="clear-search" onClick={() => setSearchQuery('')}>×</button>}
                 </div>
               </div>
-              <div className="teacher-list">
+              <div className="manager-list">
                 <table>
                   <thead>
                     <tr>

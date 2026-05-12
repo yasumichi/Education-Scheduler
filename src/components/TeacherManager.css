@@ -108,40 +108,8 @@
   font-weight: bold;
 }
 
-.teacher-list table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.teacher-list th {
-  text-align: left;
-  padding: 10px;
-  border-bottom: 2px solid #444;
-  background-color: #2a2a2a;
-  position: sticky;
-  top: 0;
-  font-size: 0.9rem;
-}
-
-.teacher-list td {
-  padding: 10px;
-  border-bottom: 1px solid #333;
-  vertical-align: bottom;
-  font-size: 0.9rem;
-}
-
 .draggable-row:hover {
   background-color: #2a2a2a;
-}
-
-.teacher-list .drag-handle {
-  cursor: grab;
-  color: #666;
-  text-align: center;
-}
-
-.teacher-list .drag-handle svg {
-  vertical-align: middle;
 }
 
 .move-buttons {
@@ -279,8 +247,6 @@
 
 @media (prefers-color-scheme: light) {
   .teacher-manager-box { background-color: #fff; color: #333; }
-  .teacher-list th { background-color: #f5f5f5; border-bottom-color: #ddd; }
-  .teacher-list td { border-bottom-color: #eee; }
   .draggable-row:hover { background-color: #f9f9f9; }
   .move-btn { background: #f0f0f0; border-color: #ccc; color: #666; }
   .edit-btn { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }

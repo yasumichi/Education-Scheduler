@@ -166,7 +166,7 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
                   {t('Add New {{resource}}', { resource: labels.equipment })}
                 </button>
               </div>
-              <div className="equipment-list">
+              <div className="manager-list">
                 <table>
                   <thead>
                     <tr>
