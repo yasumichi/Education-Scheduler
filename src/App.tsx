@@ -420,7 +420,7 @@ export function App() {
           <h1><img src={logoPath} style="vertical-align: middle;" /><span style="color: #18324d">Schola</span><span style="color: #1ec1ca">Tile</span></h1>
           {user.value && (
             <div className="user-info">
-              {user.value.role === 'ADMIN' && (
+              {(user.value.role === 'ADMIN' || user.value.role === 'EQUIPMENT_MANAGER') && (
                 <div className="settings-container">
                   <button 
                     className="settings-button" 
@@ -430,33 +430,37 @@ export function App() {
                   </button>
                   {showSettingsDropdown.value && (
                     <div className="settings-dropdown">
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showPeriodManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Manage Periods')}
-                      </button>
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showLabelManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Manage Labels')}
-                      </button>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => {
-                          showSubjectManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Manage {{resource}}', { resource: resourceLabels.value.subject })}
-                      </button>
+                      {user.value.role === 'ADMIN' && (
+                        <>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={() => {
+                              showPeriodManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage Periods')}
+                          </button>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={() => {
+                              showLabelManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage Labels')}
+                          </button>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              showSubjectManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage {{resource}}', { resource: resourceLabels.value.subject })}
+                          </button>
+                        </>
+                      )}
 
                       <button
                        className="dropdown-item"
@@ -474,94 +478,89 @@ export function App() {
                          showRoomManager.value = true;
                          showSettingsDropdown.value = false;
                        }}
-                      >                        {t('Manage {{resource}}', { resource: resourceLabels.value.room })}
-                      </button>
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showTeacherManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
                       >
-                        {t('Manage {{resource}}', { resource: resourceLabels.value.teacher })}
-                      </button>
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showCourseManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Manage {{resource}}', { resource: resourceLabels.value.course })}
-                      </button>
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showHolidayManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Manage Holidays')}
-                      </button>
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showDeliveryMethodManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Manage {{resource}}', { resource: resourceLabels.value.deliveryMethod })}
-                      </button>
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showColorThemeManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Manage Color Themes')}
-                      </button>
-                      <button 
-                        className="dropdown-item" 
-                        onClick={() => {
-                          showUserManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Manage Users')}
-                      </button>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => {
-                          showSystemSettingManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('System Settings')}
-                      </button>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => {
-                          fetchAuditLogs();
-                          showAuditLogManager.value = true;
-                          showSettingsDropdown.value = false;
-                        }}
-                      >
-                        {t('Audit Logs')}
+                        {t('Manage {{resource}}', { resource: resourceLabels.value.room })}
                       </button>
 
+                      {user.value.role === 'ADMIN' && (
+                        <>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={() => {
+                              showTeacherManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage {{resource}}', { resource: resourceLabels.value.teacher })}
+                          </button>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={() => {
+                              showCourseManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage {{resource}}', { resource: resourceLabels.value.course })}
+                          </button>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={() => {
+                              showHolidayManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage Holidays')}
+                          </button>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={() => {
+                              showDeliveryMethodManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage {{resource}}', { resource: resourceLabels.value.deliveryMethod })}
+                          </button>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={() => {
+                              showColorThemeManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage Color Themes')}
+                          </button>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={() => {
+                              showUserManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Manage Users')}
+                          </button>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              showSystemSettingManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('System Settings')}
+                          </button>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              fetchAuditLogs();
+                              showAuditLogManager.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Audit Logs')}
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
-              {user.value.role === 'EQUIPMENT_MANAGER' && (
-                <div className="settings-container">
-                  <button
-                    className="settings-button"
-                    onClick={() => showEquipmentManager.value = true}
-                  >
-                    {t('Manage {{resource}}', { resource: resourceLabels.value.equipment })}
-                  </button>
                 </div>
               )}
               <div className="user-dropdown-container">
@@ -941,7 +940,7 @@ export function App() {
           onUpdate={fetchData}
           resources={resources.value}
           labels={resourceLabels.value}
-          isAdmin={user.value?.role === 'ADMIN'}
+          isAdmin={user.value?.role === 'ADMIN' || user.value?.role === 'EQUIPMENT_MANAGER'}
           initialRoomId={editingRoomId.value}
         />
       )}

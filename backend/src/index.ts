@@ -355,10 +355,10 @@ app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// Create/Update room (ADMIN required)
+// Create/Update room (ADMIN or EQUIPMENT_MANAGER required)
 app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
-  if (req.user?.role !== UserRole.ADMIN) {
-    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.EQUIPMENT_MANAGER) {
+    return res.status(403).json({ error: 'Access denied. Admin or Equipment Manager role required.' });
   }
   const { id, name, order, equipments, capacity } = req.body;
   try {
@@ -406,10 +406,10 @@ app.post('/api/rooms', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// Update room order (ADMIN required)
+// Update room order (ADMIN or EQUIPMENT_MANAGER required)
 app.post('/api/rooms/reorder', verifyToken, async (req: AuthRequest, res) => {
-  if (req.user?.role !== UserRole.ADMIN) {
-    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.EQUIPMENT_MANAGER) {
+    return res.status(403).json({ error: 'Access denied. Admin or Equipment Manager role required.' });
   }
   const { orders } = req.body; // Array of { id, order }
   try {
@@ -429,10 +429,10 @@ app.post('/api/rooms/reorder', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// Delete room (ADMIN required)
+// Delete room (ADMIN or EQUIPMENT_MANAGER required)
 app.delete('/api/rooms/:id', verifyToken, async (req: AuthRequest, res) => {
-  if (req.user?.role !== UserRole.ADMIN) {
-    return res.status(403).json({ error: 'Access denied. Admin role required.' });
+  if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.EQUIPMENT_MANAGER) {
+    return res.status(403).json({ error: 'Access denied. Admin or Equipment Manager role required.' });
   }
   const { id } = req.params;
   try {
