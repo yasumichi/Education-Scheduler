@@ -273,10 +273,6 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
                 </table>
               </div>
               {isAdmin && <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>}
-              <div className="list-footer">
-                {isAdmin && <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>}
-                <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
-              </div>
             </>
           ) : (
             <div className="room-form">
@@ -350,13 +346,22 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
                   )}
                 </div>
               </div>
+            </div>
+          )}
+        </div>
 
-              <div className="form-actions">
-                <button className="cancel-button" onClick={() => isAdmin ? setEditingRoomId(null) : onClose()}>
-                  {isAdmin ? t('Cancel') : t('Close')}
-                </button>
-                {isAdmin && <button className="save-button" onClick={handleSave}>{t('Save')}</button>}
-              </div>
+        <div className="dialog-footer">
+          {!editingRoomId ? (
+            <div className="footer-right">
+              {isAdmin && <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>}
+              <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+            </div>
+          ) : (
+            <div className="footer-right">
+              <button className="cancel-button" onClick={() => isAdmin ? setEditingRoomId(null) : onClose()}>
+                {isAdmin ? t('Cancel') : t('Close')}
+              </button>
+              {isAdmin && <button className="save-button" onClick={handleSave}>{t('Save')}</button>}
             </div>
           )}
         </div>

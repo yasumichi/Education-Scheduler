@@ -131,12 +131,6 @@
   padding: 20px;
 }
 
-.list-footer {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-}
-
 .holiday-form h3, .import-section h3 {
   margin-top: 0;
   border-bottom: 1px solid #444;
@@ -175,13 +169,11 @@
   flex: 1;
 }
 
-.form-actions {
+.dialog-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #444;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
-  border-top: 1px solid #444;
-  padding-top: 16px;
 }
 
 .save-button {

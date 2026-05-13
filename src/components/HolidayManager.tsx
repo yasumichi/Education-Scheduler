@@ -234,9 +234,6 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
                   </tbody>
                 </table>
               </div>
-              <div className="list-footer">
-                <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
-              </div>
             </>
           )}
 
@@ -279,10 +276,6 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
                   />
                 </div>
               </div>
-              <div className="form-actions">
-                <button className="cancel-button" onClick={() => setEditingHolidayId(null)}>{t('Cancel')}</button>
-                <button className="save-button" onClick={handleSave}>{t('Save')}</button>
-              </div>
             </div>
           )}
 
@@ -317,10 +310,23 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
                 <p>{t('Select a JSON file downloaded from Nager.Date')}</p>
                 <input type="file" accept=".json" onChange={handleImportJson} />
               </div>
+            </div>
+          )}
+        </div>
 
-              <div className="form-actions">
-                <button className="cancel-button" onClick={() => setIsImportMode(false)}>{t('Cancel')}</button>
-              </div>
+        <div className="dialog-footer">
+          {!editingHolidayId && !isImportMode ? (
+            <div className="footer-right">
+              <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+            </div>
+          ) : editingHolidayId ? (
+            <div className="footer-right">
+              <button className="cancel-button" onClick={() => setEditingHolidayId(null)}>{t('Cancel')}</button>
+              <button className="save-button" onClick={handleSave}>{t('Save')}</button>
+            </div>
+          ) : (
+            <div className="footer-right">
+              <button className="cancel-button" onClick={() => setIsImportMode(false)}>{t('Cancel')}</button>
             </div>
           )}
         </div>
