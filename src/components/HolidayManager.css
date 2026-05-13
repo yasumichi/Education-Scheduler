@@ -131,6 +131,12 @@
   padding: 20px;
 }
 
+.list-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
 .holiday-form h3, .import-section h3 {
   margin-top: 0;
   border-bottom: 1px solid #444;

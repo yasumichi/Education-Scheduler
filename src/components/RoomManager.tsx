@@ -273,11 +273,10 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
                 </table>
               </div>
               {isAdmin && <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>}
-              {isAdmin && (
-                <div className="list-footer">
-                  <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
-                </div>
-              )}
+              <div className="list-footer">
+                {isAdmin && <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>}
+                <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+              </div>
             </>
           ) : (
             <div className="room-form">

@@ -234,6 +234,9 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
                   </tbody>
                 </table>
               </div>
+              <div className="list-footer">
+                <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+              </div>
             </>
           )}
 
@@ -316,7 +319,7 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
               </div>
 
               <div className="form-actions">
-                <button className="cancel-button" onClick={() => setIsImportMode(false)}>{t('Back')}</button>
+                <button className="cancel-button" onClick={() => setIsImportMode(false)}>{t('Cancel')}</button>
               </div>
             </div>
           )}
