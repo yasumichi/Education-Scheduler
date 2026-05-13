@@ -121,7 +121,7 @@ export function PeriodManager({ backendUrl, onClose, onUpdate }: Props) {
         <div className="period-manager-footer">
           <button className="add-button" onClick={handleAdd}>{t('Add Period')}</button>
           <div className="footer-actions">
-            <button className="cancel-button" onClick={onClose}>{t('Back to Timetable')}</button>
+            <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
             <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
           </div>
         </div>

@@ -215,6 +215,7 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
               <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>
               <div className="list-footer">
                 <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
+                <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
               </div>
             </>
           ) : (

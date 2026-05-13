@@ -165,7 +165,7 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
 
         <div className="period-manager-footer">
           <div className="footer-actions">
-            <button className="cancel-button" onClick={onClose}>{t('Back to Timetable')}</button>
+            <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
             <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
           </div>
         </div>

@@ -497,7 +497,7 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
         </div>
 
         <div className="subject-manager-footer">
-          <button className="close-btn" onClick={onClose}>{t('Close')}</button>
+          <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
         </div>
       </div>
 
@@ -525,7 +525,7 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
               <input type="number" value={editingType.order} onInput={(e) => setEditingType({ ...editingType, order: parseInt(e.currentTarget.value) })} />
             </div>
             <div className="modal-actions">
-              <button className="close-btn" onClick={() => setEditingType(null)}>{t('Cancel')}</button>
+              <button className="cancel-button" onClick={() => setEditingType(null)}>{t('Cancel')}</button>
               <button className="add-btn" onClick={handleSaveType}>{t('Save')}</button>
             </div>
           </div>
@@ -562,7 +562,7 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
               <input type="number" value={editingSubject.order || 0} onInput={(e) => setEditingSubject({ ...editingSubject, order: parseInt(e.currentTarget.value) })} />
             </div>
             <div className="modal-actions">
-              <button className="close-btn" onClick={() => setEditingSubject(null)}>{t('Cancel')}</button>
+              <button className="cancel-button" onClick={() => setEditingSubject(null)}>{t('Cancel')}</button>
               <button className="add-btn" onClick={handleSaveSubject}>{t('Save')}</button>
             </div>
           </div>

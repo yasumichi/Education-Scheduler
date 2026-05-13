@@ -197,6 +197,11 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
                   </tbody>
                 </table>
               </div>
+              <div className="dialog-footer">
+                <div className="footer-right">
+                  <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+                </div>
+              </div>
             </>
           ) : (
             <>
