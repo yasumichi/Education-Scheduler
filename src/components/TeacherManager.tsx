@@ -272,11 +272,6 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
                   {isFiltering ? t('Reordering is disabled during filtering') : t('Drag and drop rows or use arrows to change order')}
                 </p>
               )}
-              {isAdmin && (
-                <div className="list-footer">
-                  <button className="save-order-button" onClick={handleSaveOrder} disabled={isFiltering}>{t('Save Order')}</button>
-                </div>
-              )}
             </>
           ) : (
             <div className="teacher-form">
@@ -318,7 +313,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
           )}
         </div>
 
-        <div className="teacher-manager-footer">
+        <div className="dialog-footer">
           {editingTeacherId ? (
             <>
               {isAdmin && editingTeacherId !== 'new' && (
@@ -333,6 +328,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
             </>
           ) : (
             <div className="footer-right">
+              {isAdmin && <button className="save-order-button" onClick={handleSaveOrder} disabled={isFiltering}>{t('Save Order')}</button>}
               <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
             </div>
           )}

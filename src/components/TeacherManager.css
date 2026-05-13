@@ -162,12 +162,6 @@
   margin-top: 10px;
 }
 
-.list-footer {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .save-order-button {
   background-color: #252;
   color: #8f8;
@@ -204,7 +198,7 @@
   border-radius: 4px;
 }
 
-.teacher-manager-footer {
+.dialog-footer {
   display: flex;
   justify-content: space-between;
   border-top: 1px solid #444;
@@ -252,7 +246,7 @@
   .edit-btn { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
   .delete-btn { background-color: #fee2e2; color: #b91c1c; border-color: #fecaca; }
   .teacher-form input, .teacher-form select { background-color: #f5f5f5; border-color: #ccc; color: #333; }
-  .teacher-manager-header, .teacher-manager-footer { border-color: #eee; }
+  .teacher-manager-header, .dialog-footer { border-color: #eee; }
   .save-order-button { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
   .cancel-button { background-color: #f5f5f5; color: #333; border-color: #ccc; }
 }
