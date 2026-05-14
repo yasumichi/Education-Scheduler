@@ -14,7 +14,6 @@
 .profile-manager-box {
   background-color: #242424;
   color: #fff;
-  padding: 20px;
   border-radius: 8px;
   width: 90%;
   max-width: 450px;
@@ -24,24 +23,10 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-.profile-manager-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #444;
-  padding-bottom: 10px;
-}
-
-.profile-manager-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
 .profile-manager-content {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 20px;
+  padding: 20px;
 }
 
 .user-info-section {

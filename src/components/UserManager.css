@@ -14,7 +14,6 @@
 .user-manager-box {
   background-color: #242424;
   color: #fff;
-  padding: 20px;
   border-radius: 8px;
   width: 90%;
   max-width: 500px;
@@ -29,18 +28,10 @@
   width: 95%;
 }
 
-.close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #ccc;
-  cursor: pointer;
-}
-
 .user-manager-content {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 20px;
+  padding: 20px;
 }
 
 .user-list-actions {

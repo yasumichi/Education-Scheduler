@@ -23,19 +23,6 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-.subject-manager-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #444;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.subject-manager-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
 .subject-manager-content {
   flex: 1;
   overflow: hidden;

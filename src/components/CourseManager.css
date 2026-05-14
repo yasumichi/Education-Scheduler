@@ -14,7 +14,6 @@
 .course-manager-box {
   background-color: #242424;
   color: #fff;
-  padding: 20px;
   border-radius: 8px;
   width: 95%;
   max-width: 1000px; /* Increased width */
@@ -29,7 +28,7 @@
   color: #a7f3d0;
   padding: 8px 12px;
   border-radius: 4px;
-  margin-bottom: 15px;
+  margin: 15px 20px 0;
   font-size: 0.9rem;
   border: 1px solid #065f46;
   text-align: center;
@@ -38,7 +37,7 @@
 .course-manager-content {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 20px;
+  padding: 20px;
 }
 
 /* List View Styles */

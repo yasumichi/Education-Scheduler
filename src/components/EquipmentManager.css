@@ -14,7 +14,6 @@
 .equipment-manager-box {
   background-color: #242424;
   color: #fff;
-  padding: 20px;
   border-radius: 8px;
   width: 90%;
   max-width: 800px;
@@ -27,7 +26,7 @@
 .equipment-manager-content {
   flex: 1;
   overflow-y: auto;
-  margin-top: 20px;
+  padding: 20px;
 }
 
 .equipment-form .form-group {
