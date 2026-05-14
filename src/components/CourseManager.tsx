@@ -591,11 +591,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 </table>
               </div>
               {isAdmin && <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>}
-              {isAdmin && (
-                <div className="list-footer">
-                  <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
-                </div>
-              )}
             </>
           ) : (
             <div className="course-form">
@@ -634,7 +629,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                       />
                     </div>
                   </div>
-                  <div className="dialog-actions">
+                  <div className="footer-right">
                     <button className="cancel-button" onClick={() => setShowDuplicateLessons(false)}>{t('Cancel')}</button>
                     <button className="confirm-button" onClick={handleDuplicateLessons}>{t('Duplicate Now')}</button>
                   </div>
@@ -830,16 +825,16 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   <button className="duplicate-lessons-btn" onClick={() => setShowDuplicateLessons(true)}>{t('Duplicate Lessons')}</button>
                 </div>
               )}
-              <div className="form-actions">
+              <div className="footer-right">
                 <button className="cancel-button" onClick={() => isAdmin ? setEditingCourseId(null) : onClose()}>
                   {isAdmin ? t('Cancel') : t('Close')}
                 </button>
                 {isAdmin && <button className="save-button" onClick={handleSave}>{t('Save')}</button>}
               </div>
-
             </>
           ) : (
             <div className="footer-right">
+              {isAdmin && <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>}
               <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
             </div>
           )}

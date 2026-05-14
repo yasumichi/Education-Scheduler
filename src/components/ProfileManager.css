@@ -102,18 +102,10 @@
   background-color: #064e3b;
 }
 
-.profile-manager-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid #444;
-  padding-top: 15px;
-}
-
 @media (prefers-color-scheme: light) {
   .profile-manager-box { background-color: #fff; color: #333; }
   .user-info-section { background-color: #f5f5f5; }
-  .profile-manager-header, .profile-manager-footer { border-color: #eee; }
+  .profile-manager-header { border-color: #eee; }
   .password-change-section h3 { color: #646cff; }
   .ical-export-section { border-top-color: #eee; }
   .ical-export-section h3 { color: #059669; }

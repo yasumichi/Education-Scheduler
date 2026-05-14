@@ -170,30 +170,10 @@
   display: none;
 }
 
-.delete-button {
-  background-color: #522;
-  color: #f88;
-  border: 1px solid #744;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.save-button {
-  background-color: #646cff;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
 @media (prefers-color-scheme: light) {
   .event-manager-box { background-color: #fff; color: #333; }
   .form-group input, .form-group select, .resource-selector-list, .theme-preview-list { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .resource-item { background: #eee; color: #333; }
   .resource-item.selected { background: #3b82f6; color: #fff; }
-  .delete-button { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
   .custom-color-picker { border-color: #ccc; }
 }

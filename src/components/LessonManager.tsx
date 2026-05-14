@@ -679,9 +679,11 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
         </div>
 
         <div className="dialog-footer">
-          {formData.id && (
-            <button className="delete-button" onClick={handleDelete} disabled={!canManage}>{t('Delete')}</button>
-          )}
+          {formData.id ? (
+            <div className="footer-left">
+              <button className="delete-button" onClick={handleDelete} disabled={!canManage}>{t('Delete')}</button>
+            </div>
+          ) : <div />}
           <div className="footer-right">
             <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
             <button className="save-button" onClick={handleSave} disabled={!canLimitedEdit}>{t('Save Changes')}</button>

@@ -143,31 +143,6 @@
   box-sizing: border-box;
 }
 
-.save-button {
-  background-color: #646cff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.delete-button {
-  background-color: #ff4d4d;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
-}
-
 @media (prefers-color-scheme: light) {
   .user-manager-box { background-color: #fff; color: #333; }
   .search-input { background-color: #f5f5f5; border-color: #ccc; color: #333; }
@@ -179,5 +154,4 @@
   .action-btn.delete-btn:hover { background-color: #fecaca; }
   .user-form h3 { border-bottom-color: #eee; }
   .form-group input, .form-group select { background-color: #f5f5f5; border-color: #ccc; color: #333; }
-  .close-button { color: #666; }
 }

@@ -50,15 +50,6 @@
   margin-bottom: 15px;
 }
 
-.add-button {
-  background-color: #646cff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 .draggable-row {
   cursor: grab;
 }
@@ -116,23 +107,6 @@
   color: #888;
   margin-top: 10px;
   text-align: center;
-}
-
-.list-footer {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-}
-
-.save-order-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
 }
 
 .room-form {
@@ -230,30 +204,6 @@
   color: #888;
   text-align: center;
   padding: 10px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.save-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  color: #aaa;
-  font-size: 1.5rem;
-  cursor: pointer;
 }
 
 @media (prefers-color-scheme: light) {

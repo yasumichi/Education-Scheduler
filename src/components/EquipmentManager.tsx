@@ -213,10 +213,6 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
                 </table>
               </div>
               <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>
-              <div className="list-footer">
-                <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
-                <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
-              </div>
             </>
           ) : (
             <div className="equipment-form">
@@ -245,12 +241,24 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
                   onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
                 />
               </div>
-              <div className="form-actions">
-                <button className="cancel-button" onClick={() => setEditingId(null)}>{t('Cancel')}</button>
-                <button className="save-button" onClick={handleSave}>{t('Save')}</button>
-              </div>
             </div>
           )}
+        </div>
+
+        <div className="dialog-footer">
+          <div className="footer-right">
+            {!editingId ? (
+              <>
+                <button className="save-order-button" onClick={handleSaveOrder}>{t('Save Order')}</button>
+                <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+              </>
+            ) : (
+              <>
+                <button className="cancel-button" onClick={() => setEditingId(null)}>{t('Cancel')}</button>
+                <button className="save-button" onClick={handleSave}>{t('Save')}</button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

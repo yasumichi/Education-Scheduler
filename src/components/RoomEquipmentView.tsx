@@ -50,8 +50,10 @@ export function RoomEquipmentView({ room, onClose, labels }: Props) {
           </table>
         </div>
 
-        <div className="form-actions">
-          <button className="save-button" onClick={onClose}>{t('Close')}</button>
+        <div className="dialog-footer">
+          <div className="footer-right">
+            <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+          </div>
         </div>
       </div>
     </div>

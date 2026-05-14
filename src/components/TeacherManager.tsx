@@ -316,9 +316,11 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
         <div className="dialog-footer">
           {editingTeacherId ? (
             <>
-              {isAdmin && editingTeacherId !== 'new' && (
-                <button className="delete-button" onClick={() => handleDelete(editingTeacherId)}>{t('Delete')}</button>
-              )}
+              {isAdmin && editingTeacherId !== 'new' ? (
+                <div className="footer-left">
+                  <button className="delete-button" onClick={() => handleDelete(editingTeacherId)}>{t('Delete')}</button>
+                </div>
+              ) : <div />}
               <div className="footer-right">
                 <button className="cancel-button" onClick={() => isAdmin ? setEditingTeacherId(null) : onClose()}>
                   {isAdmin ? t('Cancel') : t('Close')}

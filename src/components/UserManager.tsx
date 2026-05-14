@@ -197,11 +197,6 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
                   </tbody>
                 </table>
               </div>
-              <div className="dialog-footer">
-                <div className="footer-right">
-                  <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
-                </div>
-              </div>
             </>
           ) : (
             <>
@@ -238,10 +233,6 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
                       <option value="STUDENT">STUDENT</option>
                     </select>
                   </div>
-                  <div className="form-actions">
-                    <button className="cancel-button" onClick={() => { setEditingUserId(null); setIsAddingNew(false); }}>{t('Cancel')}</button>
-                    <button className="save-button" onClick={handleSave}>{t('Save')}</button>
-                  </div>
                 </div>
               ) : (
                 <div className="user-form">
@@ -255,14 +246,28 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
                       onInput={(e) => setNewPassword(e.currentTarget.value)}
                     />
                   </div>
-                  <div className="form-actions">
-                    <button className="cancel-button" onClick={() => setResetPasswordMode(false)}>{t('Cancel')}</button>
-                    <button className="save-button" onClick={handleResetPassword}>{t('Reset')}</button>
-                  </div>
                 </div>
               )}
             </>
           )}
+        </div>
+
+        <div className="dialog-footer">
+          <div className="footer-right">
+            {!editingUserId && !isAddingNew ? (
+              <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+            ) : !resetPasswordMode ? (
+              <>
+                <button className="cancel-button" onClick={() => { setEditingUserId(null); setIsAddingNew(false); }}>{t('Cancel')}</button>
+                <button className="save-button" onClick={handleSave}>{t('Save')}</button>
+              </>
+            ) : (
+              <>
+                <button className="cancel-button" onClick={() => setResetPasswordMode(false)}>{t('Cancel')}</button>
+                <button className="save-button" onClick={handleResetPassword}>{t('Reset')}</button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

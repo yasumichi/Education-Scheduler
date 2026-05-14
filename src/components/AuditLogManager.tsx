@@ -77,9 +77,9 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
   return (
     <div className="modal-overlay">
       <div className="modal-box audit-log-manager">
-        <div className="modal-header">
+        <div className="dialog-header">
           <h2>{t('Audit Logs')} ({totalLogs})</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
+          <button className="close-button" onClick={onClose}>&times;</button>
         </div>
         <div className="modal-content">
           <form className="audit-log-filters" onSubmit={handleSearch}>
@@ -195,8 +195,10 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
             </div>
           )}
         </div>
-        <div className="modal-footer">
-          <button className="cancel-btn" onClick={onClose}>{t('Close')}</button>
+        <div className="dialog-footer">
+          <div className="footer-right">
+            <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+          </div>
         </div>
       </div>
     </div>

@@ -112,9 +112,11 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate, labels }:
           )}
         </div>
 
-        <div className="delivery-method-manager-footer">
-          <button className="add-button" onClick={handleAdd}>{t('Add {{resource}}', { resource: labels.deliveryMethod })}</button>
-          <div className="footer-actions">
+        <div className="dialog-footer">
+          <div className="footer-left">
+            <button className="add-button" onClick={handleAdd}>{t('Add {{resource}}', { resource: labels.deliveryMethod })}</button>
+          </div>
+          <div className="footer-right">
             <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
             <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
           </div>

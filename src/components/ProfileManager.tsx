@@ -159,12 +159,14 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
           )}
         </div>
 
-        <div className="profile-manager-footer">
-          <button className="cancel-button" onClick={onClose}>{mode === 'password' ? t('Cancel') : t('Close')}</button>
+        <div className="dialog-footer">
+          <div className="footer-right">
+            <button className="cancel-button" onClick={onClose}>{mode === 'password' ? t('Cancel') : t('Close')}</button>
+            {mode === 'password' && (
+              <button className="save-button" onClick={handleChangePassword}>{t('Change Password')}</button>
+            )}
+          </div>
         </div>
-        {mode === 'password' && (
-        <button className="save-button" onClick={handleChangePassword}>{t('Change Password')}</button>
-        )}
       </div>
     </div>
   );

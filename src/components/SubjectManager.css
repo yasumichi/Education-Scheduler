@@ -290,13 +290,6 @@
 .node-level-2 { background: #333; }
 .node-level-3 { background: #3d3d3d; }
 
-.subject-manager-footer {
-  padding: 15px 20px;
-  border-top: 1px solid #444;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .add-btn {
   background: #646cff;
   color: #fff;
@@ -350,13 +343,6 @@
   padding: 8px;
   border-radius: 4px;
   box-sizing: border-box;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
 }
 
 @media (prefers-color-scheme: light) {

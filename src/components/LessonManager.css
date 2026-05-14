@@ -273,6 +273,5 @@
   .combo-input { background-color: #f5f5f5 !important; border-color: #ccc !important; color: #333 !important; color-scheme: light; }
   .sub-teacher-item, .delivery-method-item { background: #eee; color: #333; }
   .sub-teacher-item.selected, .delivery-method-item.selected { background: #646cff; color: #fff; }
-  .lesson-manager-header, .lesson-manager-footer { border-color: #eee; }
-  .delete-button { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+  .lesson-manager-header { border-color: #eee; }
 }

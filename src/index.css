@@ -130,12 +130,86 @@ h1 {
 }
 
 .cancel-button {
-  background-color: transparent;
-  border: 1px solid #666;
-  color: #ccc;
+  background-color: #444;
+  color: #fff;
+  border: 1px solid #555;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #555;
+  border-color: #666;
+}
+
+.save-button {
+  background-color: #646cff;
+  color: #fff;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.save-button:hover {
+  background-color: #747bff;
+}
+
+.save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-button {
+  background-color: #522;
+  color: #f88;
+  border: 1px solid #744;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #633;
+}
+
+.duplicate-button {
+  background-color: #234;
+  color: #8af;
+  border: 1px solid #346;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.duplicate-button:hover {
+  background-color: #2a3a5a;
+}
+
+.save-order-button {
+  background-color: #252;
+  color: #8f8;
+  border: 1px solid #474;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.save-order-button:hover {
+  background-color: #2a622a;
+}
+
+.save-order-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (prefers-color-scheme: light) {
@@ -163,7 +237,39 @@ h1 {
     background-color: #ffebee;
     color: #b71c1c;
   }
-  .cancel-button { background-color: #f0f0f0; color: black; border-color: #ccc; }
+  .cancel-button { 
+    background-color: #f5f5f5; 
+    color: #333; 
+    border-color: #ccc; 
+  }
+  .cancel-button:hover {
+    background-color: #e5e5e5;
+    border-color: #bbb;
+  }
+  .delete-button {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-color: #fecaca;
+  }
+  .delete-button:hover {
+    background-color: #fecaca;
+  }
+  .duplicate-button {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+  }
+  .duplicate-button:hover {
+    background-color: #dbeafe;
+  }
+  .save-order-button {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+  .save-order-button:hover {
+    background: #bbf7d0;
+  }
 }
 
 .settings-dropdown {
@@ -210,9 +316,25 @@ h1 {
   margin: 0;
 }
 
+.close-button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #fff;
+}
+
 .dialog-footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   border-top: 1px solid #444;
   padding-top: 15px;
 }
@@ -220,6 +342,7 @@ h1 {
 .footer-right {
   display: flex;
   gap: 10px;
+  margin-left: auto;
 }
 
 .footer-left {
@@ -236,6 +359,12 @@ h1 {
   .settings-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
   .settings-button { color: black; }
   .dialog-header, .dialog-footer { border-color: #eee; }
+  .close-button {
+    color: #888;
+  }
+  .close-button:hover {
+    color: #000;
+  }
   .settings-dropdown {
     background-color: #fff;
     border-color: #ccc;

@@ -115,6 +115,13 @@
   font-size: 1rem;
 }
 
+.dialog-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #444;
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (prefers-color-scheme: light) {
   .teacher-statistics-box { background: #fff; color: #333; }
   .range-selector { background: #f5f5f5; }

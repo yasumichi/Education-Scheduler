@@ -105,14 +105,6 @@
   height: 30px;
 }
 
-.delivery-method-manager-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #444;
-  padding-top: 20px;
-}
-
 .add-button {
   background-color: #225522;
   color: #88ff88;
@@ -120,21 +112,6 @@
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-}
-
-.footer-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.save-button {
-  background-color: #646cff;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
 }
 
 .empty-message {
@@ -149,5 +126,5 @@
   .method-field input[type="text"], .method-field input[type="color"] { background-color: #fff; border-color: #ccc; color: #333; }
   .remove-button { background-color: #fee2e2; color: #b91c1c; border-color: #fecaca; }
   .add-button { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; }
-  .delivery-method-manager-header, .delivery-method-manager-footer { border-color: #eee; }
+  .delivery-method-manager-header { border-color: #eee; }
 }

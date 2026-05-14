@@ -196,9 +196,11 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
           </div>
         </div>
 
-        <div className="system-setting-footer">
-          <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-          <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+        <div className="dialog-footer">
+          <div className="footer-right">
+            <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
+            <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+          </div>
         </div>
       </div>
     </div>

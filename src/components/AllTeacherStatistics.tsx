@@ -157,7 +157,9 @@ export function AllTeacherStatistics({
         </div>
 
         <div className="dialog-footer">
-          <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+          <div className="footer-right">
+            <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+          </div>
         </div>
       </div>
     </div>

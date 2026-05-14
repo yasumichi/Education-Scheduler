@@ -168,9 +168,11 @@ export function ColorThemeManager({ backendUrl, onClose, onUpdate, themes: initi
           {renderCategory('HOLIDAY', t('Holidays'))}
         </div>
 
-        <div className="theme-manager-footer">
-          <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-          <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+        <div className="dialog-footer">
+          <div className="footer-right">
+            <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
+            <button className="save-button" onClick={handleSave}>{t('Save Changes')}</button>
+          </div>
         </div>
       </div>
     </div>

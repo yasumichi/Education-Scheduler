@@ -496,8 +496,10 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
           </div>
         </div>
 
-        <div className="subject-manager-footer">
-          <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+        <div className="dialog-footer">
+          <div className="footer-right">
+            <button className="cancel-button" onClick={onClose}>{t('Close')}</button>
+          </div>
         </div>
       </div>
 
@@ -524,9 +526,11 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
               <label>{t('Order')}</label>
               <input type="number" value={editingType.order} onInput={(e) => setEditingType({ ...editingType, order: parseInt(e.currentTarget.value) })} />
             </div>
-            <div className="modal-actions">
-              <button className="cancel-button" onClick={() => setEditingType(null)}>{t('Cancel')}</button>
-              <button className="add-btn" onClick={handleSaveType}>{t('Save')}</button>
+            <div className="dialog-footer">
+              <div className="footer-right">
+                <button className="cancel-button" onClick={() => setEditingType(null)}>{t('Cancel')}</button>
+                <button className="save-button" onClick={handleSaveType}>{t('Save')}</button>
+              </div>
             </div>
           </div>
         </div>
@@ -561,9 +565,11 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
               <label>{t('Order')}</label>
               <input type="number" value={editingSubject.order || 0} onInput={(e) => setEditingSubject({ ...editingSubject, order: parseInt(e.currentTarget.value) })} />
             </div>
-            <div className="modal-actions">
-              <button className="cancel-button" onClick={() => setEditingSubject(null)}>{t('Cancel')}</button>
-              <button className="add-btn" onClick={handleSaveSubject}>{t('Save')}</button>
+            <div className="dialog-footer">
+              <div className="footer-right">
+                <button className="cancel-button" onClick={() => setEditingSubject(null)}>{t('Cancel')}</button>
+                <button className="save-button" onClick={handleSaveSubject}>{t('Save')}</button>
+              </div>
             </div>
           </div>
         </div>

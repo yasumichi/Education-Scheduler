@@ -27,33 +27,6 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #444;
-  padding-bottom: 10px;
-}
-
-.modal-header h2 {
-  margin: 0;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: #888;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
-.close-btn:hover {
-  color: #fff;
-}
-
 .modal-content {
   flex: 1;
   overflow-y: hidden; /* Changed to hidden to allow internal scroll */
