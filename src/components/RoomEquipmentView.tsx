@@ -12,8 +12,8 @@ export function RoomEquipmentView({ room, onClose, labels }: Props) {
   const { t } = useTranslation();
 
   return (
-    <div className="room-equipment-overlay">
-      <div className="room-equipment-box">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
         <div className="dialog-header">
           <h2>{room.name}</h2>
           <button className="close-button" onClick={onClose}>×</button>

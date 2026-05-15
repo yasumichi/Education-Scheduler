@@ -100,9 +100,9 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="system-setting-overlay">
-      <div className="system-setting-box">
-        <div className="system-setting-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
+        <div className="dialog-header">
           <h2>{t('System Settings')}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>

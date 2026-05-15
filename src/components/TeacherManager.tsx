@@ -187,9 +187,9 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
   };
 
   return (
-    <div className="teacher-manager-overlay">
-      <div className="teacher-manager-box">
-        <div className="teacher-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box teacher-manager-box">
+        <div className="dialog-header">
           <h2>{t('Manage {{resource}}', { resource: labels.teacher })}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>

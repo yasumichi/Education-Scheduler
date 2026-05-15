@@ -303,6 +303,32 @@ h1 {
   color: #fff;
 }
 
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.dialog-box {
+  background-color: #242424;
+  color: #fff;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  position: relative;
+}
+
 .dialog-header {
   display: flex;
   justify-content: space-between;
@@ -313,6 +339,7 @@ h1 {
 
 .dialog-header h2 {
   margin: 0;
+  font-size: 1.25rem;
 }
 
 .close-button {
@@ -357,6 +384,10 @@ h1 {
   .settings-button { border-color: #ccc; color: #666; }
   .settings-button:hover { background-color: #f0f0f0; border-color: #999; color: #333; }
   .settings-button { color: black; }
+  .dialog-box {
+    background-color: #fff;
+    color: #333;
+  }
   .dialog-header, .dialog-footer { border-color: #eee; }
   .close-button {
     color: #888;

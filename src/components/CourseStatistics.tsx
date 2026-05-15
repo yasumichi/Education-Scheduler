@@ -125,13 +125,13 @@ export function CourseStatistics({ course, subjects, lessons, periods, labels, o
   };
 
   return (
-    <div className="course-statistics-overlay">
-      <div className="course-statistics-box">
+    <div className="dialog-overlay">
+      <div className="dialog-box course-statistics-box">
         <div className="dialog-header">
           <h2>{t('Course Statistics')}: {course.name}</h2>
           <div className="header-actions">
-            <button 
-              className="excel-export-btn" 
+            <button
+              className="excel-export-btn"
               onClick={() => exportCourseStatisticsToExcel({ courseName: course.name, stats, labels, t })}
               title={t('Export to Excel')}
               style={{ marginRight: '10px' }}
@@ -141,7 +141,6 @@ export function CourseStatistics({ course, subjects, lessons, periods, labels, o
                 <polyline points="7 10 12 15 17 10"></polyline>
                 <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
-              <span style={{ marginLeft: '5px' }}>Excel</span>
             </button>
             <button className="close-button" onClick={onClose}>×</button>
           </div>

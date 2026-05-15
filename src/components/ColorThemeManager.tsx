@@ -155,9 +155,9 @@ export function ColorThemeManager({ backendUrl, onClose, onUpdate, themes: initi
   };
 
   return (
-    <div className="theme-manager-overlay">
-      <div className="theme-manager-box">
-        <div className="theme-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
+        <div className="dialog-header">
           <h2>{t('Manage Color Themes')}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>

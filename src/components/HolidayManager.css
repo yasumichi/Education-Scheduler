@@ -1,26 +1,5 @@
-.holiday-manager-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
 .holiday-manager-box {
-  background-color: #242424;
-  color: #fff;
   width: 600px;
-  max-width: 90vw;
-  max-height: 80vh;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .holiday-manager-content {
@@ -176,9 +155,6 @@
 }
 
 @media (prefers-color-scheme: light) {
-  .holiday-manager-box { background-color: #fff; color: #333; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
-  .holiday-manager-header { border-bottom-color: #eee; }
-  .close-button { color: #666; }
   .year-selector label { color: #666; }
   .year-selector select { background-color: #fff; border-color: #ccc; color: #333; }
   .holiday-list th, .holiday-list td { border-bottom-color: #eee; }
@@ -189,7 +165,6 @@
   .holiday-form h3, .import-section h3 { border-bottom-color: #eee; }
   .form-group label { color: #666; }
   .form-group input { background-color: #fff; border-color: #ccc; color: #333; }
-  .form-actions { border-top-color: #eee; }
   .import-section h4 { border-bottom-color: #eee; }
   .import-nager, .import-json { background-color: #f3f4f6; }
   .import-nager button { background-color: #10b981; }

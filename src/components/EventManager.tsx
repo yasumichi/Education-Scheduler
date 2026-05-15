@@ -100,8 +100,8 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
   const roomResources = resources.filter(r => r.type === 'room');
 
   return (
-    <div className="event-manager-overlay">
-      <div className="event-manager-box">
+    <div className="dialog-overlay">
+      <div className="dialog-box event-manager-box">
         <div className="dialog-header">
           <h2>{formData.id ? t('Edit Event') : t('Create Event')}</h2>
           <button className="close-button" onClick={onClose}>×</button>

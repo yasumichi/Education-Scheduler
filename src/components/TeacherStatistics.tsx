@@ -248,8 +248,8 @@ export function TeacherStatistics({
   }, [teacher, courses, subjects, lessons, periods, startDate, endDate, t]);
 
   return (
-    <div className="teacher-statistics-overlay">
-      <div className="teacher-statistics-box">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
         <div className="dialog-header">
           <h2>{t('{{resource}} Statistics', { resource: labels.teacher })}: {teacher.name}</h2>
           <div className="header-actions">

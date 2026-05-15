@@ -148,8 +148,8 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
   };
 
   return (
-    <div className="user-manager-overlay">
-      <div className="user-manager-box larger">
+    <div className="dialog-overlay">
+      <div className="dialog-box user-manager-box larger">
         <div className="dialog-header">
           <h2>{t('Manage Users')}</h2>
           <button className="close-button" onClick={onClose}>×</button>

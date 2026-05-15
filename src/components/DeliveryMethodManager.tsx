@@ -73,9 +73,9 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate, labels }:
   if (loading) return <div className="loading">{t('Loading...')}</div>;
 
   return (
-    <div className="delivery-method-manager-overlay">
-      <div className="delivery-method-manager-box">
-        <div className="delivery-method-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
+        <div className="dialog-header">
           <h2>{t('Manage {{resource}}', { resource: labels.deliveryMethod })}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>

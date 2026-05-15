@@ -387,8 +387,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   };
 
   return (
-    <div className="lesson-manager-overlay">
-      <div className="lesson-manager-box">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
         <div className="dialog-header">
           <h2>
             {formData.id ? t('Edit Lesson') : t('Create Lesson')}

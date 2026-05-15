@@ -171,9 +171,9 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
   };
 
   return (
-    <div className="holiday-manager-overlay">
-      <div className="holiday-manager-box">
-        <div className="holiday-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
+        <div className="dialog-header">
           <h2>{t('Manage Holidays')}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>

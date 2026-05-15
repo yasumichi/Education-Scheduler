@@ -82,9 +82,9 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
   };
 
   return (
-    <div className="profile-manager-overlay">
-      <div className="profile-manager-box">
-        <div className="profile-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
+        <div className="dialog-header">
           <h2>{getTitle()}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>

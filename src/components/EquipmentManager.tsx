@@ -151,8 +151,8 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
   };
 
   return (
-    <div className="equipment-manager-overlay">
-      <div className="equipment-manager-box">
+    <div className="dialog-overlay">
+      <div className="dialog-box equipment-manager-box">
         <div className="dialog-header">
           <h2>{t('Manage {{resource}}', { resource: labels.equipment })}</h2>
           <button className="close-button" onClick={onClose}>×</button>

@@ -205,9 +205,9 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
   };
 
   return (
-    <div className="room-manager-overlay">
-      <div className="room-manager-box">
-        <div className="room-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box room-manager-box">
+        <div className="dialog-header">
           <h2>{t('Manage {{resource}}', { resource: labels.room })}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>

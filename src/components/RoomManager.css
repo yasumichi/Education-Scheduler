@@ -1,26 +1,5 @@
-.room-manager-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
 .room-manager-box {
-  background-color: #242424;
-  color: #fff;
-  border-radius: 8px;
-  width: 90%;
   max-width: 550px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .room-manager-content {
@@ -192,10 +171,8 @@
 }
 
 @media (prefers-color-scheme: light) {
-  .room-manager-box { background-color: #fff; color: #333; }
   .room-form input { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .move-btn { background-color: #f0f0f0; color: #333; border-color: #ccc; }
-  .room-manager-header { border-color: #eee; }
   .edit-btn { background-color: #f0f0f0; color: #333; border-color: #ccc; }
   .draggable-row:active { background-color: #f9f9f9; }
   .room-equipments-section { border-color: #eee; }

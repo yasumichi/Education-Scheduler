@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { ResourceLabels } from '../types';
-import './PeriodManager.css'; // Re-use PeriodManager overlay/box styles
+import './PeriodManager.css'; // Re-use PeriodManager layout styles
 
 interface Props {
   backendUrl: string;
@@ -41,15 +41,14 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
   };
 
   return (
-    <div className="period-manager-overlay">
-      <div className="period-manager-box" style={{ maxWidth: '500px' }}>
-        <div className="period-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box" style={{ maxWidth: '500px' }}>
+        <div className="dialog-header">
           <h2>{t('Manage Labels')}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
-        
-        <div className="period-list">
-          <div className="period-field" style={{ marginBottom: '15px' }}>
+
+        <div className="period-list">          <div className="period-field" style={{ marginBottom: '15px' }}>
             <label>Room</label>
             <input 
               type="text" 

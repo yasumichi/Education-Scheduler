@@ -493,8 +493,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   };
 
   return (
-    <div className="course-manager-overlay">
-      <div className="course-manager-box">
+    <div className="dialog-overlay">
+      <div className="dialog-box course-manager-box">
         <div className="dialog-header">
           <h2>{t('Manage {{resource}}', { resource: labels.course })}</h2>
           <button className="close-button" onClick={onClose}>×</button>

@@ -1,26 +1,5 @@
-.subject-manager-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .subject-manager-box {
-  background: #222;
-  color: #fff;
-  width: 90%;
   max-width: 1000px;
-  max-height: 90vh;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .subject-manager-content {
@@ -290,27 +269,6 @@
 .add-btn:hover { background: #747bff; }
 
 /* Modal for Editing */
-.edit-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.8);
-  z-index: 1100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.edit-modal {
-  background: #222;
-  border: 1px solid #444;
-  border-radius: 8px;
-  width: 400px;
-  padding: 20px;
-}
-
 .form-group {
   margin-bottom: 15px;
 }
@@ -333,8 +291,6 @@
 }
 
 @media (prefers-color-scheme: light) {
-  .subject-manager-box { background: #fff; color: #333; }
-  .subject-manager-header { border-bottom-color: #eee; }
   .type-section { border-right-color: #eee; }
   .type-filters { background-color: #f9f9f9; }
   .type-filters input { background: #fff; border-color: #ccc; color: #333; }
@@ -344,7 +300,6 @@
   .manager-item.active { background: #646cff; color: #fff; }
   .tree-node { background: #f9f9f9; border-color: #ddd; }
   .children-container { border-top-color: #eee; }
-  .edit-modal { background: #fff; }
   .form-group input { background: #fff; border-color: #ccc; color: #333; }
   .section-header h3 { color: #666; }
   .item-actions .icon-btn { color: #666; }

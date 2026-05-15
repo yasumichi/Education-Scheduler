@@ -109,8 +109,8 @@ export function AllTeacherStatistics({
   };
 
   return (
-    <div className="teacher-statistics-overlay">
-      <div className="teacher-statistics-box all-teachers">
+    <div className="dialog-overlay">
+      <div className="dialog-box all-teachers">
         <div className="dialog-header">
           <h2>{t('{{resource}} Statistics', { resource: labels.teacher })}</h2>
           <button className="close-button" onClick={onClose}>×</button>

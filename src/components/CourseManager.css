@@ -1,26 +1,5 @@
-.course-manager-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
 .course-manager-box {
-  background-color: #242424;
-  color: #fff;
-  border-radius: 8px;
-  width: 95%;
   max-width: 1000px; /* Increased width */
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .status-message-banner {
@@ -155,7 +134,6 @@
 .duplicate-lessons-btn { background-color: #335; color: #88f; border: 1px solid #447; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
 
 @media (prefers-color-scheme: light) {
-  .course-manager-box { background-color: #fff; color: #333; }
   .draggable-row:hover { background-color: #f9f9f9; }
   .move-btn { background: #f0f0f0; border-color: #ccc; color: #666; }
   .edit-btn { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }

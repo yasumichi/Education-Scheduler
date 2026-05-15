@@ -73,9 +73,9 @@ export function PeriodManager({ backendUrl, onClose, onUpdate }: Props) {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="period-manager-overlay">
-      <div className="period-manager-box">
-        <div className="period-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box">
+        <div className="dialog-header">
           <h2>{t('Manage Periods')}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>

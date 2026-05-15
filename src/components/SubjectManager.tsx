@@ -407,11 +407,11 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
   const filteredSubjects = subjects.filter(s => s.courseTypeId === selectedTypeId && !s.parentId);
 
   return (
-    <div className="subject-manager-overlay">
-      <div className="subject-manager-box">
-        <div className="subject-manager-header">
+    <div className="dialog-overlay">
+      <div className="dialog-box subject-manager-box">
+        <div className="dialog-header">
           <h2>{t('Manage {{resource}}', { resource: labels.subject })}</h2>
-          <button className="icon-btn" style={{ fontSize: '1.5rem' }} onClick={onClose}>×</button>
+          <button className="close-button" onClick={onClose}>×</button>
         </div>
 
         <div className="subject-manager-content">
@@ -505,26 +505,31 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
 
       {/* Edit CourseType Modal */}
       {editingType && (
-        <div className="edit-modal-overlay">
-          <div className="edit-modal">
-            <h3>{editingType.id ? t('Edit') : t('Add')} {labels.courseType}</h3>
-            <div className="form-group">
-              <label>{t('Name')}</label>
-              <input type="text" value={editingType.name} onInput={(e) => setEditingType({ ...editingType, name: e.currentTarget.value })} />
+        <div className="dialog-overlay">
+          <div className="dialog-box">
+            <div className="dialog-header">
+              <h2>{editingType.id ? t('Edit') : t('Add')} {labels.courseType}</h2>
+              <button className="close-button" onClick={() => setEditingSubject(null)}>×</button>
             </div>
-            <div className="form-row">
+            <div style={{ padding: '20px' }}>
               <div className="form-group">
-                <label>{t('Start Date')}</label>
-                <input type="date" value={editingType.startDate || ''} onInput={(e) => setEditingType({ ...editingType, startDate: e.currentTarget.value })} />
+                <label>{t('Name')}</label>
+                <input type="text" value={editingType.name} onInput={(e) => setEditingType({ ...editingType, name: e.currentTarget.value })} />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{t('Start Date')}</label>
+                  <input type="date" value={editingType.startDate || ''} onInput={(e) => setEditingType({ ...editingType, startDate: e.currentTarget.value })} />
+                </div>
+                <div className="form-group">
+                  <label>{t('End Date')}</label>
+                  <input type="date" value={editingType.endDate || ''} onInput={(e) => setEditingType({ ...editingType, endDate: e.currentTarget.value })} />
+                </div>
               </div>
               <div className="form-group">
-                <label>{t('End Date')}</label>
-                <input type="date" value={editingType.endDate || ''} onInput={(e) => setEditingType({ ...editingType, endDate: e.currentTarget.value })} />
+                <label>{t('Order')}</label>
+                <input type="number" value={editingType.order} onInput={(e) => setEditingType({ ...editingType, order: parseInt(e.currentTarget.value) })} />
               </div>
-            </div>
-            <div className="form-group">
-              <label>{t('Order')}</label>
-              <input type="number" value={editingType.order} onInput={(e) => setEditingType({ ...editingType, order: parseInt(e.currentTarget.value) })} />
             </div>
             <div className="dialog-footer">
               <div className="footer-right">
@@ -538,32 +543,37 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
 
       {/* Edit Subject Modal */}
       {editingSubject && (
-        <div className="edit-modal-overlay">
-          <div className="edit-modal">
-            <h3>{editingSubject.id ? t('Edit') : t('Add')} {
-              editingSubject.level === 1 ? labels.subjectLarge :
-              editingSubject.level === 2 ? labels.subjectMiddle :
-              labels.subjectSmall
-            }</h3>
-            <div className="form-group">
-              <label>{t('Name')}</label>
-              <input type="text" value={editingSubject.name} onInput={(e) => setEditingSubject({ ...editingSubject, name: e.currentTarget.value })} />
+        <div className="dialog-overlay" style={{ zIndex: 1100 }}>
+          <div className="dialog-box" style={{ maxWidth: '400px' }}>
+            <div className="dialog-header">
+              <h2>{editingSubject.id ? t('Edit') : t('Add')} {
+                editingSubject.level === 1 ? labels.subjectLarge :
+                editingSubject.level === 2 ? labels.subjectMiddle :
+                labels.subjectSmall
+              }</h2>
+              <button className="close-button" onClick={() => setEditingSubject(null)}>×</button>
             </div>
-            {(() => {
-              const hasChildren = subjects.some(s => s.parentId === editingSubject.id);
-              if (!hasChildren || editingSubject.level === 3) {
-                return (
-                  <div className="form-group">
-                    <label>{t('Total Periods')}</label>
-                    <input type="number" value={editingSubject.totalPeriods || 0} onInput={(e) => setEditingSubject({ ...editingSubject, totalPeriods: parseInt(e.currentTarget.value) })} />
-                  </div>
-                );
-              }
-              return null;
-            })()}
-            <div className="form-group">
-              <label>{t('Order')}</label>
-              <input type="number" value={editingSubject.order || 0} onInput={(e) => setEditingSubject({ ...editingSubject, order: parseInt(e.currentTarget.value) })} />
+            <div style={{ padding: '20px' }}>
+              <div className="form-group">
+                <label>{t('Name')}</label>
+                <input type="text" value={editingSubject.name} onInput={(e) => setEditingSubject({ ...editingSubject, name: e.currentTarget.value })} />
+              </div>
+              {(() => {
+                const hasChildren = subjects.some(s => s.parentId === editingSubject.id);
+                if (!hasChildren || editingSubject.level === 3) {
+                  return (
+                    <div className="form-group">
+                      <label>{t('Total Periods')}</label>
+                      <input type="number" value={editingSubject.totalPeriods || 0} onInput={(e) => setEditingSubject({ ...editingSubject, totalPeriods: parseInt(e.currentTarget.value) })} />
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              <div className="form-group">
+                <label>{t('Order')}</label>
+                <input type="number" value={editingSubject.order || 0} onInput={(e) => setEditingSubject({ ...editingSubject, order: parseInt(e.currentTarget.value) })} />
+              </div>
             </div>
             <div className="dialog-footer">
               <div className="footer-right">
