@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { CourseType, Subject, ResourceLabels, SystemSetting, Resource, Lesson, TimePeriod } from '../types';
+import { CourseType, Subject, ResourceLabels, SystemSetting, Resource } from '../types';
 import './CourseManager.css';
 
 interface Props {
@@ -253,59 +253,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
       ? formData.assistantTeacherIds.filter(tid => tid !== id)
       : [...formData.assistantTeacherIds, id];
     setFormData({ ...formData, assistantTeacherIds: newIds });
-  };
-
-  const handleImportCSV = (e: any) => {
-    const file = e.currentTarget.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      let text = event.target?.result as string;
-      if (!text) return;
-
-      if (text.charCodeAt(0) === 0xFEFF) {
-        text = text.substring(1);
-      }
-
-      try {
-        const lines = text.split(/\r?\n/);
-        const importedSubjects: { name: string; totalPeriods: number; subjectId: string | null }[] = [];
-        
-        lines.forEach((line, index) => {
-          const trimmedLine = line.trim();
-          if (!trimmedLine) return;
-
-          const parts = trimmedLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => {
-            let val = s.trim();
-            if (val.startsWith('"') && val.endsWith('"')) {
-              val = val.substring(1, val.length - 1).replace(/""/g, '"');
-            }
-            return val;
-          });
-
-          if (parts.length < 2) return;
-
-          const [name, totalPeriodsStr] = parts;
-          const totalPeriods = parseInt(totalPeriodsStr);
-          
-          if (index === 0 && isNaN(totalPeriods)) return;
-
-          if (name && !isNaN(totalPeriods)) {
-            importedSubjects.push({ name, totalPeriods, subjectId: null });
-          }
-        });
-
-        if (importedSubjects.length > 0) {
-          setFormData({ ...formData, subjects: [...formData.subjects, ...importedSubjects] });
-        }
-      } catch (err) {
-        console.error('Error parsing CSV:', err);
-        alert(t('Failed to parse CSV file'));
-      }
-    };
-    reader.readAsText(file);
-    e.currentTarget.value = '';
   };
 
   const handleSave = async () => {
@@ -799,15 +746,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                     <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
                       {t('Add all from {{resource}}', { resource: labels.courseType })}
                     </button>
-                    <label className="import-csv-label">
-                      <input
-                        type="file"
-                        accept=".csv"
-                        style={{ display: 'none' }}
-                        onChange={handleImportCSV}
-                      />
-                      <span className="import-btn">{t('Import CSV')}</span>
-                    </label>
                   </div>
                 )}
               </div>
