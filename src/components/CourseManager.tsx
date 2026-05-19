@@ -176,20 +176,13 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     return c.startDate <= range.end && c.endDate >= range.start;
   });
 
-  const handleRemoveSubject = (index: number) => {
-    setFormData({
-      ...formData,
-      subjects: formData.subjects.filter((_, i) => i !== index)
-    });
-  };
-
   const handleBulkAddSubjects = () => {
     if (!formData.courseTypeId) {
       alert(t('Please select a {{resource}} first', { resource: labels.courseType }));
       return;
     }
     
-    // Get all subjects for the selected course type and sort them hierarchically
+    // Get master subjects for selected course type
     const typeSubjects = allSubjects.filter(s => s.courseTypeId === formData.courseTypeId);
     const sortedSubjects: Subject[] = [];
     
@@ -208,21 +201,32 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     // Filter only leaf subjects from the sorted list
     const leafSubjects = sortedSubjects.filter(s => !typeSubjects.some(child => child.parentId === s.id));
     
-    const newSubjects = leafSubjects.map(s => ({
-      name: s.name,
-      totalPeriods: s.totalPeriods || 0,
-      subjectId: s.id
-    }));
-
-    if (newSubjects.length === 0) {
-      alert(t('No subjects found for this {{resource}}', { resource: labels.courseType }));
-      return;
-    }
-
-    setFormData({
-      ...formData,
-      subjects: [...formData.subjects, ...newSubjects]
+    // Check if current subjects are from the same CourseType
+    const currentSubjects = formData.subjects;
+    const isSameType = currentSubjects.length > 0 && currentSubjects.every(s => {
+      const masterSub = allSubjects.find(ms => ms.id === s.subjectId);
+      return masterSub && masterSub.courseTypeId === formData.courseTypeId;
     });
+
+    if (isSameType) {
+      // Reset totalPeriods
+      const updatedSubjects = currentSubjects.map(s => {
+        const masterSub = allSubjects.find(ms => ms.id === s.subjectId);
+        return {
+          ...s,
+          totalPeriods: masterSub ? (masterSub.totalPeriods || 0) : s.totalPeriods
+        };
+      });
+      setFormData({ ...formData, subjects: updatedSubjects });
+    } else {
+      // Replace with new subjects
+      const newSubjects = leafSubjects.map(s => ({
+        name: s.name,
+        totalPeriods: s.totalPeriods || 0,
+        subjectId: s.id
+      }));
+      setFormData({ ...formData, subjects: newSubjects });
+    }
   };
 
   const handleSubjectChange = (index: number, field: 'name' | 'totalPeriods' | 'subjectId', value: any) => {
@@ -778,7 +782,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                       <th>{labels.subjectMiddle}</th>
                       <th>{labels.subjectSmall}</th>
                       <th style={{ width: '100px' }}>{t('Total Periods')}</th>
-                      {isAdmin && <th style={{ width: '40px' }}></th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -805,11 +808,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                             readOnly={!isAdmin}
                           />
                         </td>
-                        {isAdmin && (
-                          <td>
-                            <button className="remove-btn" onClick={() => handleRemoveSubject(s.originalIndex)}>×</button>
-                          </td>
-                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -817,7 +815,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 {isAdmin && (
                  <div className="subjects-actions">
                    <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
-                     {t('Add all from {{resource}}', { resource: labels.courseType })}
+                     {t('Apply {{resource}}', { resource: labels.courseType })}
                    </button>
                  </div>
                 )}
