@@ -1061,6 +1061,35 @@ app.delete('/api/lessons/:id', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
+// Fetch lesson history
+app.get('/api/lessons/:id/history', verifyToken, async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  try {
+    const logs = await prisma.auditLog.findMany({
+      where: {
+        tableName: 'Lesson',
+        data: {
+          contains: id
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+    // Filter precisely by parsing JSON
+    const filteredLogs = logs.filter(log => {
+      try {
+        const data = JSON.parse(log.data);
+        return data.id === id || (Array.isArray(data) && data.some((item: any) => item.id === id));
+      } catch (e) {
+        return log.data.includes(`"id":"${id}"`);
+      }
+    });
+    res.json(filteredLogs);
+  } catch (error) {
+    console.error('Failed to fetch lesson history:', error);
+    res.status(500).json({ error: 'Failed to fetch lesson history' });
+  }
+});
+
 // Fetch events (Auth required)
 app.get('/api/events', verifyToken, async (req, res) => {
   try {

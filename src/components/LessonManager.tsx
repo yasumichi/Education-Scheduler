@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
-import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User, Subject } from '../types';
-import { parseISO, differenceInDays } from 'date-fns';
+import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User, Subject, AuditLog } from '../types';
+import { parseISO, differenceInDays, format } from 'date-fns';
 import './LessonManager.css';
 
 interface Props {
@@ -22,6 +22,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyLogs, setHistoryLogs] = useState<AuditLog[]>([]);
   
   const [formData, setFormData] = useState<{
     id?: string;
@@ -86,6 +88,23 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     fetchDeliveryMethods();
   }, [backendUrl]);
 
+  useEffect(() => {
+    if (showHistory && formData.id && historyLogs.length === 0) {
+      const fetchHistory = async () => {
+        try {
+          const res = await fetch(`${backendUrl}/lessons/${formData.id}/history`, { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            setHistoryLogs(data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch lesson history:', err);
+        }
+      };
+      fetchHistory();
+    }
+  }, [showHistory, formData.id, backendUrl, historyLogs.length]);
+
   const teachers = resources.filter(r => r.type === 'teacher');
   const rooms = resources.filter(r => r.type === 'room');
   const courses = resources.filter(r => r.type === 'course');
@@ -93,6 +112,70 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const selectedCourse = useMemo(() => courses.find(c => c.id === formData.courseId), [formData.courseId, courses]);
   const mainTeacherLabel = labels.mainTeacher;
   const subTeacherLabel = labels.subTeacher;
+
+  const getResourceName = (id: string) => {
+    const res = resources.find(r => r.id === id);
+    return res ? t(res.name) : id;
+  };
+
+  const getDeliveryMethodName = (id: string) => {
+    const m = deliveryMethods.find(m => m.id === id);
+    return m ? m.name : id;
+  };
+
+  const formatValue = (field: string, value: any) => {
+    if (value === null || value === undefined || value === '') return '-';
+    if (field === 'teacherId' || field === 'roomId' || field === 'courseId') return getResourceName(value);
+    if (field === 'subTeacherIds') {
+      const ids = Array.isArray(value) ? value : [];
+      return ids.map(getResourceName).join(', ') || '-';
+    }
+    if (field === 'deliveryMethodIds') {
+      const ids = Array.isArray(value) ? value : [];
+      return ids.map(getDeliveryMethodName).join(', ') || '-';
+    }
+    if (field === 'startPeriodId' || field === 'endPeriodId') {
+      return periods.find(p => p.id === value)?.name || value;
+    }
+    return String(value);
+  };
+
+  const calculateDiff = (prev: any, current: any) => {
+    const changes: { field: string, old: any, new: any }[] = [];
+    const keys = new Set([...Object.keys(prev || {}), ...Object.keys(current || {})]);
+    
+    keys.forEach(key => {
+      if (['id', 'updatedAt', 'createdAt', 'subTeachers', 'deliveryMethods', 'subjectRef', 'course', 'room', 'teacher'].includes(key)) return;
+      
+      let valPrev = prev?.[key];
+      let valCurrent = current?.[key];
+      
+      if (JSON.stringify(valPrev) !== JSON.stringify(valCurrent)) {
+        changes.push({ field: key, old: valPrev, new: valCurrent });
+      }
+    });
+    return changes;
+  };
+
+  const getFieldLabel = (field: string) => {
+    switch (field) {
+      case 'subject': return labels.subject;
+      case 'courseId': return labels.course;
+      case 'roomId': return labels.room;
+      case 'teacherId': return labels.mainTeacher;
+      case 'subTeacherIds': return labels.subTeacher;
+      case 'deliveryMethodIds': return labels.deliveryMethod;
+      case 'startDate': return t('Start Date');
+      case 'endDate': return t('End Date');
+      case 'startPeriodId': return t('Start Period');
+      case 'endPeriodId': return t('End Period');
+      case 'location': return t('Location');
+      case 'remarks': return t('Remarks');
+      case 'externalTeacher': return t('External {{resource}} (if not managed)', { resource: labels.mainTeacher });
+      case 'externalSubTeachers': return t('External {{resource}} (comma separated)', { resource: labels.subTeacher });
+      default: return field;
+    }
+  };
 
   const canManage = useMemo(() => {
     if (user.role === 'ADMIN') return true;
@@ -391,14 +474,75 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
       <div className="dialog-box">
         <div className="dialog-header">
           <h2>
-            {formData.id ? t('Edit Lesson') : t('Create Lesson')}
-            {!canManage && canLimitedEdit && <span className="readonly-badge limited"> ({t('Limited Edit')})</span>}
-            {!canManage && !canLimitedEdit && <span className="readonly-badge"> ({t('Read-only')})</span>}
+            {showHistory ? t('History') : (formData.id ? t('Edit Lesson') : t('Create Lesson'))}
+            {!showHistory && !canManage && canLimitedEdit && <span className="readonly-badge limited"> ({t('Limited Edit')})</span>}
+            {!showHistory && !canManage && !canLimitedEdit && <span className="readonly-badge"> ({t('Read-only')})</span>}
           </h2>
-          <button className="close-button" onClick={onClose}>×</button>
+          <div className="header-actions">
+            {formData.id && (
+              <button 
+                className={`history-toggle-btn ${showHistory ? 'active' : ''}`}
+                onClick={() => setShowHistory(!showHistory)}
+                title={t('History')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </button>
+            )}
+            <button className="close-button" onClick={onClose}>×</button>
+          </div>
         </div>
 
-        <div className="lesson-manager-content">
+        {showHistory ? (
+          <div className="lesson-manager-content history-content">
+            {historyLogs.length === 0 ? (
+              <div className="no-history">{t('Loading...')}</div>
+            ) : (
+              <div className="history-list">
+                {[...historyLogs].reverse().map((log, index, arr) => {
+                  const data = JSON.parse(log.data);
+                  const prevLog = arr[index + 1];
+                  const prevData = prevLog ? JSON.parse(prevLog.data) : null;
+                  
+                  const changes = calculateDiff(prevData, data);
+                  
+                  return (
+                    <div key={log.id} className="history-item">
+                      <div className="history-meta">
+                        <span className="history-date">{format(parseISO(log.createdAt), 'yyyy/MM/dd HH:mm:ss')}</span>
+                        <span className="history-user">{log.userEmail}</span>
+                        <span className="history-action-label">
+                          {log.action === 'CREATE_LESSON' ? t('Created') : t('Updated')}
+                        </span>
+                      </div>
+                      <div className="history-changes">
+                        {log.action === 'CREATE_LESSON' ? (
+                          <div className="history-all-fields">{t('Initial registration')}</div>
+                        ) : changes.length > 0 ? (
+                          changes.map(c => (
+                            <div key={c.field} className="change-row">
+                              <span className="field-name">{getFieldLabel(c.field)}:</span>
+                              <div className="change-values">
+                                <span className="field-old">{formatValue(c.field, c.old)}</span>
+                                <span className="field-arrow">→</span>
+                                <span className="field-new">{formatValue(c.field, c.new)}</span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="history-no-changes">{t('No visible changes')}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="lesson-manager-content">
           <div className="form-group">
             <label>{labels.course} *</label>
             {canManage ? (
@@ -677,16 +821,23 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
             </div>
           </div>
         </div>
+        )}
 
         <div className="dialog-footer">
-          {formData.id ? (
+          {formData.id && !showHistory ? (
             <div className="footer-left">
               <button className="delete-button" onClick={handleDelete} disabled={!canManage}>{t('Delete')}</button>
             </div>
           ) : <div />}
           <div className="footer-right">
-            <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
-            <button className="save-button" onClick={handleSave} disabled={!canLimitedEdit}>{t('Save Changes')}</button>
+            {showHistory ? (
+              <button className="cancel-button" onClick={() => setShowHistory(false)}>{t('Back')}</button>
+            ) : (
+              <>
+                <button className="cancel-button" onClick={onClose}>{t('Cancel')}</button>
+                <button className="save-button" onClick={handleSave} disabled={!canLimitedEdit}>{t('Save Changes')}</button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -234,3 +234,158 @@
   .sub-teacher-item, .delivery-method-item { background: #eee; color: #333; }
   .sub-teacher-item.selected, .delivery-method-item.selected { background: #646cff; color: #fff; }
 }
+
+/* History Styles */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-toggle-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.history-toggle-btn:hover {
+  background-color: #444;
+  color: #fff;
+}
+
+.history-toggle-btn.active {
+  color: #646cff;
+  background-color: rgba(100, 108, 255, 0.1);
+}
+
+.history-content {
+  background-color: #1a1a1a;
+  min-height: 400px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.history-item {
+  border-left: 3px solid #444;
+  padding-left: 15px;
+  position: relative;
+}
+
+.history-item::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background-color: #444;
+}
+
+.history-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.history-date {
+  font-weight: bold;
+  color: #ccc;
+}
+
+.history-action-label {
+  background-color: #333;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.history-changes {
+  font-size: 0.85rem;
+  background-color: #262626;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.change-row {
+  display: flex;
+  margin-bottom: 4px;
+  flex-direction: column;
+}
+
+.change-row:last-child {
+  margin-bottom: 0;
+}
+
+.field-name {
+  color: #aaa;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.change-values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.field-old {
+  color: #ef4444;
+  text-decoration: line-through;
+}
+
+.field-arrow {
+  color: #888;
+}
+
+.field-new {
+  color: #10b981;
+}
+
+.history-all-fields, .history-no-changes {
+  color: #888;
+  font-style: italic;
+}
+
+.no-history {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+
+@media (prefers-color-scheme: light) {
+  .history-toggle-btn:hover {
+    background-color: #eee;
+  }
+  .history-content {
+    background-color: #fff;
+  }
+  .history-date {
+    color: #333;
+  }
+  .history-action-label {
+    background-color: #eee;
+  }
+  .history-changes {
+    background-color: #f9f9f9;
+  }
+  .field-name {
+    color: #666;
+  }
+}
