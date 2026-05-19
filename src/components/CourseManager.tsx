@@ -433,21 +433,22 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   };
 
   const getSubjectHierarchy = (subjectId: string | null, defaultName: string) => {
-    if (!subjectId) return { large: '', middle: '', small: defaultName };
+    if (!subjectId) return { large: '', middle: '', small: defaultName, level: 3 };
     const sub = allSubjects.find(s => s.id === subjectId);
-    if (!sub) return { large: '', middle: '', small: defaultName };
+    if (!sub) return { large: '', middle: '', small: defaultName, level: 3 };
 
     let large = '';
     let middle = '';
     let small = '';
+    const level = sub.level;
 
-    if (sub.level === 1) {
+    if (level === 1) {
       large = sub.name;
-    } else if (sub.level === 2) {
+    } else if (level === 2) {
       const parent = allSubjects.find(s => s.id === sub.parentId);
       large = parent?.name || '';
       middle = sub.name;
-    } else if (sub.level === 3) {
+    } else if (level === 3) {
       const parent = allSubjects.find(s => s.id === sub.parentId);
       const grandparent = parent ? allSubjects.find(s => s.id === parent.parentId) : null;
       large = grandparent?.name || '';
@@ -457,7 +458,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
       small = sub.name;
     }
 
-    return { large, middle, small };
+    return { large, middle, small, level };
   };
 
   const getEnrichedSubjects = () => {
@@ -479,20 +480,21 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
       let largeSpan = 1;
       let middleSpan = 1;
 
-      if (i > 0 && enriched[i - 1].large === r.large && r.large !== '') {
+      // Only merge rows that have the same level for large and middle
+      if (i > 0 && enriched[i - 1].large === r.large && enriched[i - 1].level === r.level && r.large !== '') {
         largeSpan = 0;
       } else if (r.large !== '') {
         for (let j = i + 1; j < enriched.length; j++) {
-          if (enriched[j].large === r.large) largeSpan++;
+          if (enriched[j].large === r.large && enriched[j].level === r.level) largeSpan++;
           else break;
         }
       }
 
-      if (i > 0 && enriched[i - 1].large === r.large && enriched[i - 1].middle === r.middle && r.middle !== '') {
+      if (i > 0 && enriched[i - 1].large === r.large && enriched[i - 1].middle === r.middle && enriched[i - 1].level === r.level && r.middle !== '') {
         middleSpan = 0;
       } else if (r.middle !== '') {
         for (let j = i + 1; j < enriched.length; j++) {
-          if (enriched[j].large === r.large && enriched[j].middle === r.middle) middleSpan++;
+          if (enriched[j].large === r.large && enriched[j].middle === r.middle && enriched[j].level === r.level) middleSpan++;
           else break;
         }
       }
@@ -782,9 +784,19 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   <tbody>
                     {getEnrichedSubjects().map((s, index) => (
                       <tr key={index}>
-                        {s.largeSpan > 0 && <td rowSpan={s.largeSpan}>{s.large}</td>}
-                        {s.middleSpan > 0 && <td rowSpan={s.middleSpan}>{s.middle}</td>}
-                        <td>{s.small}</td>
+                        {s.largeSpan > 0 && (
+                          <td rowSpan={s.largeSpan} colSpan={s.level === 1 ? 3 : 1}>
+                            {s.large}
+                          </td>
+                        )}
+                        {s.level >= 2 && s.middleSpan > 0 && (
+                          <td rowSpan={s.middleSpan} colSpan={s.level === 2 ? 2 : 1}>
+                            {s.middle}
+                          </td>
+                        )}
+                        {s.level === 3 && (
+                          <td>{s.small}</td>
+                        )}
                         <td>
                           <input 
                             type="number" 
