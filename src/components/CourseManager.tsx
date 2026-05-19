@@ -209,7 +209,10 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     });
 
     if (isSameType) {
-      // Reset totalPeriods
+      // Reset totalPeriods for existing and find missing subjects
+      const currentSubjectIds = new Set(currentSubjects.map(s => s.subjectId));
+      const missingLeafSubjects = leafSubjects.filter(ls => !currentSubjectIds.has(ls.id));
+
       const updatedSubjects = currentSubjects.map(s => {
         const masterSub = allSubjects.find(ms => ms.id === s.subjectId);
         return {
@@ -217,7 +220,14 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           totalPeriods: masterSub ? (masterSub.totalPeriods || 0) : s.totalPeriods
         };
       });
-      setFormData({ ...formData, subjects: updatedSubjects });
+
+      const addedSubjects = missingLeafSubjects.map(s => ({
+        name: s.name,
+        totalPeriods: s.totalPeriods || 0,
+        subjectId: s.id
+      }));
+
+      setFormData({ ...formData, subjects: [...updatedSubjects, ...addedSubjects] });
     } else {
       // Replace with new subjects
       const newSubjects = leafSubjects.map(s => ({
