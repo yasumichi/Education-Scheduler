@@ -602,6 +602,7 @@ export function App() {
                       <button 
                         className="dropdown-item" 
                         onClick={() => {
+                          currentDate.value = new Date();
                           showPersonalMonthly.value = true;
                           showUserDropdown.value = false;
                         }}
