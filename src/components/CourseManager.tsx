@@ -416,12 +416,12 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   const getSortedSubjects = () => {
     const typeSubjects = allSubjects.filter(sub => sub.courseTypeId === formData.courseTypeId);
     const sorted: Subject[] = [];
-    
+
     const addChildren = (parentId: string | null, level: number) => {
       const children = typeSubjects
         .filter(s => s.parentId === parentId)
         .sort((a, b) => (a.order || 0) - (b.order || 0));
-      
+
       children.forEach(child => {
         sorted.push(child);
         addChildren(child.id, level + 1);
@@ -432,6 +432,76 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     return sorted;
   };
 
+  const getSubjectHierarchy = (subjectId: string | null, defaultName: string) => {
+    if (!subjectId) return { large: '', middle: '', small: defaultName };
+    const sub = allSubjects.find(s => s.id === subjectId);
+    if (!sub) return { large: '', middle: '', small: defaultName };
+
+    let large = '';
+    let middle = '';
+    let small = '';
+
+    if (sub.level === 1) {
+      large = sub.name;
+    } else if (sub.level === 2) {
+      const parent = allSubjects.find(s => s.id === sub.parentId);
+      large = parent?.name || '';
+      middle = sub.name;
+    } else if (sub.level === 3) {
+      const parent = allSubjects.find(s => s.id === sub.parentId);
+      const grandparent = parent ? allSubjects.find(s => s.id === parent.parentId) : null;
+      large = grandparent?.name || '';
+      middle = parent?.name || '';
+      small = sub.name;
+    } else {
+      small = sub.name;
+    }
+
+    return { large, middle, small };
+  };
+
+  const getEnrichedSubjects = () => {
+    const sortedAll = getSortedSubjects();
+    const enriched = formData.subjects.map((s, idx) => {
+      const hierarchy = getSubjectHierarchy(s.subjectId, s.name || '');
+      const masterSub = allSubjects.find(ms => ms.id === s.subjectId);
+      return {
+        ...s,
+        ...hierarchy,
+        originalIndex: idx,
+        masterOrder: masterSub ? sortedAll.indexOf(masterSub) : 999999 + idx
+      };
+    });
+
+    enriched.sort((a, b) => a.masterOrder - b.masterOrder);
+
+    const rows = enriched.map((r, i) => {
+      let largeSpan = 1;
+      let middleSpan = 1;
+
+      if (i > 0 && enriched[i - 1].large === r.large && r.large !== '') {
+        largeSpan = 0;
+      } else if (r.large !== '') {
+        for (let j = i + 1; j < enriched.length; j++) {
+          if (enriched[j].large === r.large) largeSpan++;
+          else break;
+        }
+      }
+
+      if (i > 0 && enriched[i - 1].large === r.large && enriched[i - 1].middle === r.middle && r.middle !== '') {
+        middleSpan = 0;
+      } else if (r.middle !== '') {
+        for (let j = i + 1; j < enriched.length; j++) {
+          if (enriched[j].large === r.large && enriched[j].middle === r.middle) middleSpan++;
+          else break;
+        }
+      }
+
+      return { ...r, largeSpan, middleSpan };
+    });
+
+    return rows;
+  };
   return (
     <div className="dialog-overlay">
       <div className="dialog-box course-manager-box">
@@ -485,7 +555,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCourses.map((c, idx) => {
+                    {filteredCourses.map((c) => {
                       const listIdx = coursesList.findIndex(item => item.id === c.id);
                       return (
                         <tr key={c.id}
@@ -699,40 +769,39 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
               <div className="subjects-section">
                 <h3>{labels.subject}</h3>
-                {formData.subjects.map((s, index) => (
-                  <div key={index} className="subject-row">
-                    <select
-                      value={s.subjectId || ''}
-                      onChange={(e) => handleSubjectChange(index, 'subjectId', e.currentTarget.value || null)}
-                      disabled={!isAdmin}
-                      style={{ width: '40%' }}
-                    >
-                      <option value="">-- {t('Select Subject')} --</option>
-                      {getSortedSubjects().map(sub => (
-                        <option key={sub.id} value={sub.id}>
-                          {sub.level === 2 ? '　' : sub.level === 3 ? '　　' : ''}{sub.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input 
-                      type="text" 
-                      placeholder={t('{{resource}} Name', { resource: labels.subject })}
-                      value={s.name}
-                      onInput={(e) => handleSubjectChange(index, 'name', e.currentTarget.value)}
-                      readOnly={!isAdmin}
-                      style={{ width: '30%' }}
-                    />
-                    <input 
-                      type="number" 
-                      placeholder={t('Total Periods')}
-                      value={s.totalPeriods}
-                      onInput={(e) => handleSubjectChange(index, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
-                      readOnly={!isAdmin}
-                      style={{ width: '20%' }}
-                    />
-                    {isAdmin && <button className="remove-btn" onClick={() => handleRemoveSubject(index)}>×</button>}
-                  </div>
-                ))}
+                <table className="subjects-table">
+                  <thead>
+                    <tr>
+                      <th>{labels.subjectLarge}</th>
+                      <th>{labels.subjectMiddle}</th>
+                      <th>{labels.subjectSmall}</th>
+                      <th style={{ width: '100px' }}>{t('Total Periods')}</th>
+                      {isAdmin && <th style={{ width: '40px' }}></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getEnrichedSubjects().map((s, index) => (
+                      <tr key={index}>
+                        {s.largeSpan > 0 && <td rowSpan={s.largeSpan}>{s.large}</td>}
+                        {s.middleSpan > 0 && <td rowSpan={s.middleSpan}>{s.middle}</td>}
+                        <td>{s.small}</td>
+                        <td>
+                          <input 
+                            type="number" 
+                            value={s.totalPeriods}
+                            onInput={(e) => handleSubjectChange(s.originalIndex, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
+                            readOnly={!isAdmin}
+                          />
+                        </td>
+                        {isAdmin && (
+                          <td>
+                            <button className="remove-btn" onClick={() => handleRemoveSubject(s.originalIndex)}>×</button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
                 {isAdmin && (
                  <div className="subjects-actions">
                    <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
@@ -740,7 +809,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                    </button>
                  </div>
                 )}
-
               </div>
             </div>
           )}
