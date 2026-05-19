@@ -129,6 +129,7 @@
 - **Specification First:** 仕様変更時はまず `GEMINI.md` を更新し、定義を確定させてから着手する。
 - **Data Integrity:** DB保存時、空文字は原則として `null` として処理する。
 - **Safety:** Git への commit/push は明示的な指示がない限り行わない。
+- 翻訳データの編集は禁止
 - 翻訳対象の抽出は、`npx i18next-cli extract` を使用
 
 ### UI Layering (z-index)
