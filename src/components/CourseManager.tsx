@@ -176,13 +176,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     return c.startDate <= range.end && c.endDate >= range.start;
   });
 
-  const handleAddSubject = () => {
-    setFormData({
-      ...formData,
-      subjects: [...formData.subjects, { name: '', totalPeriods: 0, subjectId: null }]
-    });
-  };
-
   const handleRemoveSubject = (index: number) => {
     setFormData({
       ...formData,
@@ -741,13 +734,13 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                   </div>
                 ))}
                 {isAdmin && (
-                  <div className="subjects-actions">
-                    <button className="add-btn" onClick={handleAddSubject}>{t('Add {{resource}}', { resource: labels.subject })}</button>
-                    <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
-                      {t('Add all from {{resource}}', { resource: labels.courseType })}
-                    </button>
-                  </div>
+                 <div className="subjects-actions">
+                   <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
+                     {t('Add all from {{resource}}', { resource: labels.courseType })}
+                   </button>
+                 </div>
                 )}
+
               </div>
             </div>
           )}
