@@ -156,7 +156,8 @@
 .subjects-actions { display: flex; gap: 10px; margin-top: 5px; }
 
 .subjects-table-container {
-  max-height: 400px;
+  max-height: calc(90vh - 280px); /* Responsive height based on dialog max-height */
+  min-height: 300px;
   overflow-y: auto;
   border: 1px solid #555;
   border-radius: 4px;
