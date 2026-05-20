@@ -617,8 +617,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                     })}
                   </tbody>
                 </table>
+                {isAdmin && <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>}
               </div>
-              {isAdmin && <p className="hint-text">{t('Drag and drop rows or use arrows to change order')}</p>}
             </>
           ) : (
             <div className="course-form">
