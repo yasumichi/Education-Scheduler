@@ -120,23 +120,39 @@
 .remove-btn { background: #522; color: #f88; border: 1px solid #744; border-radius: 4px; cursor: pointer; padding: 0 10px; }
 .subjects-actions { display: flex; gap: 10px; margin-top: 5px; }
 
+.subjects-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
 .subjects-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  border-collapse: separate; /* Use separate to avoid border issues with sticky */
+  border-spacing: 0;
   background-color: #2a2a2a;
 }
 .subjects-table th, .subjects-table td {
-  border: 1px solid #555;
+  border-bottom: 1px solid #555;
+  border-right: 1px solid #555;
   padding: 8px;
   text-align: left;
   font-size: 0.9rem;
+}
+.subjects-table th:last-child, .subjects-table td:last-child {
+  border-right: none;
+}
+.subjects-table tr:last-child td {
+  border-bottom: none;
 }
 .subjects-table th {
   background-color: #444;
   color: #aaa;
   font-weight: normal;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .subjects-table td input[type="number"] {
   width: 100%;
@@ -208,6 +224,7 @@
   .course-tab:hover { color: #000; }
   .course-tab.active { color: #646cff; }
 
+  .subjects-table-container { border-color: #ddd; }
   .subjects-table { background-color: #fcfcfc; }
   .subjects-table th, .subjects-table td { border-color: #ddd; }
   .subjects-table th { background-color: #f0f0f0; color: #666; }

@@ -806,51 +806,52 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
               {activeTab === 'subjects' && (
                 <div className="subjects-section" style={{ marginTop: 0 }}>
-                  <h3>{labels.subject}</h3>
-                  <table className="subjects-table">
-                    <thead>
-                      <tr>
-                        <th>{labels.subjectLarge}</th>
-                        <th>{labels.subjectMiddle}</th>
-                        <th>{labels.subjectSmall}</th>
-                        <th style={{ width: '100px' }}>{t('Total Periods')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getEnrichedSubjects().map((s, index) => (
-                        <tr key={index}>
-                          {s.largeSpan > 0 && (
-                            <td rowSpan={s.largeSpan} colSpan={s.level === 1 ? 3 : 1}>
-                              {s.large}
-                            </td>
-                          )}
-                          {s.level >= 2 && s.middleSpan > 0 && (
-                            <td rowSpan={s.middleSpan} colSpan={s.level === 2 ? 2 : 1}>
-                              {s.middle}
-                            </td>
-                          )}
-                          {s.level === 3 && (
-                            <td>{s.small}</td>
-                          )}
-                          <td>
-                            <input 
-                              type="number" 
-                              value={s.totalPeriods}
-                              onInput={(e) => handleSubjectChange(s.originalIndex, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
-                              readOnly={!isAdmin}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                   {isAdmin && (
-                  <div className="subjects-actions">
-                    <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
-                      {t('Apply {{resource}}', { resource: labels.courseType })}
-                    </button>
-                  </div>
+                    <div className="subjects-actions" style={{ marginBottom: '10px' }}>
+                      <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
+                        {t('Apply {{resource}}', { resource: labels.courseType })}
+                      </button>
+                    </div>
                   )}
+                  <div className="subjects-table-container">
+                    <table className="subjects-table">
+                      <thead>
+                        <tr>
+                          <th>{labels.subjectLarge}</th>
+                          <th>{labels.subjectMiddle}</th>
+                          <th>{labels.subjectSmall}</th>
+                          <th style={{ width: '100px' }}>{t('Total Periods')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getEnrichedSubjects().map((s, index) => (
+                          <tr key={index}>
+                            {s.largeSpan > 0 && (
+                              <td rowSpan={s.largeSpan} colSpan={s.level === 1 ? 3 : 1}>
+                                {s.large}
+                              </td>
+                            )}
+                            {s.level >= 2 && s.middleSpan > 0 && (
+                              <td rowSpan={s.middleSpan} colSpan={s.level === 2 ? 2 : 1}>
+                                {s.middle}
+                              </td>
+                            )}
+                            {s.level === 3 && (
+                              <td>{s.small}</td>
+                            )}
+                            <td>
+                              <input 
+                                type="number" 
+                                value={s.totalPeriods}
+                                onInput={(e) => handleSubjectChange(s.originalIndex, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
+                                readOnly={!isAdmin}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
