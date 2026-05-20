@@ -524,9 +524,14 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     <div className="dialog-overlay">
       <div className="dialog-box course-manager-box">
         <div className="dialog-header">
-          <h2>{t('Manage {{resource}}', { resource: labels.course })}</h2>
-          <button className="close-button" onClick={onClose}>×</button>
+          <h2>
+            {editingCourseId 
+              ? (editingCourseId === 'new' ? t('Add New {{resource}}', { resource: labels.course }) : (isAdmin ? t('Edit') : t('View')))
+              : t('{{resource}} List', { resource: labels.course })}
+          </h2>
+          <button className="close-button" onClick={onClose}>&times;</button>
         </div>
+
 
         {statusMessage && (
           <div className="status-message-banner">
@@ -622,8 +627,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
             </>
           ) : (
             <div className="course-form">
-              <h3>{editingCourseId === 'new' ? t('Add New {{resource}}', { resource: labels.course }) : (isAdmin ? t('Edit') : t('View'))}</h3>
-              
               <div className="course-tabs">
                 <button 
                   className={`course-tab ${activeTab === 'basic' ? 'active' : ''}`}
@@ -639,221 +642,223 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 </button>
               </div>
 
-              {activeTab === 'basic' && (
-                <>
-                  {showDuplicateLessons && isAdmin && (
-                    <div className="duplicate-lessons-dialog">
-                      <h3>{t('Duplicate Lessons from Another {{resource}}', { resource: labels.course })}</h3>
+              <div className="course-form-body">
+                {activeTab === 'basic' && (
+                  <>
+                    {showDuplicateLessons && isAdmin && (
+                      <div className="duplicate-lessons-dialog">
+                        <h3>{t('Duplicate Lessons from Another {{resource}}', { resource: labels.course })}</h3>
+                        <div className="form-group">
+                          <label>{t('Source {{resource}}', { resource: labels.course })}</label>
+                          <select 
+                            value={duplicationData.sourceCourseId}
+                            onChange={(e) => setDuplicationData({ ...duplicationData, sourceCourseId: e.currentTarget.value })}
+                          >
+                            <option value="">{t('Select {{resource}}', { resource: labels.course })}</option>
+                            {courses.filter(c => c.id !== editingCourseId).map(c => (
+                              <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>{t('Start Date')}</label>
+                            <input 
+                              type="date" 
+                              value={duplicationData.startDate}
+                              onInput={(e) => setDuplicationData({ ...duplicationData, startDate: e.currentTarget.value })}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>{t('End Date')}</label>
+                            <input 
+                              type="date" 
+                              value={duplicationData.endDate}
+                              onInput={(e) => setDuplicationData({ ...duplicationData, endDate: e.currentTarget.value })}
+                            />
+                          </div>
+                        </div>
+                        <div className="footer-right">
+                          <button className="cancel-button" onClick={() => setShowDuplicateLessons(false)}>{t('Cancel')}</button>
+                          <button className="confirm-button" onClick={handleDuplicateLessons}>{t('Duplicate Now')}</button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="form-group">
+                      <label>{t('{{resource}} Name', { resource: labels.course })}</label>
+                      <input 
+                        type="text" 
+                        value={formData.name} 
+                        onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
+                        readOnly={!isAdmin}
+                      />
+                    </div>
+                    <div className="form-row">
                       <div className="form-group">
-                        <label>{t('Source {{resource}}', { resource: labels.course })}</label>
-                        <select 
-                          value={duplicationData.sourceCourseId}
-                          onChange={(e) => setDuplicationData({ ...duplicationData, sourceCourseId: e.currentTarget.value })}
-                        >
-                          <option value="">{t('Select {{resource}}', { resource: labels.course })}</option>
-                          {courses.filter(c => c.id !== editingCourseId).map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
+                        <label>{t('Start Date')}</label>
+                        <input 
+                          type="date" 
+                          value={formData.startDate} 
+                          onInput={(e) => setFormData({ ...formData, startDate: e.currentTarget.value })}
+                          readOnly={!isAdmin}
+                        />
                       </div>
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>{t('Start Date')}</label>
-                          <input 
-                            type="date" 
-                            value={duplicationData.startDate}
-                            onInput={(e) => setDuplicationData({ ...duplicationData, startDate: e.currentTarget.value })}
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label>{t('End Date')}</label>
-                          <input 
-                            type="date" 
-                            value={duplicationData.endDate}
-                            onInput={(e) => setDuplicationData({ ...duplicationData, endDate: e.currentTarget.value })}
-                          />
-                        </div>
-                      </div>
-                      <div className="footer-right">
-                        <button className="cancel-button" onClick={() => setShowDuplicateLessons(false)}>{t('Cancel')}</button>
-                        <button className="confirm-button" onClick={handleDuplicateLessons}>{t('Duplicate Now')}</button>
+                      <div className="form-group">
+                        <label>{t('End Date')}</label>
+                        <input 
+                          type="date" 
+                          value={formData.endDate} 
+                          onInput={(e) => setFormData({ ...formData, endDate: e.currentTarget.value })}
+                          readOnly={!isAdmin}
+                        />
                       </div>
                     </div>
-                  )}
-
-                  <div className="form-group">
-                    <label>{t('{{resource}} Name', { resource: labels.course })}</label>
-                    <input 
-                      type="text" 
-                      value={formData.name} 
-                      onInput={(e) => setFormData({ ...formData, name: e.currentTarget.value })}
-                      readOnly={!isAdmin}
-                    />
-                  </div>
-                  <div className="form-row">
                     <div className="form-group">
-                      <label>{t('Start Date')}</label>
+                      <label>{t('Order')}</label>
                       <input 
-                        type="date" 
-                        value={formData.startDate} 
-                        onInput={(e) => setFormData({ ...formData, startDate: e.currentTarget.value })}
+                        type="number" 
+                        value={formData.order} 
+                        onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
                         readOnly={!isAdmin}
                       />
                     </div>
+
                     <div className="form-group">
-                      <label>{t('End Date')}</label>
-                      <input 
-                        type="date" 
-                        value={formData.endDate} 
-                        onInput={(e) => setFormData({ ...formData, endDate: e.currentTarget.value })}
-                        readOnly={!isAdmin}
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>{t('Order')}</label>
-                    <input 
-                      type="number" 
-                      value={formData.order} 
-                      onInput={(e) => setFormData({ ...formData, order: parseInt(e.currentTarget.value) || 0 })}
-                      readOnly={!isAdmin}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>{labels.courseType}</label>
-                    <select 
-                      value={formData.courseTypeId} 
-                      onChange={(e) => setFormData({ ...formData, courseTypeId: e.currentTarget.value })}
-                      disabled={!isAdmin}
-                    >
-                      <option value="">{t('Select {{resource}}', { resource: labels.courseType })}</option>
-                      {courseTypes.map(ct => <option key={ct.id} value={ct.id}>{ct.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>{labels.mainRoom}</label>
-                    <select 
-                      value={formData.mainRoomId} 
-                      onChange={(e) => setFormData({ ...formData, mainRoomId: e.currentTarget.value })}
-                      disabled={!isAdmin}
-                    >
-                      <option value="">{t('Select {{resource}}', { resource: labels.room })}</option>
-                      {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>{labels.mainTeacher}</label>
+                      <label>{labels.courseType}</label>
                       <select 
-                        value={formData.chiefTeacherId} 
-                        onChange={(e) => setFormData({ ...formData, chiefTeacherId: e.currentTarget.value })}
+                        value={formData.courseTypeId} 
+                        onChange={(e) => setFormData({ ...formData, courseTypeId: e.currentTarget.value })}
                         disabled={!isAdmin}
                       >
-                        <option value="">{t('Select {{resource}}', { resource: labels.teacher })}</option>
-                        {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        <option value="">{t('Select {{resource}}', { resource: labels.courseType })}</option>
+                        {courseTypes.map(ct => <option key={ct.id} value={ct.id}>{ct.name}</option>)}
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label>{t('Instructor Label (Main)')}</label>
-                      <input 
-                        type="text" 
-                        value={formData.mainTeacherLabel} 
-                        onInput={(e) => setFormData({ ...formData, mainTeacherLabel: e.currentTarget.value })}
-                        placeholder={labels.mainTeacher}
-                        readOnly={!isAdmin}
-                      />
-                    </div>
-                  </div>
 
-                  <div className="form-row">
                     <div className="form-group">
-                      <label>{labels.subTeacher}</label>
-                      <div className="sub-teacher-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                        {(() => {
-                          const list = teachers.filter(t => t.id !== formData.chiefTeacherId);
-                          const selected = list.filter(t => formData.assistantTeacherIds.includes(t.id));
-                          const unselected = list.filter(t => !formData.assistantTeacherIds.includes(t.id));
-                          return [...selected, ...unselected].map(t => (
-                            <label key={t.id} className={`sub-teacher-item ${formData.assistantTeacherIds.includes(t.id) ? 'selected' : ''}`}>
-                              <input 
-                                type="checkbox" 
-                                checked={formData.assistantTeacherIds.includes(t.id)}
-                                onChange={() => isAdmin && toggleAssistantTeacher(t.id)}
-                                disabled={!isAdmin}
-                              />
-                              {t.name}
-                            </label>
-                          ));
-                        })()}
+                      <label>{labels.mainRoom}</label>
+                      <select 
+                        value={formData.mainRoomId} 
+                        onChange={(e) => setFormData({ ...formData, mainRoomId: e.currentTarget.value })}
+                        disabled={!isAdmin}
+                      >
+                        <option value="">{t('Select {{resource}}', { resource: labels.room })}</option>
+                        {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>{labels.mainTeacher}</label>
+                        <select 
+                          value={formData.chiefTeacherId} 
+                          onChange={(e) => setFormData({ ...formData, chiefTeacherId: e.currentTarget.value })}
+                          disabled={!isAdmin}
+                        >
+                          <option value="">{t('Select {{resource}}', { resource: labels.teacher })}</option>
+                          {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>{t('Instructor Label (Main)')}</label>
+                        <input 
+                          type="text" 
+                          value={formData.mainTeacherLabel} 
+                          onInput={(e) => setFormData({ ...formData, mainTeacherLabel: e.currentTarget.value })}
+                          placeholder={labels.mainTeacher}
+                          readOnly={!isAdmin}
+                        />
                       </div>
                     </div>
-                    <div className="form-group">
-                      <label>{t('Instructor Label (Sub)')}</label>
-                      <input 
-                        type="text" 
-                        value={formData.subTeacherLabel} 
-                        onInput={(e) => setFormData({ ...formData, subTeacherLabel: e.currentTarget.value })}
-                        placeholder={labels.subTeacher}
-                        readOnly={!isAdmin}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
 
-              {activeTab === 'subjects' && (
-                <div className="subjects-section" style={{ marginTop: 0 }}>
-                  {isAdmin && (
-                    <div className="subjects-actions" style={{ marginBottom: '10px' }}>
-                      <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
-                        {t('Apply {{resource}}', { resource: labels.courseType })}
-                      </button>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>{labels.subTeacher}</label>
+                        <div className="sub-teacher-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                          {(() => {
+                            const list = teachers.filter(t => t.id !== formData.chiefTeacherId);
+                            const selected = list.filter(t => formData.assistantTeacherIds.includes(t.id));
+                            const unselected = list.filter(t => !formData.assistantTeacherIds.includes(t.id));
+                            return [...selected, ...unselected].map(t => (
+                              <label key={t.id} className={`sub-teacher-item ${formData.assistantTeacherIds.includes(t.id) ? 'selected' : ''}`}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={formData.assistantTeacherIds.includes(t.id)}
+                                  onChange={() => isAdmin && toggleAssistantTeacher(t.id)}
+                                  disabled={!isAdmin}
+                                />
+                                {t.name}
+                              </label>
+                            ));
+                          })()}
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>{t('Instructor Label (Sub)')}</label>
+                        <input 
+                          type="text" 
+                          value={formData.subTeacherLabel} 
+                          onInput={(e) => setFormData({ ...formData, subTeacherLabel: e.currentTarget.value })}
+                          placeholder={labels.subTeacher}
+                          readOnly={!isAdmin}
+                        />
+                      </div>
                     </div>
-                  )}
-                  <div className="subjects-table-container">
-                    <table className="subjects-table">
-                      <thead>
-                        <tr>
-                          <th>{labels.subjectLarge}</th>
-                          <th>{labels.subjectMiddle}</th>
-                          <th>{labels.subjectSmall}</th>
-                          <th style={{ width: '100px' }}>{t('Total Periods')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getEnrichedSubjects().map((s, index) => (
-                          <tr key={index}>
-                            {s.largeSpan > 0 && (
-                              <td rowSpan={s.largeSpan} colSpan={s.level === 1 ? 3 : 1}>
-                                {s.large}
-                              </td>
-                            )}
-                            {s.level >= 2 && s.middleSpan > 0 && (
-                              <td rowSpan={s.middleSpan} colSpan={s.level === 2 ? 2 : 1}>
-                                {s.middle}
-                              </td>
-                            )}
-                            {s.level === 3 && (
-                              <td>{s.small}</td>
-                            )}
-                            <td>
-                              <input 
-                                type="number" 
-                                value={s.totalPeriods}
-                                onInput={(e) => handleSubjectChange(s.originalIndex, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
-                                readOnly={!isAdmin}
-                              />
-                            </td>
+                  </>
+                )}
+
+                {activeTab === 'subjects' && (
+                  <div className="subjects-section" style={{ marginTop: 0 }}>
+                    {isAdmin && (
+                      <div className="subjects-actions" style={{ marginBottom: '10px' }}>
+                        <button className="add-btn" onClick={handleBulkAddSubjects} style={{ backgroundColor: '#4a90e2' }}>
+                          {t('Apply {{resource}}', { resource: labels.courseType })}
+                        </button>
+                      </div>
+                    )}
+                    <div className="subjects-table-container">
+                      <table className="subjects-table">
+                        <thead>
+                          <tr>
+                            <th>{labels.subjectLarge}</th>
+                            <th>{labels.subjectMiddle}</th>
+                            <th>{labels.subjectSmall}</th>
+                            <th style={{ width: '100px' }}>{t('Total Periods')}</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {getEnrichedSubjects().map((s, index) => (
+                            <tr key={index}>
+                              {s.largeSpan > 0 && (
+                                <td rowSpan={s.largeSpan} colSpan={s.level === 1 ? 3 : 1}>
+                                  {s.large}
+                                </td>
+                              )}
+                              {s.level >= 2 && s.middleSpan > 0 && (
+                                <td rowSpan={s.middleSpan} colSpan={s.level === 2 ? 2 : 1}>
+                                  {s.middle}
+                                </td>
+                              )}
+                              {s.level === 3 && (
+                                <td>{s.small}</td>
+                              )}
+                              <td>
+                                <input 
+                                  type="number" 
+                                  value={s.totalPeriods}
+                                  onInput={(e) => handleSubjectChange(s.originalIndex, 'totalPeriods', parseInt(e.currentTarget.value) || 0)}
+                                  readOnly={!isAdmin}
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>
