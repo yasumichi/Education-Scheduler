@@ -1,0 +1,244 @@
+.lesson-history {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-main, #fff);
+  color: var(--text-main, #333);
+  overflow: hidden;
+  box-sizing: border-box;
+
+  --bg-main: #fff;
+  --bg-side: #f5f5f5;
+  --bg-hover: #fafafa;
+  --bg-code: #f8f8f8;
+  --text-main: #333;
+  --text-muted: #666;
+  --border-color: #ddd;
+  --accent-color: #4a54ff;
+  --diff-old: #fecaca;
+  --diff-new: #bbf7d0;
+  --diff-arrow: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lesson-history {
+    --bg-main: #1a1a1a;
+    --bg-side: #2a2a2a;
+    --bg-hover: #333;
+    --bg-code: #111;
+    --text-main: #eee;
+    --text-muted: #aaa;
+    --border-color: #444;
+    --accent-color: #646cff;
+    --diff-old: #422;
+    --diff-new: #131;
+    --diff-arrow: #aaa;
+  }
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.history-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--accent-color);
+}
+
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: var(--bg-side);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  align-items: flex-end;
+  border: 1px solid var(--border-color);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.filter-group label {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: var(--text-muted);
+}
+
+.filter-group input,
+.filter-group select {
+  padding: 6px 10px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.history-filter-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.search-btn,
+.reset-btn {
+  padding: 6px 15px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+
+.search-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.reset-btn {
+  background: #999;
+  color: white;
+}
+
+.search-btn:hover,
+.reset-btn:hover {
+  opacity: 0.8;
+}
+
+.search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.history-table-container {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-main);
+  min-height: 0;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.history-table th,
+.history-table td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.history-table th {
+  background: var(--bg-side);
+  color: var(--text-main);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.history-table tr:hover {
+  background: var(--bg-hover);
+}
+
+.history-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 0;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background: var(--bg-side);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* Diff styles */
+.diff-value {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.old-val {
+  text-decoration: line-through;
+  color: var(--text-muted);
+  background-color: var(--diff-old);
+  padding: 0 4px;
+  border-radius: 2px;
+  width: fit-content;
+}
+
+.arrow {
+  color: var(--diff-arrow);
+  font-size: 0.7rem;
+  padding-left: 4px;
+}
+
+.new-val {
+  color: var(--text-main);
+  background-color: var(--diff-new);
+  padding: 0 4px;
+  border-radius: 2px;
+  width: fit-content;
+  font-weight: bold;
+}
+
+.other-changes-cell {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  max-width: 300px;
+  line-height: 1.4;
+}
+
+.other-changes-cell div {
+  margin-bottom: 4px;
+  border-bottom: 1px dashed var(--border-color);
+  padding-bottom: 2px;
+}
+
+.other-changes-cell div:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}

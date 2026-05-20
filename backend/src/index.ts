@@ -944,12 +944,18 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         data.room = { disconnect: true };
       }
 
+      const includeFields = { subTeachers: true, deliveryMethods: true };
+      const oldLesson = await prisma.lesson.findUnique({
+        where: { id },
+        include: includeFields
+      });
+
       const lesson = await prisma.lesson.update({
         where: { id },
         data,
-        include: { subTeachers: true, deliveryMethods: true }
+        include: includeFields
       });
-      await createAuditLog(req, 'Lesson', 'UPDATE_LESSON', lesson);
+      await createAuditLog(req, 'Lesson', 'UPDATE_LESSON', { old: oldLesson, new: lesson });
       res.json(lesson);
     } else {
       // Create (Create)
@@ -975,7 +981,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         data,
         include: { subTeachers: true, deliveryMethods: true }
       });
-      await createAuditLog(req, 'Lesson', 'CREATE_LESSON', lesson);
+      await createAuditLog(req, 'Lesson', 'CREATE_LESSON', { new: lesson });
       res.json(lesson);
     }
   } catch (error) {
@@ -1047,21 +1053,80 @@ app.delete('/api/lessons/:id', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   const { id } = req.params;
   try {
-    const lesson = await prisma.lesson.findUnique({ where: { id } });
+    const lesson = await prisma.lesson.findUnique({ 
+      where: { id },
+      include: { subTeachers: true, deliveryMethods: true }
+    });
     if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
 
     const hasPermission = await canManageCourseLessons(req.user.id, lesson.courseId);
     if (!hasPermission) return res.status(403).json({ error: 'Access denied.' });
 
     await prisma.lesson.delete({ where: { id } });
-    await createAuditLog(req, 'Lesson', 'DELETE_LESSON', lesson);
+    await createAuditLog(req, 'Lesson', 'DELETE_LESSON', { old: lesson });
     res.json({ message: 'Lesson deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete lesson' });
   }
 });
 
-// Fetch lesson history
+// Fetch lesson history (ADMIN or TEACHER required)
+app.get('/api/lessons/history', verifyToken, async (req: AuthRequest, res) => {
+  if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.TEACHER) {
+    return res.status(403).json({ error: 'Access denied. Admin or Teacher role required.' });
+  }
+  const { start, end, courseId, keyword, page = '1', limit = '50' } = req.query;
+  const p = Math.max(1, parseInt(String(page)));
+  const l = Math.max(1, parseInt(String(limit)));
+
+  try {
+    const where: any = {
+      tableName: 'Lesson'
+    };
+
+    const andConditions: any[] = [];
+
+    if (start) {
+      andConditions.push({ createdAt: { gte: new Date(`${start}T00:00:00.000Z`) } });
+    }
+    if (end) {
+      andConditions.push({ createdAt: { lte: new Date(`${end}T23:59:59.999Z`) } });
+    }
+    if (courseId) {
+      // Search for courseId in data JSON string
+      andConditions.push({ data: { contains: String(courseId) } });
+    }
+    if (keyword) {
+      andConditions.push({ data: { contains: String(keyword), mode: 'insensitive' } });
+    }
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
+
+    const [logs, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (p - 1) * l,
+        take: l
+      }),
+      prisma.auditLog.count({ where })
+    ]);
+
+    res.json({
+      logs,
+      total,
+      page: p,
+      totalPages: Math.ceil(total / l)
+    });
+  } catch (error) {
+    console.error('Failed to fetch lesson history:', error);
+    res.status(500).json({ error: 'Failed to fetch lesson history' });
+  }
+});
+
+// Fetch lesson history (specific lesson)
 app.get('/api/lessons/:id/history', verifyToken, async (req: AuthRequest, res) => {
   const { id } = req.params;
   try {

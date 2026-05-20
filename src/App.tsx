@@ -19,6 +19,7 @@ import { ColorThemeManager } from './components/ColorThemeManager';
 import { SubjectManager } from './components/SubjectManager';
 import { EquipmentManager } from './components/EquipmentManager';
 import { AuditLogManager } from './components/AuditLogManager';
+import { LessonHistory } from './components/LessonHistory';
 import { CourseStatistics } from './components/CourseStatistics';
 import { TeacherStatistics } from './components/TeacherStatistics';
 import { AllTeacherStatistics } from './components/AllTeacherStatistics';
@@ -37,6 +38,7 @@ export function App() {
   const viewType = useSignal<ViewType>('month');
   const showPersonalMonthly = useSignal<boolean>(false);
   const showCourseWeekly = useSignal<boolean>(false);
+  const showLessonHistory = useSignal<boolean>(false);
   const selectedCourseIdForWeekly = useSignal<string | null>(null);
   const showRoomEquipmentView = useSignal<boolean>(false);
   const selectedRoomIdForEquipment = useSignal<string | null>(null);
@@ -303,12 +305,14 @@ export function App() {
   }
 
   const moveDate = (amount: number) => {
-    if (showPersonalMonthly.value || showCourseWeekly.value) {
+    if (showPersonalMonthly.value || showCourseWeekly.value || showLessonHistory.value) {
       const nextDate = new Date(currentDate.value);
       if (showPersonalMonthly.value) {
         nextDate.setMonth(nextDate.getMonth() + amount);
-      } else {
+      } else if (showCourseWeekly.value) {
         nextDate.setDate(nextDate.getDate() + amount * 7);
+      } else if (showLessonHistory.value) {
+        nextDate.setDate(nextDate.getDate() + amount);
       }
       currentDate.value = nextDate;
       return;
@@ -646,15 +650,16 @@ export function App() {
         </div>
 
         <div className="controls">
-          {showPersonalMonthly.value || showCourseWeekly.value ? (
+          {showPersonalMonthly.value || showCourseWeekly.value || showLessonHistory.value ? (
             <div className="control-group">
               <button onClick={() => {
                 showPersonalMonthly.value = false;
                 showCourseWeekly.value = false;
+                showLessonHistory.value = false;
               }}>
                 {t('Back to Timetable')}
               </button>
-              <span className="personal-view-title">{showPersonalMonthly.value ? t('Personal Monthly') : t('Weekly Schedule')}</span>
+              <span className="personal-view-title">{showPersonalMonthly.value ? t('Personal Monthly') : (showCourseWeekly.value ? t('Weekly Schedule') : t('History'))}</span>
             </div>
           ) : (
             <>
@@ -742,6 +747,13 @@ export function App() {
                 {t('Reduced')}
               </button>
             )}
+            <button
+              className={showLessonHistory.value ? 'active' : ''}
+              onClick={() => showLessonHistory.value = true}
+              title={t('History')}
+            >
+              {t('History')}
+            </button>
           </div>
             </>
           )}
@@ -770,7 +782,16 @@ export function App() {
       </header>
 
       <div className={`timetable-view`}>
-        {showPersonalMonthly.value && user.value?.resourceId ? (
+        {showLessonHistory.value ? (
+          <LessonHistory 
+            backendUrl={BACKEND_URL}
+            courses={resources.value.filter(r => r.type === 'course')}
+            resources={resources.value}
+            periods={periods.value}
+            subjects={subjects.value}
+            labels={resourceLabels.value}
+          />
+        ) : showPersonalMonthly.value && user.value?.resourceId ? (
           <PersonalMonthlyView 
             userResourceId={user.value.resourceId}
             resources={resources.value}
