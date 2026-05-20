@@ -1,5 +1,6 @@
 .course-manager-box {
   max-width: 1000px; /* Increased width */
+  height: 90vh; /* Fixed height to prevent resizing on tab switch */
 }
 
 .status-message-banner {
