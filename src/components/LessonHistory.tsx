@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
-import { AuditLog, Resource, ResourceLabels, TimePeriod, Subject, Lesson } from '../types';
+import { AuditLog, Resource, ResourceLabels, TimePeriod, Subject } from '../types';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO, subDays } from 'date-fns';
 import './LessonHistory.css';
@@ -232,14 +232,12 @@ export function LessonHistory({ backendUrl, courses, resources, periods, subject
               let data: any = {};
               try {
                 data = JSON.parse(log.data);
-              } catch (e) {
+              } catch {
                 console.error('Failed to parse log data:', log.data);
               }
 
               // 新形式（old/newラップあり）かどうかの判定
               const hasComparison = !!(data.old || data.new);
-              // 修正（UPDATE）かつ比較データがある場合のみ、diff表示（矢印）を行う
-              const isUpdate = log.action === 'UPDATE_LESSON' && hasComparison;
               
               let actualOld = data.old;
               let actualNew = data.new;
@@ -256,21 +254,28 @@ export function LessonHistory({ backendUrl, courses, resources, periods, subject
                 }
               }
 
+              // 修正（UPDATE）かつ比較データがある場合のみ、diff表示（矢印）を行う
+              const isUpdate = log.action === 'UPDATE_LESSON' && !!(actualOld && actualNew);
+              const isDelete = log.action === 'DELETE_LESSON';
+              
+              // 削除の場合は、表示対象を old にする
+              const effectiveNew = isDelete ? actualOld : actualNew;
+
               const actionLabel = t(log.action.replace('_LESSON', ''));
 
               return (
                 <tr key={log.id}>
                   <td className="nowrap">{format(parseISO(log.createdAt), 'yyyy/MM/dd HH:mm:ss')}</td>
                   <td className="nowrap">{actionLabel}</td>
-                  <td>{renderValue(actualOld?.courseId, actualNew?.courseId, isUpdate, getResourceName)}</td>
-                  <td className="nowrap">{renderValue(actualOld?.startDate, actualNew?.startDate, isUpdate)}</td>
-                  <td>{renderValue(actualOld?.startPeriodId, actualNew?.startPeriodId, isUpdate, getPeriodName)}</td>
-                  <td className="nowrap">{renderValue(actualOld?.endDate, actualNew?.endDate, isUpdate)}</td>
-                  <td>{renderValue(actualOld?.endPeriodId, actualNew?.endPeriodId, isUpdate, getPeriodName)}</td>
-                  <td>{renderValue(actualOld?.subjectId, actualNew?.subjectId, isUpdate, (id) => getSubjectName(id, isUpdate ? actualNew?.subject : (actualNew?.subject || actualOld?.subject)))}</td>
-                  <td>{renderValue(actualOld?.roomId, actualNew?.roomId, isUpdate, getResourceName)}</td>
-                  <td>{renderValue(actualOld?.teacherId, actualNew?.teacherId, isUpdate, getResourceName)}</td>
-                  <td>{renderValue(actualOld?.subTeachers, actualNew?.subTeachers, isUpdate, getSubTeacherNames)}</td>
+                  <td>{renderValue(actualOld?.courseId, effectiveNew?.courseId, isUpdate, getResourceName)}</td>
+                  <td className="nowrap">{renderValue(actualOld?.startDate, effectiveNew?.startDate, isUpdate)}</td>
+                  <td>{renderValue(actualOld?.startPeriodId, effectiveNew?.startPeriodId, isUpdate, getPeriodName)}</td>
+                  <td className="nowrap">{renderValue(actualOld?.endDate, effectiveNew?.endDate, isUpdate)}</td>
+                  <td>{renderValue(actualOld?.endPeriodId, effectiveNew?.endPeriodId, isUpdate, getPeriodName)}</td>
+                  <td>{renderValue(actualOld?.subjectId, effectiveNew?.subjectId, isUpdate, (id) => getSubjectName(id, isUpdate || isDelete ? effectiveNew?.subject : (actualNew?.subject || actualOld?.subject)))}</td>
+                  <td>{renderValue(actualOld?.roomId, effectiveNew?.roomId, isUpdate, getResourceName)}</td>
+                  <td>{renderValue(actualOld?.teacherId, effectiveNew?.teacherId, isUpdate, getResourceName)}</td>
+                  <td>{renderValue(actualOld?.subTeachers, effectiveNew?.subTeachers, isUpdate, getSubTeacherNames)}</td>
                   <td className="other-changes-cell">{getOtherChanges(actualOld, actualNew, isUpdate)}</td>
                 </tr>
               );

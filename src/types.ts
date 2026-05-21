@@ -190,6 +190,8 @@ export interface AuditLog {
   action: string;
   data: string;
   createdAt: string;
+  courseId?: string;
+  lessonId?: string;
 }
 
 const generateResources = (): Resource[] => {

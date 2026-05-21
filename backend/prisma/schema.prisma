@@ -218,6 +218,8 @@ model AuditLog {
   action    String
   data      String   @db.Text
   createdAt DateTime @default(now())
+  courseId  String?
+  lessonId  String?
 }
 
 enum ColorCategory {

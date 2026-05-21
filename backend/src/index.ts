@@ -22,7 +22,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // --- Audit Log Helper ---
-const createAuditLog = async (req: AuthRequest, tableName: string, action: string, data: any) => {
+const createAuditLog = async (req: AuthRequest, tableName: string, action: string, data: any, courseId?: string, lessonId?: string) => {
   try {
     await prisma.auditLog.create({
       data: {
@@ -30,7 +30,9 @@ const createAuditLog = async (req: AuthRequest, tableName: string, action: strin
         userEmail: req.user?.email,
         tableName,
         action,
-        data: typeof data === 'string' ? data : JSON.stringify(data)
+        data: typeof data === 'string' ? data : JSON.stringify(data),
+        courseId,
+        lessonId
       }
     });
   } catch (error) {
@@ -606,7 +608,7 @@ app.delete('/api/courses/:id', verifyToken, async (req: AuthRequest, res) => {
     const course = await prisma.resource.delete({
       where: { id }
     });
-    await createAuditLog(req, 'Resource', 'DELETE_COURSE', course);
+    await createAuditLog(req, 'Resource', 'DELETE_COURSE', course, id);
     res.json({ message: 'Course deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete course' });
@@ -1063,7 +1065,7 @@ app.delete('/api/lessons/:id', verifyToken, async (req: AuthRequest, res) => {
     if (!hasPermission) return res.status(403).json({ error: 'Access denied.' });
 
     await prisma.lesson.delete({ where: { id } });
-    await createAuditLog(req, 'Lesson', 'DELETE_LESSON', { old: lesson });
+    await createAuditLog(req, 'Lesson', 'DELETE_LESSON', { old: lesson }, lesson.courseId, lesson.id);
     res.json({ message: 'Lesson deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete lesson' });
@@ -1133,22 +1135,11 @@ app.get('/api/lessons/:id/history', verifyToken, async (req: AuthRequest, res) =
     const logs = await prisma.auditLog.findMany({
       where: {
         tableName: 'Lesson',
-        data: {
-          contains: id
-        }
+        lessonId: id
       },
       orderBy: { createdAt: 'asc' }
     });
-    // Filter precisely by parsing JSON
-    const filteredLogs = logs.filter(log => {
-      try {
-        const data = JSON.parse(log.data);
-        return data.id === id || (Array.isArray(data) && data.some((item: any) => item.id === id));
-      } catch (e) {
-        return log.data.includes(`"id":"${id}"`);
-      }
-    });
-    res.json(filteredLogs);
+    res.json(logs);
   } catch (error) {
     console.error('Failed to fetch lesson history:', error);
     res.status(500).json({ error: 'Failed to fetch lesson history' });
