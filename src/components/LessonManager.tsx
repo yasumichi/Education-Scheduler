@@ -24,6 +24,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [historyLogs, setHistoryLogs] = useState<AuditLog[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [hasFetchedHistory, setHasFetchedHistory] = useState(false);
   
   const [formData, setFormData] = useState<{
     id?: string;
@@ -89,21 +91,25 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   }, [backendUrl]);
 
   useEffect(() => {
-    if (showHistory && formData.id && historyLogs.length === 0) {
+    if (showHistory && formData.id && !hasFetchedHistory && !loadingHistory) {
       const fetchHistory = async () => {
+        setLoadingHistory(true);
         try {
           const res = await fetch(`${backendUrl}/lessons/${formData.id}/history`, { credentials: 'include' });
           if (res.ok) {
             const data = await res.json();
             setHistoryLogs(data);
+            setHasFetchedHistory(true);
           }
         } catch (err) {
           console.error('Failed to fetch lesson history:', err);
+        } finally {
+          setLoadingHistory(false);
         }
       };
       fetchHistory();
     }
-  }, [showHistory, formData.id, backendUrl, historyLogs.length]);
+  }, [showHistory, formData.id, backendUrl, hasFetchedHistory, loadingHistory]);
 
   const teachers = resources.filter(r => r.type === 'teacher');
   const rooms = resources.filter(r => r.type === 'room');
@@ -113,12 +119,20 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const mainTeacherLabel = labels.mainTeacher;
   const subTeacherLabel = labels.subTeacher;
 
-  const getResourceName = (id: string) => {
+  const getResourceName = (val: any) => {
+    if (!val) return '-';
+    const id = typeof val === 'object' ? val.id : val;
+    const name = typeof val === 'object' ? val.name : null;
+    if (name) return t(name);
     const res = resources.find(r => r.id === id);
     return res ? t(res.name) : id;
   };
 
-  const getDeliveryMethodName = (id: string) => {
+  const getDeliveryMethodName = (val: any) => {
+    if (!val) return '-';
+    const id = typeof val === 'object' ? val.id : val;
+    const name = typeof val === 'object' ? val.name : null;
+    if (name) return name;
     const m = deliveryMethods.find(m => m.id === id);
     return m ? m.name : id;
   };
@@ -126,17 +140,21 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const formatValue = (field: string, value: any) => {
     if (value === null || value === undefined || value === '') return '-';
     if (field === 'teacherId' || field === 'roomId' || field === 'courseId') return getResourceName(value);
-    if (field === 'subTeacherIds') {
-      const ids = Array.isArray(value) ? value : [];
-      return ids.map(getResourceName).join(', ') || '-';
+    if (field === 'subTeacherIds' || field === 'subTeachers') {
+      const items = Array.isArray(value) ? value : [];
+      return items.map(getResourceName).join(', ') || '-';
     }
-    if (field === 'deliveryMethodIds') {
-      const ids = Array.isArray(value) ? value : [];
-      return ids.map(getDeliveryMethodName).join(', ') || '-';
+    if (field === 'deliveryMethodIds' || field === 'deliveryMethods') {
+      const items = Array.isArray(value) ? value : [];
+      return items.map(getDeliveryMethodName).join(', ') || '-';
     }
     if (field === 'startPeriodId' || field === 'endPeriodId') {
-      return periods.find(p => p.id === value)?.name || value;
+      const id = typeof value === 'object' ? value.id : value;
+      const name = typeof value === 'object' ? value.name : null;
+      if (name) return name;
+      return periods.find(p => p.id === id)?.name || id;
     }
+    if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   };
 
@@ -145,12 +163,16 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     const keys = new Set([...Object.keys(prev || {}), ...Object.keys(current || {})]);
     
     keys.forEach(key => {
-      if (['id', 'updatedAt', 'createdAt', 'subTeachers', 'deliveryMethods', 'subjectRef', 'course', 'room', 'teacher'].includes(key)) return;
+      if (['id', 'updatedAt', 'createdAt', 'subjectRef', 'course', 'room', 'teacher'].includes(key)) return;
       
       let valPrev = prev?.[key];
       let valCurrent = current?.[key];
-      
-      if (JSON.stringify(valPrev) !== JSON.stringify(valCurrent)) {
+
+      // Normalize comparison for arrays (like subTeacherIds)
+      const stringifiedPrev = JSON.stringify(valPrev);
+      const stringifiedCurrent = JSON.stringify(valCurrent);
+
+      if (stringifiedPrev !== stringifiedCurrent) {
         changes.push({ field: key, old: valPrev, new: valCurrent });
       }
     });
@@ -159,12 +181,15 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
   const getFieldLabel = (field: string) => {
     switch (field) {
-      case 'subject': return labels.subject;
+      case 'subject':
+      case 'subjectId': return labels.subject;
       case 'courseId': return labels.course;
       case 'roomId': return labels.room;
       case 'teacherId': return labels.mainTeacher;
-      case 'subTeacherIds': return labels.subTeacher;
-      case 'deliveryMethodIds': return labels.deliveryMethod;
+      case 'subTeacherIds':
+      case 'subTeachers': return labels.subTeacher;
+      case 'deliveryMethodIds':
+      case 'deliveryMethods': return labels.deliveryMethod;
       case 'startDate': return t('Start Date');
       case 'endDate': return t('End Date');
       case 'startPeriodId': return t('Start Period');
@@ -497,16 +522,34 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
         {showHistory ? (
           <div className="lesson-manager-content history-content">
-            {historyLogs.length === 0 ? (
+            {loadingHistory ? (
               <div className="no-history">{t('Loading...')}</div>
+            ) : historyLogs.length === 0 ? (
+              <div className="no-history">{t('No history found')}</div>
             ) : (
               <div className="history-list">
                 {[...historyLogs].reverse().map((log, index, arr) => {
-                  const data = JSON.parse(log.data);
-                  const prevLog = arr[index + 1];
-                  const prevData = prevLog ? JSON.parse(prevLog.data) : null;
+                  const rawData = JSON.parse(log.data);
+                  const hasComparison = !!(rawData.old || rawData.new);
                   
-                  const changes = calculateDiff(prevData, data);
+                  let actualOld: any;
+                  let actualNew: any;
+                  
+                  if (hasComparison) {
+                    actualOld = rawData.old;
+                    actualNew = rawData.new;
+                  } else {
+                    actualNew = rawData;
+                    const prevLog = arr[index + 1];
+                    if (prevLog) {
+                      const prevRawData = JSON.parse(prevLog.data);
+                      actualOld = (prevRawData.old || prevRawData.new) ? (prevRawData.new || prevRawData.old) : prevRawData;
+                    } else {
+                      actualOld = null;
+                    }
+                  }
+                  
+                  const changes = calculateDiff(actualOld, actualNew);
                   
                   return (
                     <div key={log.id} className="history-item">
@@ -514,12 +557,14 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                         <span className="history-date">{format(parseISO(log.createdAt), 'yyyy/MM/dd HH:mm:ss')}</span>
                         <span className="history-user">{log.userEmail}</span>
                         <span className="history-action-label">
-                          {log.action === 'CREATE_LESSON' ? t('Created') : t('Updated')}
+                          {log.action === 'CREATE_LESSON' ? t('Created') : (log.action === 'DELETE_LESSON' ? t('Deleted') : t('Updated'))}
                         </span>
                       </div>
                       <div className="history-changes">
                         {log.action === 'CREATE_LESSON' ? (
                           <div className="history-all-fields">{t('Initial registration')}</div>
+                        ) : log.action === 'DELETE_LESSON' ? (
+                          <div className="history-all-fields">{t('Deleted')}</div>
                         ) : changes.length > 0 ? (
                           changes.map(c => (
                             <div key={c.field} className="change-row">

@@ -1078,33 +1078,32 @@ app.get('/api/lessons/history', verifyToken, async (req: AuthRequest, res) => {
     return res.status(403).json({ error: 'Access denied. Admin or Teacher role required.' });
   }
   const { start, end, courseId, keyword, page = '1', limit = '50' } = req.query;
-  const p = Math.max(1, parseInt(String(page)));
-  const l = Math.max(1, parseInt(String(limit)));
+  const p = Math.max(1, parseInt(String(page)) || 1);
+  const l = Math.max(1, parseInt(String(limit)) || 50);
 
   try {
-    const where: any = {
-      tableName: 'Lesson'
-    };
-
-    const andConditions: any[] = [];
+    const andConditions: any[] = [{ tableName: 'Lesson' }];
 
     if (start) {
-      andConditions.push({ createdAt: { gte: new Date(`${start}T00:00:00.000Z`) } });
+      const startDate = new Date(`${start}T00:00:00.000Z`);
+      if (!isNaN(startDate.getTime())) {
+        andConditions.push({ createdAt: { gte: startDate } });
+      }
     }
     if (end) {
-      andConditions.push({ createdAt: { lte: new Date(`${end}T23:59:59.999Z`) } });
+      const endDate = new Date(`${end}T23:59:59.999Z`);
+      if (!isNaN(endDate.getTime())) {
+        andConditions.push({ createdAt: { lte: endDate } });
+      }
     }
-    if (courseId) {
-      // Search for courseId in data JSON string
-      andConditions.push({ data: { contains: String(courseId) } });
+    if (courseId && String(courseId).trim() !== '') {
+      andConditions.push({ courseId: String(courseId) });
     }
-    if (keyword) {
+    if (keyword && String(keyword).trim() !== '') {
       andConditions.push({ data: { contains: String(keyword), mode: 'insensitive' } });
     }
 
-    if (andConditions.length > 0) {
-      where.AND = andConditions;
-    }
+    const where = { AND: andConditions };
 
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({
@@ -1124,7 +1123,7 @@ app.get('/api/lessons/history', verifyToken, async (req: AuthRequest, res) => {
     });
   } catch (error) {
     console.error('Failed to fetch lesson history:', error);
-    res.status(500).json({ error: 'Failed to fetch lesson history' });
+    res.status(500).json({ error: 'Failed to fetch lesson history', details: error instanceof Error ? error.message : String(error) });
   }
 });
 

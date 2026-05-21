@@ -76,24 +76,34 @@ export function LessonHistory({ backendUrl, courses, resources, periods, subject
     }
   };
 
-  const getResourceName = (id: string | null | undefined) => {
-    if (!id) return '-';
+  const getResourceName = (val: any) => {
+    if (!val) return '-';
+    const id = typeof val === 'object' ? val.id : val;
+    const name = typeof val === 'object' ? val.name : null;
+    if (name) return name;
     const r = resources.find(res => res.id === id);
     return r ? r.name : id;
   };
 
-  const getPeriodName = (id: string | null | undefined) => {
-    if (!id) return '-';
+  const getPeriodName = (val: any) => {
+    if (!val) return '-';
+    const id = typeof val === 'object' ? val.id : val;
+    const name = typeof val === 'object' ? val.name : null;
+    if (name) return name;
     const p = periods.find(period => period.id === id);
     return p ? p.name : id;
   };
 
-  const getSubjectName = (id: string | null | undefined, fallbackName?: string | null) => {
+  const getSubjectName = (val: any, fallbackName?: string | null) => {
+    if (val === null || val === undefined) return fallbackName || '-';
+    const id = typeof val === 'object' ? val.id : val;
+    const name = typeof val === 'object' ? val.name : null;
+    if (name) return name;
     if (id) {
       const s = subjects.find(sub => sub.id === id);
       if (s) return s.name;
     }
-    return fallbackName || '-';
+    return fallbackName || id || '-';
   };
 
   const getSubTeacherNames = (subTeachers: any[] | null | undefined) => {
@@ -124,12 +134,23 @@ export function LessonHistory({ backendUrl, courses, resources, periods, subject
     const changes: string[] = [];
     
     const checkField = (field: string, label: string) => {
-      const o = oldL?.[field];
-      const n = newL?.[field];
+      let o = oldL?.[field];
+      let n = newL?.[field];
+      
+      const formatValue = (v: any) => {
+        if (v === null || v === undefined || v === '') return '-';
+        if (typeof v === 'object') return JSON.stringify(v);
+        return String(v);
+      };
+
       if (isUpdate) {
-        if (o !== n) changes.push(`${label}: ${o || '-'} → ${n || '-'}`);
+        if (JSON.stringify(o) !== JSON.stringify(n)) {
+          changes.push(`${label}: ${formatValue(o)} → ${formatValue(n)}`);
+        }
       } else {
-        if (n) changes.push(`${label}: ${n}`);
+        if (n !== null && n !== undefined && n !== '') {
+          changes.push(`${label}: ${formatValue(n)}`);
+        }
       }
     };
 
