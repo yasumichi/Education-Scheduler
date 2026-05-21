@@ -249,18 +249,11 @@
 .sub-teacher-item.selected { background: #646cff; border-color: #888; }
 .sub-teacher-item input { display: none; }
 
-.duplicate-lessons-dialog { background-color: #333; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #646cff; }
-.duplicate-lessons-dialog h3 { font-size: 0.95rem; margin: 0 0 15px 0; color: #646cff; }
-.confirm-button { background-color: #646cff; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
-.duplicate-lessons-btn { background-color: #335; color: #88f; border: 1px solid #447; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-
 @media (prefers-color-scheme: light) {
   .draggable-row:hover { background-color: #f9f9f9; }
   .move-btn { background: #f0f0f0; border-color: #ccc; color: #666; }
   .edit-btn { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
   .delete-btn { background-color: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-  .duplicate-lessons-dialog { background-color: #f0f0ff; border-color: #646cff; }
-  .duplicate-lessons-btn { background-color: #f0f0ff; color: #646cff; border-color: #646cff; }
   .form-group input, .form-group select, .subject-row input { background-color: #f5f5f5; border-color: #ccc; color: #333; }
   .remove-btn { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
   .status-message-banner { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; }

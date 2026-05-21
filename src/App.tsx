@@ -19,6 +19,7 @@ import { ColorThemeManager } from './components/ColorThemeManager';
 import { SubjectManager } from './components/SubjectManager';
 import { EquipmentManager } from './components/EquipmentManager';
 import { AuditLogManager } from './components/AuditLogManager';
+import { LessonDuplicator } from './components/LessonDuplicator';
 import { LessonHistory } from './components/LessonHistory';
 import { CourseStatistics } from './components/CourseStatistics';
 import { TeacherStatistics } from './components/TeacherStatistics';
@@ -65,6 +66,7 @@ export function App() {
   const showSubjectManager = useSignal<boolean>(false);
   const showEquipmentManager = useSignal<boolean>(false);
   const showAuditLogManager = useSignal<boolean>(false);
+  const showLessonDuplicator = useSignal<boolean>(false);
   const showCourseStatistics = useSignal<boolean>(false);
   const selectedCourseIdForStats = useSignal<string | null>(null);
   const showTeacherStatistics = useSignal<boolean>(false);
@@ -505,6 +507,15 @@ export function App() {
                             }}
                           >
                             {t('Manage {{resource}}', { resource: resourceLabels.value.course })}
+                          </button>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              showLessonDuplicator.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('Duplicate Lessons')}
                           </button>
                           <button 
                             className="dropdown-item" 
@@ -1174,6 +1185,16 @@ export function App() {
           />
         );
       })()}
+
+      {showLessonDuplicator.value && (
+        <LessonDuplicator
+          backendUrl={BACKEND_URL}
+          resources={resources.value}
+          labels={resourceLabels.value}
+          onClose={() => showLessonDuplicator.value = false}
+          onUpdate={fetchData}
+        />
+      )}
 
       {showAuditLogManager.value && (
        <AuditLogManager

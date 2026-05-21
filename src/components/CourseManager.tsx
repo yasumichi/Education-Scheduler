@@ -20,7 +20,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   const [activeTab, setActiveTab] = useState<'basic' | 'subjects'>('basic');
   const [coursesList, setCoursesList] = useState<Resource[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [showDuplicateLessons, setShowDuplicateLessons] = useState(false);
   
   const [courseTypes, setCourseTypes] = useState<CourseType[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
@@ -58,24 +57,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   };
 
   const [selectedYear, setSelectedYear] = useState<number>(getInitialYear());
-  const [duplicationData, setDuplicationData] = useState({
-    sourceCourseId: '',
-    startDate: '',
-    endDate: ''
-  });
-  const [formData, setFormData] = useState<{
-    name: string;
-    order: number;
-    startDate: string;
-    endDate: string;
-    mainRoomId: string;
-    chiefTeacherId: string;
-    assistantTeacherIds: string[];
-    mainTeacherLabel: string;
-    subTeacherLabel: string;
-    courseTypeId: string;
-    subjects: { name: string; totalPeriods: number; subjectId: string | null }[];
-  }>({
+  const [formData, setFormData] = useState<any>({
     name: '',
     order: 0,
     startDate: '',
@@ -330,50 +312,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
       }
     } catch (err) {
       console.error('Error duplicating course:', err);
-    }
-  };
-
-  const handleDuplicateLessons = async () => {
-    if (!editingCourseId || !duplicationData.sourceCourseId || !duplicationData.startDate || !duplicationData.endDate) {
-      alert(t('Please select source {{resource}} and date range', { resource: labels.course }));
-      return;
-    }
-
-    const destinationCourse = courses.find(c => c.id === editingCourseId);
-    if (destinationCourse) {
-      if (destinationCourse.startDate && duplicationData.startDate < destinationCourse.startDate) {
-        alert(`${t('Start date cannot be before')} ${destinationCourse.startDate}`);
-        return;
-      }
-      if (destinationCourse.endDate && duplicationData.endDate > destinationCourse.endDate) {
-        alert(`${t('End date cannot be after')} ${destinationCourse.endDate}`);
-        return;
-      }
-    }
-
-    try {
-      const res = await fetch(`${backendUrl}/courses/${editingCourseId}/duplicate-lessons`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(duplicationData)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStatusMessage(t('Successfully duplicated {{count}} lessons', { count: data.count }));
-        setShowDuplicateLessons(false);
-        setDuplicationData({ sourceCourseId: '', startDate: '', endDate: '' });
-        await onUpdate();
-        setTimeout(() => setStatusMessage(null), 3000);
-      } else {
-        const errData = await res.json();
-        alert(errData.error || t('Failed to duplicate lessons'));
-      }
-    } catch (err) {
-      console.error('Error duplicating lessons:', err);
-      alert(t('Error duplicating lessons'));
     }
   };
 
@@ -645,46 +583,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
               <div className="course-form-body">
                 {activeTab === 'basic' && (
                   <>
-                    {showDuplicateLessons && isAdmin && (
-                      <div className="duplicate-lessons-dialog">
-                        <h3>{t('Duplicate Lessons from Another {{resource}}', { resource: labels.course })}</h3>
-                        <div className="form-group">
-                          <label>{t('Source {{resource}}', { resource: labels.course })}</label>
-                          <select 
-                            value={duplicationData.sourceCourseId}
-                            onChange={(e) => setDuplicationData({ ...duplicationData, sourceCourseId: e.currentTarget.value })}
-                          >
-                            <option value="">{t('Select {{resource}}', { resource: labels.course })}</option>
-                            {courses.filter(c => c.id !== editingCourseId).map(c => (
-                              <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label>{t('Start Date')}</label>
-                            <input 
-                              type="date" 
-                              value={duplicationData.startDate}
-                              onInput={(e) => setDuplicationData({ ...duplicationData, startDate: e.currentTarget.value })}
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>{t('End Date')}</label>
-                            <input 
-                              type="date" 
-                              value={duplicationData.endDate}
-                              onInput={(e) => setDuplicationData({ ...duplicationData, endDate: e.currentTarget.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="footer-right">
-                          <button className="cancel-button" onClick={() => setShowDuplicateLessons(false)}>{t('Cancel')}</button>
-                          <button className="confirm-button" onClick={handleDuplicateLessons}>{t('Duplicate Now')}</button>
-                        </div>
-                      </div>
-                    )}
-
                     <div className="form-group">
                       <label>{t('{{resource}} Name', { resource: labels.course })}</label>
                       <input 
@@ -870,7 +768,6 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                 <div className="footer-left">
                   <button className="delete-button" onClick={() => handleDelete(editingCourseId)}>{t('Delete')}</button>
                   <button className="duplicate-button" onClick={handleDuplicate}>{t('Duplicate {{resource}}', { resource: labels.course })}</button>
-                  <button className="duplicate-lessons-btn" onClick={() => setShowDuplicateLessons(true)}>{t('Duplicate Lessons')}</button>
                 </div>
               )}
               <div className="footer-right">

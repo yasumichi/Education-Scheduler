@@ -798,6 +798,107 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
   }
 });
 
+// Batch Clone lessons between courses (ADMIN / Course Chief or Assistant Teacher)
+app.post('/api/courses/duplicate-lessons-batch', verifyToken, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const { sourceCourseId, destinationCourseIds, startDate, endDate } = req.body;
+
+  if (!Array.isArray(destinationCourseIds) || destinationCourseIds.length === 0) {
+    return res.status(400).json({ error: 'Destination courses must be provided as an array.' });
+  }
+
+  try {
+    // Check permission for all target courses
+    for (const dId of destinationCourseIds) {
+      const hasPermission = await canManageCourseLessons(req.user.id, dId);
+      if (!hasPermission) return res.status(403).json({ error: `Access denied to destination course: ${dId}` });
+    }
+
+    // Get all time periods (for absolute time calculation)
+    const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
+    const getAbsTime = (date: string, pId: string) => {
+      const pIdx = periods.findIndex(p => p.id === pId);
+      return `${date}-${pIdx.toString().padStart(3, '0')}`;
+    };
+
+    // Get source lessons
+    const sourceLessons = await prisma.lesson.findMany({
+      where: {
+        courseId: sourceCourseId,
+        startDate: { gte: startDate },
+        endDate: { lte: endDate }
+      },
+      include: { deliveryMethods: { select: { id: true } } }
+    });
+
+    let totalCount = 0;
+
+    for (const destinationCourseId of destinationCourseIds) {
+      // Get target course info
+      const destinationCourse = await prisma.resource.findUnique({
+        where: { id: destinationCourseId }
+      });
+      if (!destinationCourse || destinationCourse.type !== ResourceType.course) {
+        continue;
+      }
+
+      // Date range validation
+      if (destinationCourse.startDate && startDate < destinationCourse.startDate) {
+        continue;
+      }
+      if (destinationCourse.endDate && endDate > destinationCourse.endDate) {
+        continue;
+      }
+
+      // Get target existing lessons (for duplication check)
+      const existingLessons = await prisma.lesson.findMany({
+        where: { courseId: destinationCourseId }
+      });
+
+      for (const sL of sourceLessons) {
+        const sStart = getAbsTime(sL.startDate, sL.startPeriodId);
+        const sEnd = getAbsTime(sL.endDate, sL.endPeriodId);
+
+        // Duplication check
+        const isOverlapping = existingLessons.some(eL => {
+          const eStart = getAbsTime(eL.startDate, eL.startPeriodId);
+          const eEnd = getAbsTime(eL.endDate, eL.endPeriodId);
+          return sStart <= eEnd && eStart <= sEnd;
+        });
+
+        if (!isOverlapping) {
+          await prisma.lesson.create({
+            data: {
+              subject: sL.subject,
+              subjectRef: sL.subjectId ? { connect: { id: sL.subjectId } } : undefined,
+              startDate: sL.startDate,
+              startPeriodId: sL.startPeriodId,
+              endDate: sL.endDate,
+              endPeriodId: sL.endPeriodId,
+              location: sL.location,
+              remarks: sL.remarks,
+              externalTeacher: sL.externalTeacher,
+              externalSubTeachers: sL.externalSubTeachers,
+              course: { connect: { id: destinationCourseId } },
+              room: destinationCourse.mainRoomId ? { connect: { id: destinationCourse.mainRoomId } } : undefined,
+              deliveryMethods: {
+                connect: sL.deliveryMethods.map(m => ({ id: m.id }))
+              }
+            }
+          });
+          totalCount++;
+        }
+      }
+      await createAuditLog(req, 'Lesson', 'DUPLICATE_LESSONS_BATCH', { sourceCourseId, destinationCourseId, startDate, endDate });
+    }
+
+    res.json({ message: `Successfully duplicated ${totalCount} lessons across ${destinationCourseIds.length} courses.`, count: totalCount });
+  } catch (error) {
+    console.error('Failed to duplicate lessons batch:', error);
+    res.status(500).json({ error: 'Failed to duplicate lessons' });
+  }
+});
+
 // Fetch lessons (Auth required)
 app.get('/api/lessons', verifyToken, async (req, res) => {
   try {
