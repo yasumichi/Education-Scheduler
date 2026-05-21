@@ -122,7 +122,7 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
                 <option value="LOGIN">LOGIN</option>
               </select>
             </div>
-            <div className="filter-actions">
+            <div className="audit-filter-actions">
               <button type="submit" className="search-btn" disabled={loading}>
                 {loading ? t('Searching...') : t('Search')}
               </button>
