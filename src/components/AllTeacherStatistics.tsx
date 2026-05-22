@@ -116,44 +116,46 @@ export function AllTeacherStatistics({
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="stats-controls">
-          <div className="date-inputs">
-            <input type="date" value={startDate} onInput={(e) => setStartDate(e.currentTarget.value)} />
-            <span>~</span>
-            <input type="date" value={endDate} onInput={(e) => setEndDate(e.currentTarget.value)} />
+        <div className="dialog-content is-flex">
+          <div className="stats-controls">
+            <div className="date-inputs">
+              <input type="date" value={startDate} onInput={(e) => setStartDate(e.currentTarget.value)} />
+              <span>~</span>
+              <input type="date" value={endDate} onInput={(e) => setEndDate(e.currentTarget.value)} />
+            </div>
+            <button className="export-button" onClick={handleExport}>{t('Export to Excel')}</button>
           </div>
-          <button className="export-button" onClick={handleExport}>{t('Export to Excel')}</button>
-        </div>
 
-        <div className="stats-table-container">
-          <table className="stat-table">
-            <thead>
-              <tr>
-                <th>{labels.teacher}</th>
-                <th>{labels.mainTeacher}</th>
-                <th>{labels.subTeacher}</th>
-                <th>{t('Subtotal')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.rows.map((row) => (
-                <tr key={row.teacherId}>
-                  <td className="col-teacher">{row.teacherName}</td>
-                  <td className="col-hours">{row.mainHours}</td>
-                  <td className="col-hours">{row.subHours}</td>
-                  <td className="col-hours subtotal">{row.totalHours}</td>
+          <div className="stats-table-container">
+            <table className="stat-table">
+              <thead>
+                <tr>
+                  <th>{labels.teacher}</th>
+                  <th>{labels.mainTeacher}</th>
+                  <th>{labels.subTeacher}</th>
+                  <th>{t('Subtotal')}</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="grand-total">
-                <td>{t('Grand Total')}</td>
-                <td className="col-hours">{stats.grandTotalMain}</td>
-                <td className="col-hours">{stats.grandTotalSub}</td>
-                <td className="col-hours">{stats.grandTotalMain + stats.grandTotalSub}</td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody>
+                {stats.rows.map((row) => (
+                  <tr key={row.teacherId}>
+                    <td className="col-teacher">{row.teacherName}</td>
+                    <td className="col-hours">{row.mainHours}</td>
+                    <td className="col-hours">{row.subHours}</td>
+                    <td className="col-hours subtotal">{row.totalHours}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="grand-total">
+                  <td>{t('Grand Total')}</td>
+                  <td className="col-hours">{stats.grandTotalMain}</td>
+                  <td className="col-hours">{stats.grandTotalSub}</td>
+                  <td className="col-hours">{stats.grandTotalMain + stats.grandTotalSub}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
 
         <div className="dialog-footer">

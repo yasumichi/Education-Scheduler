@@ -2,12 +2,6 @@
   max-width: 450px;
 }
 
-.system-setting-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
 .setting-item {
   background-color: #1a1a1a;
   padding: 15px;

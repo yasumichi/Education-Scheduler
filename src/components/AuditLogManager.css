@@ -3,14 +3,6 @@
   width: 95%;
 }
 
-.audit-log-content {
-  flex: 1;
-  overflow-y: hidden; /* Changed to hidden to allow internal scroll */
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-}
-
 .audit-log-filters {
   display: flex;
   flex-wrap: wrap;

@@ -212,7 +212,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="room-manager-content">
+        <div className="dialog-content">
           {!editingRoomId ? (
             <>
               {isAdmin && (

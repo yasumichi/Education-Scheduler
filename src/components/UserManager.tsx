@@ -155,7 +155,7 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="user-manager-content">
+        <div className="dialog-content">
           {!editingUserId && !isAddingNew ? (
             <>
               <div className="user-list-actions">

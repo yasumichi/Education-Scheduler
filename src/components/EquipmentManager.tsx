@@ -158,7 +158,7 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="equipment-manager-content">
+        <div className="dialog-content">
           {!editingId ? (
             <>
               <div className="header-actions">

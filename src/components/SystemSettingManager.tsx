@@ -107,7 +107,7 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="system-setting-content">
+        <div className="dialog-content">
           <div className="setting-item">
             <label className="checkbox-label">
               <input 

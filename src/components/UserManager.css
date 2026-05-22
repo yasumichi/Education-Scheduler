@@ -3,12 +3,6 @@
   width: 95%;
 }
 
-.user-manager-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
 .user-list-actions {
   display: flex;
   justify-content: space-between;

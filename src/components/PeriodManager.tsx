@@ -80,7 +80,7 @@ export function PeriodManager({ backendUrl, onClose, onUpdate }: Props) {
           <button className="close-button" onClick={onClose}>×</button>
         </div>
         
-        <div className="period-list">
+        <div className="dialog-content">
           {periods.map((p, index) => (
             <div key={index} className="period-row">
               <div className="period-field">

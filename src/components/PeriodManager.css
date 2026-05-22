@@ -1,9 +1,3 @@
-.period-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
 .period-row {
   display: flex;
   gap: 15px;

@@ -414,7 +414,7 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="subject-manager-content">
+        <div className="dialog-content is-flex is-row">
           {/* CourseType Section */}
           <div className="type-section">
             <div className="section-header">

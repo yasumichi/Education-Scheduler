@@ -146,7 +146,7 @@ export function CourseStatistics({ course, subjects, lessons, periods, labels, o
           </div>
         </div>
 
-        <div className="course-statistics-content">
+        <div className="dialog-content">
           <table className="stat-table">
             <thead>
               <tr>

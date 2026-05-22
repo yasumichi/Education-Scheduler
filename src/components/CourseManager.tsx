@@ -508,7 +508,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
           </div>
         )}
 
-        <div className="course-manager-content">
+        <div className="dialog-content is-flex no-padding">
           {!editingCourseId ? (
             <>
               <div className="header-actions">

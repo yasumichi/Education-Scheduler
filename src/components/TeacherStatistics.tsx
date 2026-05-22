@@ -277,7 +277,7 @@ export function TeacherStatistics({
           </div>
         </div>
 
-        <div className="teacher-statistics-content">
+        <div className="dialog-content">
           <div className="range-selector">
             <label>{t('Period')}:</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.currentTarget.value)} />

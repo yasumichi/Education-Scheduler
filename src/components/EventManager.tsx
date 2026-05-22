@@ -107,7 +107,7 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="event-manager-content">
+        <div className="dialog-content">
           <div className="form-group">
             <label>{t('Event Name')} *</label>
             <input 

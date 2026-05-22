@@ -24,7 +24,7 @@ export function RoomEquipmentView({ room, onClose, labels }: Props) {
           <span className="info-value">{room.capacity || '-'}</span>
         </div>
 
-        <div className="room-equipment-content">
+        <div className="dialog-content">
           <table className="room-equipment-table">
             <thead>
               <tr>

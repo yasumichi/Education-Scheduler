@@ -48,7 +48,8 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="period-list">          <div className="period-field" style={{ marginBottom: '15px' }}>
+        <div className="dialog-content">
+          <div className="period-field" style={{ marginBottom: '15px' }}>
             <label>Room</label>
             <input 
               type="text" 

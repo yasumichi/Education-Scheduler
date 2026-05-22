@@ -521,7 +521,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
         </div>
 
         {showHistory ? (
-          <div className="lesson-manager-content history-content">
+          <div className="dialog-content history-content">
             {loadingHistory ? (
               <div className="no-history">{t('Loading...')}</div>
             ) : historyLogs.length === 0 ? (
@@ -587,7 +587,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
             )}
           </div>
         ) : (
-          <div className="lesson-manager-content">
+          <div className="dialog-content">
           <div className="form-group">
             <label>{labels.course} *</label>
             {canManage ? (

@@ -89,7 +89,7 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="profile-manager-content">
+        <div className="dialog-content">
          {mode === 'profile' && (
            <div className="user-info-section">
              <p><strong>{t('Email')}:</strong> {user.email}</p>

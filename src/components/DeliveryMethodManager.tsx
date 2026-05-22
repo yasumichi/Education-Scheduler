@@ -80,7 +80,7 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate, labels }:
           <button className="close-button" onClick={onClose}>×</button>
         </div>
         
-        <div className="method-list">
+        <div className="dialog-content">
           {methods.map((m, index) => (
             <div key={index} className="method-row">
               <div className="method-field">

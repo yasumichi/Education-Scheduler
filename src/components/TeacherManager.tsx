@@ -194,7 +194,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="teacher-manager-content">
+        <div className="dialog-content">
           {!editingTeacherId ? (
             <>
               <div className="header-actions">

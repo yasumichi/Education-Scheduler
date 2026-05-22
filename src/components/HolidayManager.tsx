@@ -178,7 +178,7 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="holiday-manager-content">
+        <div className="dialog-content">
           {!isImportMode && !editingHolidayId && (
             <>
               <div className="year-selector">

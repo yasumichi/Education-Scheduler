@@ -111,7 +111,7 @@ export function LessonDuplicator({ backendUrl, onClose, onUpdate, resources, lab
           <button className="close-button" onClick={onClose}>&times;</button>
         </div>
 
-        <div className="dialog-body">
+        <div className="dialog-content">
           <div className="form-group">
             <label>{labels.courseType} ({t('Filter')})</label>
             <select value={selectedTypeId} onChange={(e) => setSelectedTypeId(e.currentTarget.value)}>

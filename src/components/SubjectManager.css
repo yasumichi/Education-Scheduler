@@ -2,11 +2,7 @@
   max-width: 1000px;
 }
 
-.subject-manager-content {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  padding: 20px;
+.dialog-content.is-flex.is-row {
   gap: 20px;
 }
 

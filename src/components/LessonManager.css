@@ -121,12 +121,6 @@
   }
 }
 
-.lesson-manager-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
 .form-group {
   display: flex;
   flex-direction: column;

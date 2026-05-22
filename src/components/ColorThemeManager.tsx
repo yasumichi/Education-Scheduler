@@ -162,7 +162,7 @@ export function ColorThemeManager({ backendUrl, onClose, onUpdate, themes: initi
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <div className="theme-manager-content">
+        <div className="dialog-content">
           {renderCategory('EVENT', t('Events'))}
           {renderCategory('LESSON', t('Lessons'))}
           {renderCategory('HOLIDAY', t('Holidays'))}

@@ -2,12 +2,6 @@
   width: 600px;
 }
 
-.holiday-manager-content {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-
 .year-selector {
   display: flex;
   align-items: center;

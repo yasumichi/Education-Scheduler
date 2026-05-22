@@ -81,7 +81,7 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
           <h2>{t('Audit Logs')} ({totalLogs})</h2>
           <button className="close-button" onClick={onClose}>&times;</button>
         </div>
-        <div className="audit-log-content">
+        <div className="dialog-content is-flex">
           <form className="audit-log-filters" onSubmit={handleSearch}>
             <div className="filter-group">
               <label>{t('Date')}</label>
