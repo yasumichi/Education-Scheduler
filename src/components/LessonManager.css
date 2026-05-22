@@ -230,12 +230,6 @@
 }
 
 /* History Styles */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .history-toggle-btn {
   background: none;
   border: none;

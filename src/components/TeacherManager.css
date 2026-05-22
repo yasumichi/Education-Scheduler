@@ -3,14 +3,6 @@
 }
 
 /* List View Styles */
-.header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  gap: 15px;
-}
-
 .search-box {
   display: flex;
   align-items: center;

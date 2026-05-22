@@ -47,12 +47,6 @@
   cursor: default;
 }
 
-.header-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 15px;
-}
-
 .action-buttons {
   display: flex;
   gap: 8px;

@@ -21,9 +21,8 @@
   align-items: center;
   padding: 15px 20px;
   gap: 15px;
-  background-color: #242424; /* Match dialog-box bg */
   z-index: 20;
-  border-bottom: 1px solid #444;
+  margin-bottom: 0;
 }
 
 .manager-list {
@@ -250,8 +249,6 @@
   .remove-btn { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
   .status-message-banner { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; }
   .add-btn { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
-  
-  .header-actions { background-color: #fff; border-bottom: 1px solid #eee; }
   
   .course-tabs { background-color: #fff; border-bottom-color: #ccc; }
 

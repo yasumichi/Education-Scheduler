@@ -201,8 +201,8 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
                   />
                 </div>
                 <div className="header-actions">
-                  <button onClick={() => setEditingHolidayId('new')}>{t('Add Holiday')}</button>
-                  <button onClick={() => setIsImportMode(true)}>{t('Import')}</button>
+                  <button className="action-button" onClick={() => setEditingHolidayId('new')}>{t('Add Holiday')}</button>
+                  <button className="action-button" onClick={() => setIsImportMode(true)}>{t('Import')}</button>
                 </div>
               </div>
 

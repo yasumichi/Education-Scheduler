@@ -2,12 +2,6 @@
   max-width: 550px;
 }
 
-.header-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 15px;
-}
-
 .draggable-row {
   cursor: grab;
 }
