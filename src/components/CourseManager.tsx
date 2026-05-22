@@ -14,6 +14,37 @@ interface Props {
   isAdmin?: boolean;
 }
 
+interface CourseSubjectFormData {
+  name: string;
+  totalPeriods: number;
+  subjectId: string | null;
+}
+
+interface CourseFormData {
+  name: string;
+  order: number;
+  startDate: string;
+  endDate: string;
+  mainRoomId: string;
+  chiefTeacherId: string;
+  assistantTeacherIds: string[];
+  mainTeacherLabel: string;
+  subTeacherLabel: string;
+  courseTypeId: string;
+  subjects: CourseSubjectFormData[];
+}
+
+interface EnrichedSubject extends CourseSubjectFormData {
+  large: string;
+  middle: string;
+  small: string;
+  level: number;
+  originalIndex: number;
+  masterOrder: number;
+  largeSpan: number;
+  middleSpan: number;
+}
+
 export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels, systemSettings, initialCourseId, isAdmin = true }: Props) {
   const { t } = useTranslation();
   const [editingCourseId, setEditingCourseId] = useState<string | null>(initialCourseId || null);
@@ -57,7 +88,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   };
 
   const [selectedYear, setSelectedYear] = useState<number>(getInitialYear());
-  const [formData, setFormData] = useState<any>({
+  const [formData, setFormData] = useState<CourseFormData>({
     name: '',
     order: 0,
     startDate: '',
@@ -223,18 +254,18 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
   };
 
-  const handleSubjectChange = (index: number, field: 'name' | 'totalPeriods' | 'subjectId', value: any) => {
+  const handleSubjectChange = (index: number, field: 'name' | 'totalPeriods' | 'subjectId', value: string | number | null) => {
     const newSubjects = [...formData.subjects];
     if (field === 'subjectId') {
       const sub = allSubjects.find(s => s.id === value);
       newSubjects[index] = { 
         ...newSubjects[index], 
-        subjectId: value,
+        subjectId: value as string | null,
         name: sub ? sub.name : newSubjects[index].name,
         totalPeriods: sub ? (sub.totalPeriods || 0) : newSubjects[index].totalPeriods
       };
     } else {
-      newSubjects[index] = { ...newSubjects[index], [field]: value };
+      newSubjects[index] = { ...newSubjects[index], [field]: value } as CourseSubjectFormData;
     }
     setFormData({ ...formData, subjects: newSubjects });
   };
@@ -415,7 +446,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     return { large, middle, small, level };
   };
 
-  const getEnrichedSubjects = () => {
+  const getEnrichedSubjects = (): EnrichedSubject[] => {
     const sortedAll = getSortedSubjects();
     const enriched = formData.subjects.map((s, idx) => {
       const hierarchy = getSubjectHierarchy(s.subjectId, s.name || '');
@@ -453,7 +484,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
         }
       }
 
-      return { ...r, largeSpan, middleSpan };
+      return { ...r, largeSpan, middleSpan } as EnrichedSubject;
     });
 
     return rows;
