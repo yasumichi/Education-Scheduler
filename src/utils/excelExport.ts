@@ -80,12 +80,12 @@ export async function exportTimetableToExcel({
     const holiday = getHoliday(date);
     const dayInfo = getDayInfo(date.getDay());
     
-    // 週末設定がある場合は、休日であっても週末のテーマを優先する
+    // If weekend settings exist, prioritize weekend theme even if it's a holiday
     if (dayInfo.isWeekend) {
       return getThemeColor(colorThemes, 'HOLIDAY', dayInfo.themeId);
     }
     
-    // 週末でない平日の休日の場合は、holidayTheme を使用する
+    // Use holidayTheme for non-weekend weekdays that are holidays
     if (holiday) {
       return getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
     }
@@ -627,12 +627,12 @@ export async function exportPersonalMonthlyToExcel({
       const holiday = getHoliday(date);
       const dayInfo = getDayInfo(date.getDay());
       
-      // 週末設定がある場合は、休日であっても週末のテーマを優先する
+      // If weekend settings exist, prioritize weekend theme even if it's a holiday
       if (dayInfo.isWeekend) {
         return getThemeColor(colorThemes, 'HOLIDAY', dayInfo.themeId);
       }
       
-      // 週末でない平日の休日の場合は、holidayTheme を使用する
+      // Use holidayTheme for non-weekend weekdays that are holidays
       if (holiday) {
         return getThemeColor(colorThemes, 'HOLIDAY', holidayTheme);
       }

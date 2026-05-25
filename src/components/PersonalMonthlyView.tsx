@@ -85,7 +85,7 @@ export function PersonalMonthlyView({
   const isWeekend = (date: Date) => getDayInfo(date.getDay()).isWeekend;
   const holidayTheme = systemSettings?.holidayTheme || 'default';
 
-  // カラーテーマ取得用ヘルパー
+  // Helper to get color theme
   const getThemeColor = (category: ColorCategory, keyOrId: string) => {
     const theme = colorThemes.find(t => t.category === category && (t.key === keyOrId || t.id === keyOrId));
     if (theme) return theme;
@@ -96,12 +96,12 @@ export function PersonalMonthlyView({
     const holiday = getHoliday(date);
     const dayInfo = getDayInfo(date.getDay());
     
-    // 週末設定がある場合は、休日であっても週末のテーマを優先する
+    // If weekend settings exist, prioritize weekend theme even if it's a holiday
     if (dayInfo.isWeekend) {
       return getThemeColor('HOLIDAY', dayInfo.themeId);
     }
 
-    // 週末でない平日の休日の場合は、holidayTheme を使用する
+    // Use holidayTheme for non-weekend weekdays that are holidays
     if (holiday) {
       return getThemeColor('HOLIDAY', holidayTheme);
     }
@@ -109,7 +109,7 @@ export function PersonalMonthlyView({
     return null;
   };
 
-  // 以前はテキスト選択中を無視していたが、ダブルクリックによる編集を優先するため常に実行
+  // Previously ignored while selecting text, but now always runs to prioritize editing on double-click
   const handleIntentionalClick = (callback: () => void) => {
     callback();
   };
@@ -132,7 +132,7 @@ export function PersonalMonthlyView({
       const isTeacher = l.teacherId === userResourceId || subIds.includes(userResourceId);
       if (!isTeacher) return false;
       
-      // 期間内に入っているかチェック
+      // Check if within the period
       return dateStr >= l.startDate && dateStr <= l.endDate;
     });
   };
@@ -141,7 +141,7 @@ export function PersonalMonthlyView({
     const dateStr = format(date, 'yyyy-MM-dd');
     return events.filter(e => {
       const resourceIdList = [...(e.resourceIds || []), ...(e.resources || []).map(r => r.id)];
-      // この教官に割り当てられたイベントのみを表示
+      // Only show events assigned to this instructor
       const isAssigned = resourceIdList.includes(userResourceId);
       if (!isAssigned) return false;
       
@@ -153,7 +153,7 @@ export function PersonalMonthlyView({
     const dateStr = format(date, 'yyyy-MM-dd');
     const totalPeriods = periods.length || 8;
     
-    // この日のアイテムを整形して抽出
+    // Format and extract items for this day
     const dayItems = [
       ...dayLessons.map(l => {
         let startIdx = 0;
@@ -185,7 +185,7 @@ export function PersonalMonthlyView({
 
     if (dayItems.length === 0) return null;
 
-    // 重なりを計算して列（level）を割り当てる
+    // Calculate overlaps and assign columns (level)
     const placements: { item: any, level: number, maxLevelInGroup: number }[] = [];
     const sortedItems = [...dayItems].sort((a, b) => a.startIdx - b.startIdx || (b.endIdx - b.startIdx) - (a.endIdx - a.startIdx));
     
@@ -197,7 +197,7 @@ export function PersonalMonthlyView({
       placements.push({ item, level, maxLevelInGroup: 0 });
     });
 
-    // 同じグループ（重なり合う一群）内での最大列数を計算
+    // Calculate the maximum number of columns within the same group (overlapping set)
     placements.forEach(p => {
       const overlapping = placements.filter(other => !(p.item.endIdx < other.item.startIdx || p.item.startIdx > other.item.endIdx));
       p.maxLevelInGroup = Math.max(...overlapping.map(o => o.level)) + 1;
@@ -218,7 +218,7 @@ export function PersonalMonthlyView({
             zIndex: 10 + level
           };
 
-          // 表示用の時限ラベル (単位不要のため番号のみ)
+          // Period label for display (number only, unit not required)
           const periodLabel = span > 1 ? `${startIdx + 1}-${endIdx + 1}` : `${startIdx + 1}`;
 
           if (type === 'event') {

@@ -30,7 +30,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
     equipments: []
   });
 
-  // ドラッグ&ドロップ用の参照
+  // Refs for drag and drop
   const dragItemRef = useRef<number | null>(null);
   const dragOverItemRef = useRef<number | null>(null);
 
@@ -152,7 +152,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
     }
   };
 
-  // 上下ボタンによる移動
+  // Move using up/down buttons
   const moveItem = (index: number, direction: 'up' | 'down') => {
     const newRooms = [...roomsList];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -163,7 +163,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
     setRoomsList(newRooms);
   };
 
-  // ドラッグ&ドロップの処理
+  // Drag and drop processing
   const handleDragStart = (index: number) => {
     dragItemRef.current = index;
   };
@@ -189,7 +189,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          // 配列の現在の並び順（インデックス）を新しい order として保存
+          // Save current array order (index) as the new order
           orders: roomsList.map((r, idx) => ({ id: r.id, order: idx + 1 }))
         })
       });

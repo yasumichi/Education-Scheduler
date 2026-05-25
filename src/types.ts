@@ -148,7 +148,7 @@ export interface Lesson {
   subject: string;
   subjectId?: string;
   teacherId?: string;
-  subTeacherIds?: string[]; // サブ講師
+  subTeacherIds?: string[]; // Assistant teachers
   subTeachers?: { id: string }[]; // Relation from backend
   roomId?: string;
   courseId: string;
@@ -156,12 +156,12 @@ export interface Lesson {
   remarks?: string;
   externalTeacher?: string;
   externalSubTeachers?: string;
-  deliveryMethodIds?: string[]; // 授業方式
+  deliveryMethodIds?: string[]; // Delivery methods
   deliveryMethods?: { id: string, name: string, color?: string }[]; // Relation from backend
-  startDate: string;   // 開始日 "2026-03-26"
-  startPeriodId: string; // 開始時限 "p1"
-  endDate: string;     // 終了日 "2026-03-27"
-  endPeriodId: string;   // 終了時限 "p4"
+  startDate: string;   // Start date "2026-03-26"
+  startPeriodId: string; // Start period ID "p1"
+  endDate: string;     // End date "2026-03-27"
+  endPeriodId: string;   // End period ID "p4"
 }
 
 export type ViewType = 'day' | 'week' | 'month' | '3month' | '6month' | 'year' | 'course_timeline';
@@ -217,7 +217,7 @@ const generateLessons = (): Lesson[] => {
   const subjects = ['Math', 'English', 'Physics', 'Japanese', 'Chemistry', 'History', 'Geography', 'Biology', 'Social', 'Info', 'Arts', 'PE'];
   const baseDate = new Date().toISOString().split('T')[0];
 
-  // 基本的な単発の授業
+  // Basic single-session lesson
   for (let i = 1; i <= 30; i++) {
     const periodNum = (i % 8) + 1;
     lessons.push({
@@ -233,7 +233,7 @@ const generateLessons = (): Lesson[] => {
     });
   }
 
-  // 複数サブ講師のテストデータ
+  // Test data for multiple assistant teachers
   lessons.push({
     id: 'l-multi-sub',
     subject: 'Team Teaching: Research',
@@ -247,7 +247,7 @@ const generateLessons = (): Lesson[] => {
     endPeriodId: 'p4'
   });
 
-  // 日を跨ぐ集中講義
+  // Multi-day intensive lecture
   lessons.push({
     id: 'l-special',
     subject: 'Special: Multiculturalism',
@@ -275,7 +275,7 @@ export const MOCK_EVENTS: ScheduleEvent[] = [
     endDate: '2026-03-26',
     endPeriodId: 'p6',
     color: '#fee2e2',
-    showInEventRow: true // イベント行のみ（resourceIdsなし）
+    showInEventRow: true // Event row only (no resourceIds)
   },
   {
     id: 'e-resource-only',
@@ -286,7 +286,7 @@ export const MOCK_EVENTS: ScheduleEvent[] = [
     endPeriodId: 'p8',
     color: '#d1fae5',
     resourceIds: ['t10'], // Dr. Kato only
-    showInEventRow: false // イベント行には出さない
+    showInEventRow: false // Don't show in event row
   },
   {
     id: 'e-both',
@@ -297,7 +297,7 @@ export const MOCK_EVENTS: ScheduleEvent[] = [
     endPeriodId: 'p3',
     color: '#fef3c7',
     resourceIds: ['t4', 'r4'], // Dr. Tanaka, Room 104
-    showInEventRow: true // 両方に表示
+    showInEventRow: true // Show in both
   }
 ];
 

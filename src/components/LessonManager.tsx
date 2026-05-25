@@ -222,7 +222,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     return isLessonMain || isLessonSub;
   }, [canManage, user, formData.id, formData.teacherId, formData.subTeacherIds]);
 
-  // 講座が変更された際のメイン教室の自動入力
+  // Auto-fill main room when course is changed
   useEffect(() => {
     if (!formData.id && selectedCourse?.mainRoomId) {
       setFormData(prev => ({
@@ -232,7 +232,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     }
   }, [formData.courseId, selectedCourse]);
 
-  // 選択された講座に関連する課目と残り時限の計算
+  // Calculate subjects and remaining periods related to the selected course
   const subjectOptions = useMemo(() => {
     const course = selectedCourse;
     if (!course || !course.subjects) return [];

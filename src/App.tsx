@@ -91,7 +91,7 @@ export function App() {
   const user = useSignal<User | null>(null);
   const authError = useSignal<string | undefined>(undefined);
 
-  // リソースの表示名設定
+  // Display name settings for resources
   const resourceLabels = useSignal<ResourceLabels>({
     room: '',
     teacher: '',
@@ -109,7 +109,7 @@ export function App() {
     equipment: ''
   });
 
-  // 初期化時に /auth/me でセッション復元
+  // Restore session via /auth/me on initialization
   useEffect(() => {
     const restoreSession = async () => {
       try {
@@ -171,7 +171,7 @@ export function App() {
 
       const [resResources, resLessons, resEvents, resHolidays, resPeriods, resLabels, resSettings, resThemes, resSubjects, resFilters] = responses;
 
-      // すべてのJSONパースを並列で行う
+      // Parse all JSON in parallel
       const [dataResources, dataLessons, dataEvents, dataHolidays, dataPeriods, dataLabels, dataSettings, dataThemes, dataSubjects, dataFilters] = await Promise.all([
         resResources.json(),
         resLessons.json(),
@@ -255,7 +255,7 @@ export function App() {
     }
   }, [user.value]);
 
-  // 設定読み込み後に日付を整列させる
+  // Align dates after loading settings
   useEffect(() => {
     if (showPersonalMonthly.value || showCourseWeekly.value || showLessonHistory.value) return;
     if (systemSettings.value && (viewType.value === 'year' || viewType.value === '3month' || viewType.value === '6month' || viewType.value === 'month' || viewType.value === 'week')) {
@@ -910,7 +910,7 @@ export function App() {
               const initial: Partial<Lesson> = { startDate: date, startPeriodId: periodId, endDate: date, endPeriodId: periodId };
               if (viewMode.value === 'room') {
                 initial.roomId = resourceId;
-                // この教室をメイン教室としている講座があれば、それを初期選択
+                // Initially select the course that has this room as its main room, if any
                 const relatedCourse = resources.value.find(c => c.type === 'course' && c.mainRoomId === resourceId);
                 if (relatedCourse) initial.courseId = relatedCourse.id;
               }

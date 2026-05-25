@@ -142,7 +142,7 @@ app.post('/api/auth/login', async (req, res) => {
     res.cookie('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', // または 'strict'
+      sameSite: 'lax', // or 'strict'
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
 
@@ -991,7 +991,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         }
       }
     } else {
-      // Create時: 指定された講座に対して権限があるか
+      // On creation: check if user has permissions for the specified course
       if (!courseId) return res.status(400).json({ error: 'courseId is required' });
       const hasPermission = await canManageCourseLessons(req.user.id, courseId);
       if (!hasPermission) return res.status(403).json({ error: 'Access denied.' });
@@ -1124,7 +1124,7 @@ app.post('/api/delivery-methods', verifyToken, async (req: AuthRequest, res) => 
         await tx.deliveryMethod.deleteMany({ where: { id: { in: idsToDelete } } });
       }
 
-      // Updateまたは新規作成
+      // Update or create new
       for (let i = 0; i < methods.length; i++) {
         const m = methods[i];
         if (m.id) {
@@ -1276,7 +1276,7 @@ app.get('/api/resources/:id/icalendar', verifyToken, async (req: AuthRequest, re
 
     if (!resource) return res.status(404).json({ error: 'Resource not found' });
 
-    // Permission check: ADMIN または 紐付けられたユーザー本人
+    // Permission check: ADMIN or the linked user themselves
     if (req.user.role !== UserRole.ADMIN && resource.userId !== req.user.id) {
       return res.status(403).json({ error: 'Access denied.' });
     }
@@ -1844,10 +1844,10 @@ app.post('/api/course-types/:id/duplicate', verifyToken, async (req: AuthRequest
       }
     });
 
-    // Subject 複製 (階層維持)
+    // Subject replication (maintain hierarchy)
     const oldToNewId = new Map<string, string>();
     
-    // Levelごとに複製
+    // Replicate level by level
     for (let level = 1; level <= 3; level++) {
       const levelSubjects = original.subjects.filter(s => s.level === level);
       for (const s of levelSubjects) {

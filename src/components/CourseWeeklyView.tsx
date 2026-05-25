@@ -80,7 +80,7 @@ export function CourseWeeklyView({
               const dateStr = format(day, 'yyyy-MM-dd');
               const dayLessons = lessons.filter(l => l.courseId === courseId && dateStr >= l.startDate && dateStr <= l.endDate);
 
-              // この日の各時限でどのレッスンを表示するか、および rowspan を計算
+              // Calculate which lesson to display for each period of the day, and the rowspan
               const periodAssignment: { lesson: Lesson | null, rowSpan: number }[] = periods.map(() => ({ lesson: null, rowSpan: 1 }));
               
               const processedLessonIds = new Set<string>();
@@ -118,7 +118,7 @@ export function CourseWeeklyView({
                     periodAssignment[pIdx] = { lesson, rowSpan: 0 };
                   }
                 } else {
-                  // 空きコマの場合の連続結合処理
+                  // Continuous merge processing for empty slots
                   if (!Array.from(processedEmptyStartIndices).some(startIdx => {
                     const assignment = periodAssignment[startIdx];
                     return assignment.lesson === null && pIdx < startIdx + assignment.rowSpan;

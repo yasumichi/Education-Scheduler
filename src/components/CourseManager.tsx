@@ -55,11 +55,11 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   const [courseTypes, setCourseTypes] = useState<CourseType[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
   
-  // システム設定から開始月日を取得
+  // Get start month/day from system settings
   const startMonth = systemSettings?.yearViewStartMonth ?? 4;
   const startDay = systemSettings?.yearViewStartDay ?? 1;
 
-  // 年度期間を計算 (YYYY-MM-DD 形式)
+  // Calculate fiscal year period (YYYY-MM-DD format)
   const getYearRange = (year: number) => {
     const start = new Date(year, startMonth - 1, startDay);
     const end = new Date(year + 1, startMonth - 1, startDay);
@@ -72,7 +72,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     };
   };
 
-  // 指定された日付がどの年度に属するか計算
+  // Calculate which fiscal year a given date belongs to
   const getAcademicYear = (dateStr: string) => {
     const d = new Date(dateStr);
     const y = d.getFullYear();
@@ -102,7 +102,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     subjects: []
   });
 
-  // ドラッグ&ドロップ用の参照
+  // Refs for drag and drop
   const dragItemRef = useRef<number | null>(null);
   const dragOverItemRef = useRef<number | null>(null);
 
@@ -170,7 +170,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
   }, [editingCourseId, resources]);
 
-  // 年度の選択肢を生成
+  // Generate fiscal year options
   const availableYears = Array.from(new Set(courses.flatMap(c => {
     const years: number[] = [];
     if (c.startDate) years.push(getAcademicYear(c.startDate));
@@ -184,7 +184,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     availableYears.sort((a, b) => b - a);
   }
 
-  // 表示する講座のフィルタリング (選択された年度に重なるもの)
+  // Filter courses to display (those overlapping with the selected fiscal year)
   const filteredCourses = coursesList.filter(c => {
     if (!c.startDate || !c.endDate) return true;
     const range = getYearRange(selectedYear);
@@ -346,7 +346,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
   };
 
-  // 順序変更ロジック
+  // Reordering logic
   const moveItem = (index: number, direction: 'up' | 'down') => {
     const newCourses = [...coursesList];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;

@@ -29,7 +29,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
     userId: ''
   });
 
-  // ドラッグ&ドロップ用の参照
+  // Refs for drag and drop
   const dragItemRef = useRef<number | null>(null);
   const dragOverItemRef = useRef<number | null>(null);
 
@@ -39,7 +39,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
     setTeachersList(teachers);
   }, [resources]);
 
-  // 表示する講師のフィルタリング
+  // Filter teachers to display
   const filteredTeachers = teachersList.filter(t => 
     t.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -131,7 +131,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
     }
   };
 
-  // 順序変更ロジック
+  // Reordering logic
   const moveItem = (index: number, direction: 'up' | 'down') => {
     const newTeachers = [...teachersList];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;

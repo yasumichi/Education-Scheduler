@@ -31,7 +31,7 @@ model Resource {
   lessonsAsSub     Lesson[]        @relation("SubTeacherLessons")
   equipments       RoomEquipment[] @relation("RoomEquipments")
 
-  // 追加: メイン教室・教官設定
+  // Added: Main room and instructor settings
   mainRoomId       String?
   mainRoom         Resource?       @relation("CourseMainRoom", fields: [mainRoomId], references: [id])
   coursesAsMainRoom Resource[]     @relation("CourseMainRoom")
@@ -196,7 +196,7 @@ model ColorTheme {
   id         String        @id @default(uuid())
   name       String
   category   ColorCategory
-  key        String?       // システムデフォルト識別用 (e.g. "default", "no-teacher")
+  key        String?       // For system default identification (e.g. "default", "no-teacher")
   background String
   foreground String
   order      Int           @default(0)

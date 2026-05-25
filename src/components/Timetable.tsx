@@ -79,7 +79,7 @@ interface Props {
   const isWeekend = (date: Date) => getDayInfo(date.getDay()).isWeekend;
   const holidayTheme = systemSettings?.holidayTheme || 'default';
 
-  // カラーテーマ取得用ヘルパー
+  // Helper to get color theme
   const getThemeColor = (category: ColorCategory, keyOrId: string) => {
     const theme = colorThemes.find(t => t.category === category && (t.key === keyOrId || t.id === keyOrId));
     if (theme) return theme;
@@ -91,12 +91,12 @@ interface Props {
     const holiday = getHoliday(date);
     const dayInfo = getDayInfo(date.getDay());
     
-    // 週末設定がある場合は、休日であっても週末のテーマを優先する
+    // If weekend settings exist, prioritize weekend theme even if it's a holiday
     if (dayInfo.isWeekend) {
       return getThemeColor('HOLIDAY', dayInfo.themeId);
     }
 
-    // 週末でない平日の休日の場合は、holidayTheme を使用する
+    // Use holidayTheme for non-weekend weekdays that are holidays
     if (holiday) {
       return getThemeColor('HOLIDAY', holidayTheme);
     }
@@ -150,7 +150,7 @@ interface Props {
   const allResourcesOfMode = resources
     .filter(r => {
       if (r.type !== viewMode) return false;
-      // 講座ビューの場合、表示期間内に開催されているもののみを表示
+      // In course view, only show items held within the display period
       if (viewMode === 'course') {
         if (r.startDate && r.endDate) {
           return r.startDate <= viewEndStr && r.endDate >= viewStartStr;

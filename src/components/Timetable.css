@@ -35,7 +35,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  margin-left: auto; /* controls の右端に寄せる */
+  margin-left: auto; /* Align to the right of controls */
 }
 
 .excel-export-btn:hover {
@@ -61,7 +61,7 @@
   min-width: 100%;
 }
 
-/* 左上の交差点 (常に最前面：z-index: 100) */
+/* Top-left corner (always on top: z-index: 100) */
 .grid-corner {
   background-color: #222;
   border-right: 1px solid #666;
@@ -309,7 +309,7 @@
   }
 }
 
-/* 日付ヘッダー (z-index: 35) */
+/* Date header (z-index: 35) */
 .date-header {
   background-color: #222;
   color: #fff;
@@ -329,7 +329,7 @@
   text-align: center;
 }
 
-/* 時限ヘッダー (z-index: 34) */
+/* Period header (z-index: 34) */
 .period-header {
   background-color: #444;
   color: #ccc;
@@ -340,7 +340,7 @@
   border-bottom: 1px solid #555;
   border-right: 1px solid #555;
   position: sticky;
-  top: 40px; /* date-header の高さ */
+  top: 40px; /* Height of date-header */
   z-index: 34;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -348,7 +348,7 @@
   text-align: center;
 }
 
-/* イベント行ラベル (z-index: 30) */
+/* Event row labels (z-index: 30) */
 .event-label {
   background-color: #3d3d3d;
   color: #eee;
@@ -410,7 +410,7 @@
   z-index: 2;
 }
 
-/* リソースラベル (z-index: 25) */
+/* Resource labels (z-index: 25) */
 .grid-label {
   background-color: #444;
   color: #fff;
@@ -483,7 +483,7 @@
   }
 }
 
-/* 土日祝日の色設定 (ダークモード) */
+/* Weekend/Holiday color settings (dark mode) */
 .is-weekend, 
 .is-holiday { color: #ffffff; background-color: #ff8181; }
 
@@ -492,7 +492,7 @@
   border-bottom: 1px solid #444;
 }
 
-/* セルの土日祝日背景 */
+/* Weekend/Holiday background for cells */
 .grid-cell.is-weekend, 
 .grid-cell.is-holiday { background-color: rgba(255, 129, 129, 0.1); }
 
@@ -516,7 +516,7 @@
 }
 
 .lesson-card.no-main-teacher {
-  color: #333; /* 明るい背景に合わせて文字を暗く */
+  color: #333; /* Darken text to match light background */
 }
 
 .lesson-subject {
@@ -589,8 +589,8 @@
 }
 
 .control-group button.active {
-  background-color: #fff; /* 背景を白に (反転) */
-  color: #333; /* 文字を黒に (反転) */
+  background-color: #fff; /* White background (inverted) */
+  color: #333; /* Black text (inverted) */
   border-color: #fff;
   font-weight: bold;
 }
@@ -689,8 +689,8 @@
     border-color: #bbb;
   }
   .control-group button.active {
-    background-color: #333; /* 背景を黒に (反転) */
-    color: #fff; /* 文字を白に (反転) */
+    background-color: #333; /* Black background (inverted) */
+    color: #fff; /* White text (inverted) */
     border-color: #333;
   }
   .grid-cell.is-weekend, 

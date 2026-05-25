@@ -257,29 +257,29 @@ export function LessonHistory({ backendUrl, courses, resources, periods, subject
                 console.error('Failed to parse log data:', log.data);
               }
 
-              // 新形式（old/newラップあり）かどうかの判定
+              // Determine if it's in the new format (with old/new wrapping)
               const hasComparison = !!(data.old || data.new);
               
               let actualOld = data.old;
               let actualNew = data.new;
 
               if (!hasComparison) {
-                // レガシー形式またはラップなしデータ
+                // Legacy format or unwrapped data
                 if (log.action === 'DELETE_LESSON') {
                   actualOld = data;
                   actualNew = null;
                 } else {
-                  // CREATE またはラップなしの UPDATE は、現在のデータを new とみなす
+                  // Consider current data as 'new' for CREATE or unwrapped UPDATE
                   actualOld = null;
                   actualNew = data;
                 }
               }
 
-              // 修正（UPDATE）かつ比較データがある場合のみ、diff表示（矢印）を行う
+              // Only show diff (arrow) for modifications (UPDATE) with comparison data
               const isUpdate = log.action === 'UPDATE_LESSON' && !!(actualOld && actualNew);
               const isDelete = log.action === 'DELETE_LESSON';
               
-              // 削除の場合は、表示対象を old にする
+              // Set 'old' as display target for deletions
               const effectiveNew = isDelete ? actualOld : actualNew;
 
               const actionLabel = t(log.action.replace('_LESSON', ''));

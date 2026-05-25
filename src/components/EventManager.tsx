@@ -10,7 +10,7 @@ interface Props {
   periods: TimePeriod[];
   resources: Resource[];
   labels: ResourceLabels;
-  initialEvent?: Partial<ScheduleEvent>; // 編集時は既存、新規時は日付・時限のみ
+  initialEvent?: Partial<ScheduleEvent>; // Existing event when editing, only date/periods when creating new
   themes: ColorTheme[];
 }
 

@@ -53,7 +53,7 @@ export function Login({ onLogin, error: loginError, backendUrl }: Props) {
           body: JSON.stringify({ email, password })
         });
         if (res.ok) {
-          // サインアップ成功後、自動的にログイン
+          // Automatically log in after successful signup
           onLogin(email, password);
         } else {
           const data = await res.json();
