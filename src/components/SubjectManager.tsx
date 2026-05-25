@@ -294,8 +294,8 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
       if (!text) return;
 
       const lines = text.split(/\r?\n/).filter(line => line.trim());
-      // Skip header if it exists (e.g., if first line contains "Large" or "大課目")
-      const startIdx = (lines[0].includes('Large') || lines[0].includes('Subject') || lines[0].includes('課目')) ? 1 : 0;
+      // Skip header if it exists (e.g., if first line contains "Large", "Subject", "大課目", or "Subject" translations)
+      const startIdx = (lines[0].includes('Large') || lines[0].includes('Subject') || lines[0].includes('大課目') || lines[0].includes('Subject')) ? 1 : 0;
       
       const rows = lines.slice(startIdx).map(line => {
         const [large, middle, small, totalPeriods, order] = line.split(',').map(s => s.trim());

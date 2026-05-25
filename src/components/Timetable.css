@@ -697,7 +697,7 @@
   .grid-cell.is-holiday { background-color: #fffafa; }
 }
 
-/* タイムライン用ヘッダー行 */
+/* Timeline header row */
 .month-row {
   height: 30px;
   top: 0;
