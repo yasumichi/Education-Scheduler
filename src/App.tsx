@@ -257,10 +257,11 @@ export function App() {
 
   // 設定読み込み後に日付を整列させる
   useEffect(() => {
+    if (showPersonalMonthly.value || showCourseWeekly.value || showLessonHistory.value) return;
     if (systemSettings.value && (viewType.value === 'year' || viewType.value === '3month' || viewType.value === '6month' || viewType.value === 'month' || viewType.value === 'week')) {
       handleViewTypeChange(viewType.value);
     }
-  }, [systemSettings.value]);
+  }, [systemSettings.value, showPersonalMonthly.value, showCourseWeekly.value, showLessonHistory.value]);
 
   const handleLogin = async (email: string, pass: string) => {
     authError.value = undefined;
