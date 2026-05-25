@@ -289,14 +289,18 @@
 @media (prefers-color-scheme: light) {
   .type-section { border-right-color: #eee; }
   .type-filters { background-color: #f9f9f9; }
-  .type-filters input { background: #fff; border-color: #ccc; color: #333; }
+  .type-filters input, .form-group input { 
+    background: #fff; 
+    border-color: #ccc; 
+    color: #333; 
+    color-scheme: light;
+  }
   .item-period { color: #666; }
   .manager-item { background: #f9f9f9; border-color: #ddd; }
   .manager-item:hover { background: #f0f0f0; }
   .manager-item.active { background: #646cff; color: #fff; }
   .tree-node { background: #f9f9f9; border-color: #ddd; }
   .children-container { border-top-color: #eee; }
-  .form-group input { background: #fff; border-color: #ccc; color: #333; }
   .section-header h3 { color: #666; }
   .item-actions .icon-btn { color: #666; }
   .move-btn { background-color: #f0f0f0; border-color: #ccc; }

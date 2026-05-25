@@ -143,5 +143,11 @@
   .move-btn { background: #f0f0f0; border-color: #ccc; color: #666; }
   .edit-btn { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
   .delete-btn { background-color: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-  .teacher-form input, .teacher-form select { background-color: #f5f5f5; border-color: #ccc; color: #333; }
+  .teacher-form input, .teacher-form select, .search-box input { 
+    background-color: #f5f5f5; 
+    border-color: #ccc; 
+    color: #333; 
+    color-scheme: light;
+  }
+  .clear-search:hover { color: #000; }
 }

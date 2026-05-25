@@ -143,7 +143,12 @@
 }
 
 @media (prefers-color-scheme: light) {
-  .form-group input, .form-group select, .resource-selector-list, .theme-preview-list { background-color: #f5f5f5; border-color: #ccc; color: #333; }
+  .form-group input, .form-group select, .resource-selector-list, .theme-preview-list { 
+    background-color: #f5f5f5; 
+    border-color: #ccc; 
+    color: #333; 
+    color-scheme: light;
+  }
   .resource-item { background: #eee; color: #333; }
   .resource-item.selected { background: #3b82f6; color: #fff; }
   .custom-color-picker { border-color: #ccc; }

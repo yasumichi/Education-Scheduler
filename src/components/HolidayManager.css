@@ -140,7 +140,12 @@
 
 @media (prefers-color-scheme: light) {
   .year-selector label { color: #666; }
-  .year-selector select { background-color: #fff; border-color: #ccc; color: #333; }
+  .year-selector select, .year-selector input[type="date"] { 
+    background-color: #fff; 
+    border-color: #ccc; 
+    color: #333; 
+    color-scheme: light;
+  }
   .holiday-list th, .holiday-list td { border-bottom-color: #eee; }
   .holiday-list th { color: #666; }
   .holiday-list button { background-color: #f9f9f9; border-color: #ccc; color: #333; }
@@ -148,8 +153,19 @@
   .empty-message { color: #999; }
   .holiday-form h3, .import-section h3 { border-bottom-color: #eee; }
   .form-group label { color: #666; }
-  .form-group input { background-color: #fff; border-color: #ccc; color: #333; }
+  .form-group input { 
+    background-color: #fff; 
+    border-color: #ccc; 
+    color: #333; 
+    color-scheme: light;
+  }
   .import-section h4 { border-bottom-color: #eee; }
   .import-nager, .import-json { background-color: #f3f4f6; }
   .import-nager button { background-color: #10b981; }
+  .import-nager input {
+    background-color: #fff;
+    border-color: #ccc;
+    color: #333;
+    color-scheme: light;
+  }
 }

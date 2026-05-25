@@ -60,12 +60,51 @@
   background-color: #064e3b;
 }
 
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.form-group input {
+  width: 100%;
+  background: #333;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 8px;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 @media (prefers-color-scheme: light) {
   .user-info-section { background-color: #f5f5f5; }
   .password-change-section h3 { color: #646cff; }
   .ical-export-section { border-top-color: #eee; }
   .ical-export-section h3 { color: #059669; }
   .section-desc { color: #666; }
+  .form-group label { color: #666; }
+  .form-group input { 
+    background-color: #fff; 
+    border-color: #ccc; 
+    color: #333; 
+    color-scheme: light;
+  }
   .ical-download-button {
     background-color: #dcfce7;
     color: #065f46;

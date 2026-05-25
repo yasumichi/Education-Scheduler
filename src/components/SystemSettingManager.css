@@ -105,14 +105,18 @@
 @media (prefers-color-scheme: light) {
   .setting-item { background-color: #f5f5f5; }
   .setting-description { color: #666; }
-  .theme-select {
+  .field-label { color: #333; }
+  .form-group label { color: #666; }
+  .theme-select, select {
     background-color: #fff;
     color: #333;
     border-color: #ccc;
+    color-scheme: light;
   }
   .weekend-day-row {
     border-bottom-color: #eee;
   }
+  .checkbox-label { color: #333; }
   .theme-preview-item.selected {
     border-color: #646cff;
   }
