@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
+import { apiFetch } from '../utils/api';
 import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User, Subject, AuditLog } from '../types';
 import { parseISO, differenceInDays, format } from 'date-fns';
 import './LessonManager.css';
@@ -78,7 +79,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   useEffect(() => {
     const fetchDeliveryMethods = async () => {
       try {
-        const res = await fetch(`${backendUrl}/delivery-methods`, { credentials: 'include' });
+        const res = await apiFetch(`${backendUrl}/delivery-methods`);
         if (res.ok) {
           const data = await res.json();
           setDeliveryMethods(data);
@@ -95,7 +96,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
       const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
-          const res = await fetch(`${backendUrl}/lessons/${formData.id}/history`, { credentials: 'include' });
+          const res = await apiFetch(`${backendUrl}/lessons/${formData.id}/history`);
           if (res.ok) {
             const data = await res.json();
             setHistoryLogs(data);
@@ -432,12 +433,11 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     }
 
     try {
-      const res = await fetch(`${backendUrl}/lessons`, {
+      const res = await apiFetch(`${backendUrl}/lessons`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           teacherId: formData.teacherId || null,
@@ -465,9 +465,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     if (!confirm(t('Are you sure you want to delete this lesson?'))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/lessons/${formData.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/lessons/${formData.id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         onUpdate();

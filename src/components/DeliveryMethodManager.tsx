@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { DeliveryMethod, ResourceLabels } from '../types';
+import { apiFetch } from '../utils/api';
 import './DeliveryMethodManager.css';
 
 interface Props {
@@ -21,9 +22,7 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate, labels }:
 
   const fetchMethods = async () => {
     try {
-      const res = await fetch(`${backendUrl}/delivery-methods`, {
-        credentials: 'include'
-      });
+      const res = await apiFetch(`${backendUrl}/delivery-methods`);
       if (res.ok) {
         const data = await res.json();
         setMethods(data);
@@ -51,12 +50,11 @@ export function DeliveryMethodManager({ backendUrl, onClose, onUpdate, labels }:
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`${backendUrl}/delivery-methods`, {
+      const res = await apiFetch(`${backendUrl}/delivery-methods`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({ methods })
       });
       if (res.ok) {

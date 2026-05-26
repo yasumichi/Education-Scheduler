@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { apiFetch } from '../utils/api';
 import { useTranslation } from 'react-i18next';
 import { TimePeriod } from '../types';
 import './PeriodManager.css';
@@ -20,9 +21,7 @@ export function PeriodManager({ backendUrl, onClose, onUpdate }: Props) {
 
   const fetchPeriods = async () => {
     try {
-      const res = await fetch(`${backendUrl}/periods`, {
-        credentials: 'include'
-      });
+      const res = await apiFetch(`${backendUrl}/periods`);
       if (res.ok) {
         const data = await res.json();
         setPeriods(data);
@@ -50,12 +49,11 @@ export function PeriodManager({ backendUrl, onClose, onUpdate }: Props) {
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`${backendUrl}/periods`, {
+      const res = await apiFetch(`${backendUrl}/periods`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({ periods })
       });
       if (res.ok) {

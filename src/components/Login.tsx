@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { apiFetch } from '../utils/api';
 import './Login.css';
 import { useTranslation } from 'react-i18next';
 
@@ -24,7 +25,7 @@ export function Login({ onLogin, error: loginError, backendUrl }: Props) {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch(`${backendUrl}/settings`);
+        const res = await apiFetch(`${backendUrl}/settings`);
         if (res.ok) {
           const data = await res.json();
           setAllowPublicSignup(data.allowPublicSignup);
@@ -47,7 +48,7 @@ export function Login({ onLogin, error: loginError, backendUrl }: Props) {
       }
 
       try {
-        const res = await fetch(`${backendUrl}/auth/register`, {
+        const res = await apiFetch(`${backendUrl}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })

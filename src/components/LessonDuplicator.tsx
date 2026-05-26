@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { Resource, ResourceLabels, CourseType } from '../types';
+import { apiFetch } from '../utils/api';
 import './LessonDuplicator.css';
 
 interface Props {
@@ -26,7 +27,7 @@ export function LessonDuplicator({ backendUrl, onClose, onUpdate, resources, lab
   useEffect(() => {
     const fetchCourseTypes = async () => {
       try {
-        const res = await fetch(`${backendUrl}/course-types`, { credentials: 'include' });
+        const res = await apiFetch(`${backendUrl}/course-types`);
         if (res.ok) {
           const data = await res.json();
           setCourseTypes(data);
@@ -63,10 +64,9 @@ export function LessonDuplicator({ backendUrl, onClose, onUpdate, resources, lab
 
     setIsProcessing(true);
     try {
-      const res = await fetch(`${backendUrl}/courses/duplicate-lessons-batch`, {
+      const res = await apiFetch(`${backendUrl}/courses/duplicate-lessons-batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           sourceCourseId,
           destinationCourseIds,

@@ -27,9 +27,10 @@ import { AllTeacherStatistics } from './components/AllTeacherStatistics';
 import { PersonalMonthlyView } from './components/PersonalMonthlyView';
 import { CourseWeeklyView } from './components/CourseWeeklyView';
 import { RoomEquipmentView } from './components/RoomEquipmentView';
-import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, User, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject, SavedFilter, AuditLog } from './types';
+import { Resource, Lesson, ScheduleEvent, ResourceType, ViewType, Holiday, ResourceLabels, AuthResponse, TimePeriod, SystemSetting, ColorTheme, Subject, SavedFilter, AuditLog } from './types';
 import { format, addDays, addMonths, getYear, parseISO, differenceInMonths, differenceInDays, startOfDay, startOfWeek } from 'date-fns';
 import { exportTimetableToExcel, exportPersonalMonthlyToExcel, exportCourseWeeklyToExcel } from './utils/excelExport';
+import { apiFetch, userSignal, expiresAtSignal, showLoginModalSignal, retryPendingRequests, clearPendingRequests } from './utils/api';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -87,8 +88,7 @@ export function App() {
   const auditLogs = useSignal<AuditLog[]>([]);
   const sessionRestored = useSignal<boolean>(false);
 
-  // Auth signals
-  const user = useSignal<User | null>(null);
+  // Auth signal
   const authError = useSignal<string | undefined>(undefined);
 
   // Display name settings for resources
@@ -113,12 +113,11 @@ export function App() {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/auth/me`, {
-          credentials: 'include'
-        });
+        const res = await apiFetch('/auth/me');
         if (res.ok) {
           const data = await res.json();
-          user.value = data;
+          userSignal.value = data;
+          expiresAtSignal.value = data.expiresAt;
         }
       } catch (err) {
         console.error('Session restoration failed:', err);
@@ -143,26 +142,26 @@ export function App() {
   }, [showUserDropdown.value]);
 
   const fetchData = async () => {
-    if (!user.value) return;
+    if (!userSignal.value) return;
     try {
       const responses = await Promise.all([
-        fetch(`${BACKEND_URL}/resources`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/lessons`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/events`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/holidays`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/periods`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/labels`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/settings`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/color-themes`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/subjects`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/saved-filters`, { credentials: 'include' })
+        apiFetch('/resources'),
+        apiFetch('/lessons'),
+        apiFetch('/events'),
+        apiFetch('/holidays'),
+        apiFetch('/periods'),
+        apiFetch('/labels'),
+        apiFetch('/settings'),
+        apiFetch('/color-themes'),
+        apiFetch('/subjects'),
+        apiFetch('/saved-filters')
       ]);
 
       const failed = responses.find(r => !r.ok);
       if (failed) {
         if (failed.status === 401) {
-          console.warn('Unauthorized access, logging out...');
-          handleLogout();
+          // Handled by apiFetch
+          return;
         } else {
           console.error(`Backend request failed with status ${failed.status}: ${failed.url}`);
         }
@@ -198,62 +197,15 @@ export function App() {
 
       console.log('Successfully fetched all data from backend');
     } catch (err) {
-      console.error('Failed to fetch data from backend:', err);
+      console.error('Failed to fetch data:', err);
     }
   };
-
-  const handleSaveFilter = async (filter: Partial<SavedFilter>) => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/saved-filters`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(filter),
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        if (filter.id) {
-          savedFilters.value = savedFilters.value.map(f => f.id === updated.id ? updated : f);
-        } else {
-          savedFilters.value = [...savedFilters.value, updated];
-        }
-      }
-    } catch (err) {
-      console.error('Failed to save filter:', err);
-    }
-  };
-
-  const handleDeleteFilter = async (id: string) => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/saved-filters/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      if (res.ok) {
-        savedFilters.value = savedFilters.value.filter(f => f.id !== id);
-      }
-    } catch (err) {
-      console.error('Failed to delete filter:', err);
-    }
-  };
-
-  const fetchAuditLogs = async () => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/audit-logs`, { credentials: 'include' });
-      if (res.ok) {
-        auditLogs.value = await res.json();
-      }
-    } catch (err) {
-      console.error('Failed to fetch audit logs:', err);
-    }
-  };
-
 
   useEffect(() => {
-    if (user.value) {
+    if (userSignal.value) {
       fetchData();
     }
-  }, [user.value]);
+  }, [userSignal.value]);
 
   // Align dates after loading settings
   useEffect(() => {
@@ -273,14 +225,17 @@ export function App() {
         credentials: 'include'
       });
 
-      const data: AuthResponse & { error?: string } = await res.json();
+      const data: AuthResponse & { error?: string; expiresAt?: number } = await res.json();
 
       if (!res.ok) {
         authError.value = data.error || 'Login failed';
         return;
       }
 
-      user.value = data.user;
+      userSignal.value = data.user;
+      expiresAtSignal.value = data.expiresAt || null;
+      showLoginModalSignal.value = false;
+      retryPendingRequests();
     } catch (err) {
       authError.value = 'Server connection failed';
     }
@@ -295,7 +250,49 @@ export function App() {
     } catch (err) {
       console.error('Logout failed:', err);
     } finally {
-      user.value = null;
+      userSignal.value = null;
+      expiresAtSignal.value = null;
+      clearPendingRequests();
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await apiFetch('/audit-logs');
+      if (res.ok) {
+        auditLogs.value = await res.json();
+      }
+    } catch (err) {
+      console.error('Failed to fetch audit logs:', err);
+    }
+  };
+
+  const handleSaveFilter = async (filter: Partial<SavedFilter>) => {
+    try {
+      const res = await apiFetch('/saved-filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: filter.name, resourceType: viewMode.value, resourceIds: filter.resourceIds })
+      });
+      if (res.ok) {
+        const newFilter = await res.json();
+        savedFilters.value = [...savedFilters.value, newFilter];
+      }
+    } catch (err) {
+      console.error('Failed to save filter:', err);
+    }
+  };
+
+  const handleDeleteFilter = async (id: string) => {
+    try {
+      const res = await apiFetch(`/saved-filters/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        savedFilters.value = savedFilters.value.filter(f => f.id !== id);
+      }
+    } catch (err) {
+      console.error('Failed to delete filter:', err);
     }
   };
 
@@ -303,7 +300,7 @@ export function App() {
     return <div className="loading">Loading...</div>;
   }
 
-  if (!user.value) {
+  if (!userSignal.value) {
     return <Login onLogin={handleLogin} error={authError.value} backendUrl={BACKEND_URL} />;
   }
 
@@ -384,9 +381,9 @@ export function App() {
   };
 
   const handlePersonalExport = () => {
-    if (!user.value?.resourceId) return;
+    if (!userSignal.value?.resourceId) return;
     exportPersonalMonthlyToExcel({
-      userResourceId: user.value.resourceId,
+      userResourceId: userSignal.value.resourceId,
       periods: periods.value,
       resources: resources.value,
       lessons: lessons.value,
@@ -425,9 +422,9 @@ export function App() {
       <header className="app-header">
         <div className="header-top">
           <h1><img src={logoPath} style="vertical-align: middle;" /><span style="color: #18324d">Schola</span><span style="color: #1ec1ca">Tile</span></h1>
-          {user.value && (
+          {userSignal.value && (
             <div className="user-info">
-              {(user.value.role === 'ADMIN' || user.value.role === 'EQUIPMENT_MANAGER') && (
+              {(userSignal.value.role === 'ADMIN' || userSignal.value.role === 'EQUIPMENT_MANAGER') && (
                 <div className="settings-container">
                   <button 
                     className="settings-button" 
@@ -437,7 +434,7 @@ export function App() {
                   </button>
                   {showSettingsDropdown.value && (
                     <div className="settings-dropdown">
-                      {user.value.role === 'ADMIN' && (
+                      {userSignal.value.role === 'ADMIN' && (
                         <>
                           <button 
                             className="dropdown-item" 
@@ -489,7 +486,7 @@ export function App() {
                         {t('Manage {{resource}}', { resource: resourceLabels.value.room })}
                       </button>
 
-                      {user.value.role === 'ADMIN' && (
+                      {userSignal.value.role === 'ADMIN' && (
                         <>
                           <button 
                             className="dropdown-item" 
@@ -585,11 +582,11 @@ export function App() {
                   onClick={() => showUserDropdown.value = !showUserDropdown.value}
                 >
                   {(() => {
-                    if (user.value?.resourceId) {
-                      const teacher = resources.value.find(r => r.id === user.value?.resourceId);
+                    if (userSignal.value?.resourceId) {
+                      const teacher = resources.value.find(r => r.id === userSignal.value?.resourceId);
                       if (teacher) return t(teacher.name);
                     }
-                    return user.value?.email;
+                    return userSignal.value?.email;
                   })()}
                 </button>
                 {showUserDropdown.value && (
@@ -614,7 +611,7 @@ export function App() {
                     >
                       {t('Change Password')}
                     </button>
-                    {user.value?.resourceId && (
+                    {userSignal.value?.resourceId && (
                       <button 
                         className="dropdown-item" 
                         onClick={() => {
@@ -626,7 +623,7 @@ export function App() {
                         {t('Personal Monthly')}
                       </button>
                     )}
-                    {user.value?.resourceId && (
+                    {userSignal.value?.resourceId && (
                       <button 
                         className="dropdown-item" 
                         onClick={() => {
@@ -638,7 +635,7 @@ export function App() {
                         {t('Export Schedule (iCalendar)')}
                       </button>
                     )}
-                    {user.value?.resourceId && (
+                    {userSignal.value?.resourceId && (
                       <button 
                         className="dropdown-item" 
                         onClick={() => {
@@ -803,9 +800,9 @@ export function App() {
             subjects={subjects.value}
             labels={resourceLabels.value}
           />
-        ) : showPersonalMonthly.value && user.value?.resourceId ? (
+        ) : showPersonalMonthly.value && userSignal.value?.resourceId ? (
           <PersonalMonthlyView 
-            userResourceId={user.value.resourceId}
+            userResourceId={userSignal.value.resourceId}
             resources={resources.value}
             lessons={lessons.value}
             events={events.value}
@@ -829,7 +826,7 @@ export function App() {
                 endDate: date,
                 startPeriodId: periods.value[0]?.id || 'p1',
                 endPeriodId: periods.value[periods.value.length - 1]?.id || 'p8',
-                resourceIds: [user.value!.resourceId!],
+                resourceIds: [userSignal.value!.resourceId!],
                 showInEventRow: false
               };
               showEventManager.value = true;
@@ -960,7 +957,7 @@ export function App() {
           labels={resourceLabels.value}
           systemSettings={systemSettings.value}
           initialCourseId={editingCourseId.value}
-          isAdmin={user.value?.role === 'ADMIN'}
+          isAdmin={userSignal.value?.role === 'ADMIN'}
         />
       )}
 
@@ -974,7 +971,7 @@ export function App() {
           onUpdate={fetchData}
           resources={resources.value}
           labels={resourceLabels.value}
-          isAdmin={user.value?.role === 'ADMIN' || user.value?.role === 'EQUIPMENT_MANAGER'}
+          isAdmin={userSignal.value?.role === 'ADMIN' || userSignal.value?.role === 'EQUIPMENT_MANAGER'}
           initialRoomId={editingRoomId.value}
         />
       )}
@@ -989,7 +986,7 @@ export function App() {
           onUpdate={fetchData}
           resources={resources.value}
           labels={resourceLabels.value}
-          isAdmin={user.value?.role === 'ADMIN'}
+          isAdmin={userSignal.value?.role === 'ADMIN'}
           initialTeacherId={editingTeacherId.value}
         />
       )}
@@ -1024,7 +1021,7 @@ export function App() {
           subjects={subjects.value}
           labels={resourceLabels.value}
           initialLesson={editingLesson.value || {}}
-          user={user.value!}
+          user={userSignal.value!}
         />
       )}
 
@@ -1038,19 +1035,19 @@ export function App() {
         />
       )}
 
-      {showUserManager.value && user.value && (
+      {showUserManager.value && userSignal.value && (
         <UserManager 
           backendUrl={BACKEND_URL} 
           onClose={() => showUserManager.value = false}
-          currentUser={user.value}
+          currentUser={userSignal.value}
         />
       )}
 
-      {showProfileManager.value && user.value && (
+      {showProfileManager.value && userSignal.value && (
         <ProfileManager 
           backendUrl={BACKEND_URL} 
           onClose={() => showProfileManager.value = false}
-          user={user.value}
+          user={userSignal.value}
           mode={profileMode.value}
         />
       )}
@@ -1085,9 +1082,6 @@ export function App() {
         const course = resources.value.find(c => c.id === selectedCourseIdForStats.value);
         if (!course) return null;
         
-        // Fetch subjects if needed, but they are already managed in CourseManager.
-        // For simplicity, we'll fetch all subjects here too or rely on a global state.
-        // Since we don't have global subjects signal yet, we'll need to fetch them.
         return (
           <CourseStatistics
             course={course}
@@ -1223,6 +1217,27 @@ export function App() {
           />
         );
       })()}
-      </div>
-      );
-      }
+
+      {showLoginModalSignal.value && (
+        <div className="login-modal-overlay">
+          <div className="login-modal-content">
+            <Login 
+              onLogin={handleLogin} 
+              error={authError.value} 
+              backendUrl={BACKEND_URL} 
+            />
+            <button 
+              className="login-modal-close" 
+              onClick={() => {
+                showLoginModalSignal.value = false;
+                clearPendingRequests();
+              }}
+            >
+              {t('Cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

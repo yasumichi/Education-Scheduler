@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { CourseType, Subject, ResourceLabels, SystemSetting, Resource } from '../types';
+import { apiFetch } from '../utils/api';
 import './CourseManager.css';
 
 interface Props {
@@ -110,16 +111,11 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   const rooms = resources.filter(r => r.type === 'room');
   const teachers = resources.filter(r => r.type === 'teacher');
 
-  useEffect(() => {
-    setCoursesList(courses);
-    fetchMasterData();
-  }, [resources]);
-
   const fetchMasterData = async () => {
     try {
       const [typesRes, subjectsRes] = await Promise.all([
-        fetch(`${backendUrl}/course-types`, { credentials: 'include' }),
-        fetch(`${backendUrl}/subjects`, { credentials: 'include' })
+        apiFetch(`${backendUrl}/course-types`),
+        apiFetch(`${backendUrl}/subjects`)
       ]);
       if (typesRes.ok && subjectsRes.ok) {
         setCourseTypes(await typesRes.json());
@@ -129,6 +125,11 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
       console.error('Failed to fetch master data:', err);
     }
   };
+
+  useEffect(() => {
+    setCoursesList(courses);
+    fetchMasterData();
+  }, [resources]);
 
   useEffect(() => {
     setActiveTab('basic');
@@ -284,12 +285,11 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     }
 
     try {
-      const res = await fetch(`${backendUrl}/courses`, {
+      const res = await apiFetch(`${backendUrl}/courses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({
           id: editingCourseId === 'new' ? null : editingCourseId,
           ...formData
@@ -310,9 +310,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
     if (!confirm(t('Are you sure you want to delete this {{resource}}?', { resource: labels.course }))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/courses/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/courses/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         await onUpdate();
@@ -328,9 +327,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
   const handleDuplicate = async () => {
     if (!editingCourseId || editingCourseId === 'new') return;
     try {
-      const res = await fetch(`${backendUrl}/courses/${editingCourseId}/duplicate`, {
-        method: 'POST',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/courses/${editingCourseId}/duplicate`, {
+        method: 'POST'
       });
       if (res.ok) {
         const data = await res.json();
@@ -377,10 +375,9 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
   const handleSaveOrder = async () => {
     try {
-      const res = await fetch(`${backendUrl}/courses/reorder`, {
+      const res = await apiFetch(`${backendUrl}/courses/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           orders: coursesList.map((c, idx) => ({ id: c.id, order: idx + 1 }))
         })

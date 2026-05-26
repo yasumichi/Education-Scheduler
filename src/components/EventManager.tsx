@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { ScheduleEvent, TimePeriod, Resource, ResourceLabels, ColorTheme } from '../types';
+import { apiFetch } from '../utils/api';
 import './EventManager.css';
 
 interface Props {
@@ -50,12 +51,11 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
       return;
     }
     try {
-      const res = await fetch(`${backendUrl}/events`, {
+      const res = await apiFetch(`${backendUrl}/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify(formData)
       });
       if (res.ok) {
@@ -74,9 +74,8 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
     if (!confirm(t('Are you sure you want to delete this event?'))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/events/${formData.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/events/${formData.id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         onUpdate();

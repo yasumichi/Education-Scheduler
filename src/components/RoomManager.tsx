@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { Resource, ResourceLabels, Equipment } from '../types';
+import { apiFetch } from '../utils/api';
 import './RoomManager.css';
 
 interface Props {
@@ -43,7 +44,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
   useEffect(() => {
     const fetchEquipments = async () => {
       try {
-        const res = await fetch(`${backendUrl}/equipments`, { credentials: 'include' });
+        const res = await apiFetch(`${backendUrl}/equipments`);
         if (res.ok) {
           const data = await res.json();
           setEquipmentsMaster(data);
@@ -86,7 +87,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
     }
 
     try {
-      const res = await fetch(`${backendUrl}/rooms`, {
+      const res = await apiFetch(`${backendUrl}/rooms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -137,7 +138,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
     if (!confirm(t('Are you sure you want to delete this {{resource}}?', { resource: labels.room }))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/rooms/${id}`, {
+      const res = await apiFetch(`${backendUrl}/rooms/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -184,7 +185,7 @@ export function RoomManager({ backendUrl, onClose, onUpdate, resources, labels, 
 
   const handleSaveOrder = async () => {
     try {
-      const res = await fetch(`${backendUrl}/rooms/reorder`, {
+      const res = await apiFetch(`${backendUrl}/rooms/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

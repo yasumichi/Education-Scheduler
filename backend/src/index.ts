@@ -137,6 +137,8 @@ app.post('/api/auth/login', async (req, res) => {
     if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
+    const decoded = jwt.decode(token) as { exp: number };
+    const expiresAt = decoded.exp * 1000;
     
     // Save to Cookie
     res.cookie('auth_token', token, {
@@ -147,7 +149,8 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
     res.json({
-      user: { id: user.id, email: user.email, role: user.role, resourceId: user.resource?.id }
+      user: { id: user.id, email: user.email, role: user.role, resourceId: user.resource?.id },
+      expiresAt
     });
   } catch (error) {
     res.status(500).json({ error: 'Login failed' });
@@ -178,7 +181,8 @@ app.get('/api/auth/me', verifyToken, async (req: AuthRequest, res) => {
       id: user.id,
       email: user.email,
       role: user.role,
-      resourceId: user.resource?.id
+      resourceId: user.resource?.id,
+      expiresAt: req.user.exp ? req.user.exp * 1000 : undefined
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user' });

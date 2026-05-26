@@ -19,6 +19,7 @@ export interface User {
 export interface AuthResponse {
   token?: string;
   user: User;
+  expiresAt?: number;
 }
 
 export interface Equipment {

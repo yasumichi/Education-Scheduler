@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { Holiday } from '../types';
 import { parseISO, getYear } from 'date-fns';
+import { apiFetch } from '../utils/api';
 import './HolidayManager.css';
 
 interface Props {
@@ -87,10 +88,9 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
         end: formData.end || null
       };
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(payload)
       });
       if (res.ok) {
@@ -108,9 +108,8 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
     if (!confirm(t('Are you sure you want to delete this holiday?'))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/holidays/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/holidays/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         onUpdate();
@@ -125,10 +124,9 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
   const handleImportNager = async () => {
     if (!confirm(t('Import holidays for {{year}} from Nager.Date?', { year: importYear }))) return;
     try {
-      const res = await fetch(`${backendUrl}/holidays/import-nager`, {
+      const res = await apiFetch(`${backendUrl}/holidays/import-nager`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ year: importYear, countryCode })
       });
       if (res.ok) {
@@ -150,10 +148,9 @@ export function HolidayManager({ backendUrl, onClose, onUpdate, holidays, initia
     reader.onload = async (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
-        const res = await fetch(`${backendUrl}/holidays/import-json`, {
+        const res = await apiFetch(`${backendUrl}/holidays/import-json`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ holidays: json })
         });
         if (res.ok) {

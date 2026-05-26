@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { apiFetch } from '../utils/api';
 import { useTranslation } from 'react-i18next';
 import { User, UserRole } from '../types';
 import './UserManager.css';
@@ -25,7 +26,7 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${backendUrl}/users`, { credentials: 'include' });
+      const res = await apiFetch(`${backendUrl}/users`);
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -65,10 +66,9 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
     }
 
     try {
-      const res = await fetch(`${backendUrl}/users`, {
+      const res = await apiFetch(`${backendUrl}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           id: isAddingNew ? null : editingUserId,
           ...formData
@@ -96,9 +96,8 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
     if (!confirm(t('Are you sure you want to delete this user?'))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/users/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/users/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         fetchUsers();
@@ -113,10 +112,9 @@ export function UserManager({ backendUrl, onClose, currentUser }: Props) {
   const handleResetPassword = async () => {
     if (!editingUserId || !newPassword) return;
     try {
-      const res = await fetch(`${backendUrl}/users/${editingUserId}/reset-password`, {
+      const res = await apiFetch(`${backendUrl}/users/${editingUserId}/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ newPassword })
       });
       if (res.ok) {

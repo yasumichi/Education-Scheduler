@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { AuditLog, Resource, ResourceLabels, TimePeriod, Subject } from '../types';
+import { apiFetch } from '../utils/api';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO, subDays } from 'date-fns';
 import './LessonHistory.css';
@@ -42,7 +43,7 @@ export function LessonHistory({ backendUrl, courses, resources, periods, subject
       query.append('page', pageNum.toString());
       query.append('limit', '50');
 
-      const res = await fetch(`${backendUrl}/lessons/history?${query.toString()}`, { credentials: 'include' });
+      const res = await apiFetch(`${backendUrl}/lessons/history?${query.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setLogs(data.logs);

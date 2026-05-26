@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { Equipment, ResourceLabels } from '../types';
+import { apiFetch } from '../utils/api';
 import './EquipmentManager.css';
 
 interface Props {
@@ -29,7 +30,7 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
 
   const fetchEquipments = async () => {
     try {
-      const res = await fetch(`${backendUrl}/equipments`, { credentials: 'include' });
+      const res = await apiFetch(`${backendUrl}/equipments`);
       if (res.ok) {
         const data = await res.json();
         setEquipments(data);
@@ -69,10 +70,9 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
     }
 
     try {
-      const res = await fetch(`${backendUrl}/equipments`, {
+      const res = await apiFetch(`${backendUrl}/equipments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           id: editingId === 'new' ? null : editingId,
           ...formData
@@ -93,9 +93,8 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
     if (!confirm(t('Are you sure you want to delete this {{resource}}?', { resource: labels.equipment }))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/equipments/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/equipments/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         fetchEquipments();
@@ -110,10 +109,9 @@ export function EquipmentManager({ backendUrl, onClose, labels }: Props) {
 
   const handleSaveOrder = async () => {
     try {
-      const res = await fetch(`${backendUrl}/equipments/reorder`, {
+      const res = await apiFetch(`${backendUrl}/equipments/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           orders: equipments.map((e, idx) => ({ id: e.id, order: idx + 1 }))
         })

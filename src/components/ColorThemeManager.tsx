@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { ColorTheme, ColorCategory } from '../types';
+import { apiFetch } from '../utils/api';
 import './ColorThemeManager.css';
 
 interface Props {
@@ -43,9 +44,8 @@ export function ColorThemeManager({ backendUrl, onClose, onUpdate, themes: initi
     if (!confirm(t('Are you sure you want to delete this theme?'))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/color-themes/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/color-themes/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         setThemes(themes.filter(t => t.id !== id));
@@ -60,12 +60,11 @@ export function ColorThemeManager({ backendUrl, onClose, onUpdate, themes: initi
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`${backendUrl}/color-themes`, {
+      const res = await apiFetch(`${backendUrl}/color-themes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({ themes })
       });
       if (res.ok) {

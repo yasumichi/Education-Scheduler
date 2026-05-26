@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { User } from '../types';
+import { apiFetch } from '../utils/api';
 import './ProfileManager.css';
 
 export type ProfileMode = 'profile' | 'password' | 'export' | 'csv_export';
@@ -53,7 +54,7 @@ export function ProfileManager({ backendUrl, onClose, user, mode }: Props) {
     }
 
     try {
-      const res = await fetch(`${backendUrl}/auth/change-password`, {
+      const res = await apiFetch(`${backendUrl}/auth/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

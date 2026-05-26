@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'preact/hooks';
 import { AuditLog } from '../types';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
+import { apiFetch } from '../utils/api';
 import './AuditLogManager.css';
 
 interface Props {
@@ -34,7 +35,7 @@ export function AuditLogManager({ backendUrl, onClose }: Props) {
       query.append('page', pageNum.toString());
       query.append('limit', '50'); // Reduced default limit for pagination
 
-      const res = await fetch(`${backendUrl}/audit-logs?${query.toString()}`, { credentials: 'include' });
+      const res = await apiFetch(`${backendUrl}/audit-logs?${query.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setLogs(data.logs);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { ResourceLabels } from '../types';
+import { apiFetch } from '../utils/api';
 import './PeriodManager.css'; // Re-use PeriodManager layout styles
 
 interface Props {
@@ -20,12 +21,11 @@ export function LabelManager({ backendUrl, onClose, onUpdate, initialLabels }: P
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`${backendUrl}/labels`, {
+      const res = await apiFetch(`${backendUrl}/labels`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({ labels })
       });
       if (res.ok) {

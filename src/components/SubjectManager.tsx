@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { CourseType, Subject, ResourceLabels } from '../types';
+import { apiFetch } from '../utils/api';
 import './SubjectManager.css';
 
 interface Props {
@@ -32,19 +33,9 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
   const dragItemRef = useRef<{ id: string, parentId: string | null, level: number } | null>(null);
   const dragOverItemRef = useRef<{ id: string, parentId: string | null, level: number } | null>(null);
 
-  useEffect(() => {
-    fetchData();
-    fetchSettings();
-  }, []);
-
-  // Filter application
-  useEffect(() => {
-    fetchCourseTypes();
-  }, [typeFilters]);
-
   const fetchSettings = async () => {
     try {
-      const res = await fetch(`${backendUrl}/settings`, { credentials: 'include' });
+      const res = await apiFetch(`${backendUrl}/settings`);
       if (res.ok) setSystemSettings(await res.json());
     } catch (err) {
       console.error('Failed to fetch settings:', err);
@@ -53,7 +44,7 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
 
   const fetchData = async () => {
     try {
-      const subjectsRes = await fetch(`${backendUrl}/subjects`, { credentials: 'include' });
+      const subjectsRes = await apiFetch(`${backendUrl}/subjects`);
       if (subjectsRes.ok) {
         const subs = await subjectsRes.json();
         setSubjects(subs.sort((a: Subject, b: Subject) => (a.order || 0) - (b.order || 0)));
@@ -72,7 +63,7 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
       if (typeFilters.startDate) params.append('startDate', typeFilters.startDate);
       if (typeFilters.endDate) params.append('endDate', typeFilters.endDate);
 
-      const res = await fetch(`${backendUrl}/course-types?${params.toString()}`, { credentials: 'include' });
+      const res = await apiFetch(`${backendUrl}/course-types?${params.toString()}`);
       if (res.ok) {
         const types = await res.json();
         setCourseTypes(types);
@@ -84,6 +75,16 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
       console.error('Failed to fetch course types:', err);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+    fetchSettings();
+  }, []);
+
+  // Filter application
+  useEffect(() => {
+    fetchCourseTypes();
+  }, [typeFilters]);
 
   const getDefaultDates = () => {
     if (!systemSettings) return { start: '', end: '' };
@@ -106,9 +107,8 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
   const handleDuplicateType = async (id: string) => {
     if (!confirm(t('Are you sure you want to duplicate this course type and all its subjects?'))) return;
     try {
-      const res = await fetch(`${backendUrl}/course-types/${id}/duplicate`, {
-        method: 'POST',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/course-types/${id}/duplicate`, {
+        method: 'POST'
       });
       if (res.ok) {
         const newType = await res.json();
@@ -203,10 +203,9 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
 
   const handleSaveOrder = async () => {
     try {
-      const res = await fetch(`${backendUrl}/subjects/reorder`, {
+      const res = await apiFetch(`${backendUrl}/subjects/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           orders: subjects.map(s => ({ id: s.id, order: s.order }))
         })
@@ -227,10 +226,9 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
   const handleSaveType = async () => {
     if (!editingType?.name) return;
     try {
-      const res = await fetch(`${backendUrl}/course-types`, {
+      const res = await apiFetch(`${backendUrl}/course-types`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(editingType)
       });
       if (res.ok) {
@@ -245,9 +243,8 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
   const handleDeleteType = async (id: string) => {
     if (!confirm(t('Are you sure?'))) return;
     try {
-      const res = await fetch(`${backendUrl}/course-types/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/course-types/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) fetchData();
     } catch (err) {
@@ -259,10 +256,9 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
   const handleSaveSubject = async () => {
     if (!editingSubject?.name) return;
     try {
-      const res = await fetch(`${backendUrl}/subjects`, {
+      const res = await apiFetch(`${backendUrl}/subjects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ ...editingSubject, courseTypeId: selectedTypeId })
       });
       if (res.ok) {
@@ -277,9 +273,8 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
   const handleDeleteSubject = async (id: string) => {
     if (!confirm(t('Are you sure?'))) return;
     try {
-      const res = await fetch(`${backendUrl}/subjects/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/subjects/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) fetchData();
     } catch (err) {
@@ -327,10 +322,9 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
       });
 
       try {
-        const res = await fetch(`${backendUrl}/course-types/${selectedTypeId}/import-subjects`, {
+        const res = await apiFetch(`${backendUrl}/course-types/${selectedTypeId}/import-subjects`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ rows: processedRows })
         });
         if (res.ok) {

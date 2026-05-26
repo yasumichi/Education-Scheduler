@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { apiFetch } from '../utils/api';
 import { useTranslation } from 'react-i18next';
 import { ColorTheme } from '../types';
 import './SystemSettingManager.css';
@@ -22,7 +23,7 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch(`${backendUrl}/settings`);
+        const res = await apiFetch(`${backendUrl}/settings`);
         if (res.ok) {
           const data = await res.json();
           setAllowPublicSignup(data.allowPublicSignup);
@@ -73,10 +74,9 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`${backendUrl}/settings`, {
+      const res = await apiFetch(`${backendUrl}/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ 
           allowPublicSignup,
           yearViewStartMonth,

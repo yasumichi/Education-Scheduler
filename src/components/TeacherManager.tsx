@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
+import { apiFetch } from '../utils/api';
 import { useTranslation } from 'react-i18next';
 import { Resource, ResourceLabels, User } from '../types';
 import './TeacherManager.css';
@@ -48,9 +49,7 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${backendUrl}/users`, {
-        credentials: 'include'
-      });
+      const res = await apiFetch(`${backendUrl}/users`);
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -90,12 +89,11 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
     }
 
     try {
-      const res = await fetch(`${backendUrl}/teachers`, {
+      const res = await apiFetch(`${backendUrl}/teachers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({
           id: editingTeacherId === 'new' ? null : editingTeacherId,
           ...formData
@@ -116,9 +114,8 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
     if (!confirm(t('Are you sure you want to delete this {{resource}}?', { resource: labels.teacher }))) return;
 
     try {
-      const res = await fetch(`${backendUrl}/teachers/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await apiFetch(`${backendUrl}/teachers/${id}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         onUpdate();
@@ -162,10 +159,9 @@ export function TeacherManager({ backendUrl, onClose, onUpdate, resources, label
 
   const handleSaveOrder = async () => {
     try {
-      const res = await fetch(`${backendUrl}/teachers/reorder`, {
+      const res = await apiFetch(`${backendUrl}/teachers/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           orders: teachersList.map((t, idx) => ({ id: t.id, order: idx + 1 }))
         })

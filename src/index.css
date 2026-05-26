@@ -417,6 +417,62 @@ h1 {
   gap: 10px;
 }
 
+/* Login Modal */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.login-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-modal-close {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: 1px solid #666;
+  color: #ccc;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.login-modal-close:hover {
+  background-color: #333;
+  color: #fff;
+  border-color: #999;
+}
+
+@media (prefers-color-scheme: light) {
+  .login-modal-overlay {
+    background-color: rgba(255, 255, 255, 0.85);
+  }
+  .login-modal-close {
+    border-color: #ccc;
+    color: #666;
+  }
+  .login-modal-close:hover {
+    background-color: #f0f0f0;
+    color: #333;
+    border-color: #999;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
