@@ -1088,7 +1088,7 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
         data,
         include: { subTeachers: true, deliveryMethods: true }
       });
-      await createAuditLog(req, 'Lesson', 'CREATE_LESSON', { new: lesson });
+      await createAuditLog(req, 'Lesson', 'CREATE_LESSON', { new: lesson }, lesson.courseId, lesson.id);
       res.json(lesson);
     }
   } catch (error) {
