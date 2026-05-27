@@ -16,7 +16,7 @@
   "dependencies": {
     "@preact/signals": "^2.0.0",
     "date-fns": "^3.6.0",
-    "exceljs": "4.4.0",
+    "exceljs": "^4.4.0",
     "file-saver": "2.0.5",
     "i18next": "^26.0.1",
     "i18next-browser-languagedetector": "^8.2.1",
