@@ -239,6 +239,7 @@ export function App() {
       userSignal.value = data.user;
       expiresAtSignal.value = data.expiresAt || null;
       showLoginModalSignal.value = false;
+      showUserDropdown.value = false;
       retryPendingRequests();
     } catch (err) {
       authError.value = 'Server connection failed';
