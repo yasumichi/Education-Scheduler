@@ -289,8 +289,11 @@ export function SubjectManager({ backendUrl, onClose, onUpdate, labels }: Props)
       if (!text) return;
 
       const lines = text.split(/\r?\n/).filter(line => line.trim());
-      // Skip header if it exists (e.g., if first line contains "Large", "Subject", "大課目", or "Subject" translations)
-      const startIdx = (lines[0].includes('Large') || lines[0].includes('Subject') || lines[0].includes('大課目') || lines[0].includes('Subject')) ? 1 : 0;
+      
+      // Determine if the first line is a header by checking if the 4th column (totalPeriods) is numeric
+      const firstLineCols = lines[0].split(',').map(s => s.trim());
+      const isHeader = isNaN(parseInt(firstLineCols[3]));
+      const startIdx = isHeader ? 1 : 0;
       
       const rows = lines.slice(startIdx).map(line => {
         const [large, middle, small, totalPeriods, order] = line.split(',').map(s => s.trim());
