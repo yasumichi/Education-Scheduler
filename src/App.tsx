@@ -118,6 +118,10 @@ export function App() {
           const data = await res.json();
           userSignal.value = data;
           expiresAtSignal.value = data.expiresAt;
+        } else if (res.status === 401) {
+          console.log('Session not found, please log in.');
+        } else {
+          console.error('Session restoration failed:', res.statusText);
         }
       } catch (err) {
         console.error('Session restoration failed:', err);

@@ -31,8 +31,8 @@ export async function apiFetch(url: string, config: RequestConfig = {}): Promise
   const response = await fetch(fullUrl, config);
 
   if (response.status === 401) {
-    // Don't intercept 401 for login itself
-    if (fullUrl.endsWith('/auth/login')) {
+    // Don't intercept 401 for login or session check
+    if (fullUrl.endsWith('/auth/login') || fullUrl.endsWith('/auth/me')) {
       return response;
     }
 
