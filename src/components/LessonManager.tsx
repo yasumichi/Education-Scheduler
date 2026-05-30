@@ -410,13 +410,13 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     const formStart = getAbsTime(formData.startDate, formData.startPeriodId);
     const formEnd = getAbsTime(formData.endDate, formData.endPeriodId);
 
-    const isDoubleBooked = lessons.some(l => {
+    const isDoubleBooked = lessons.filter(l => {
       if (l.id === formData.id) return false;
 
       // Check time overlap using absolute timestamps (date + period index)
       const lStart = getAbsTime(l.startDate, l.startPeriodId);
       const lEnd = getAbsTime(l.endDate, l.endPeriodId);
-      
+
       const timeOverlap = formStart <= lEnd && lStart <= formEnd;
 
       if (!timeOverlap) return false;
@@ -426,10 +426,86 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
       return checkResources.some(rid => lResources.includes(rid));
     });
 
-    if (isDoubleBooked) {
-      if (!confirm(t('Warning: One or more resources are already booked for this time. Do you want to proceed anyway?'))) {
-        return;
-      }
+    console.log('Debugging Conflict: isDoubleBooked =', isDoubleBooked);
+
+    if (isDoubleBooked.length > 0) {
+      console.log('Debugging Conflict: Conflict found, triggering modal');
+
+      const labelCourse = labels.course;
+      const labelRoom = labels.room;
+      const labelMainTeacher = labels.mainTeacher;
+      const labelSubTeacher = labels.subTeacher;
+
+      // Pre-calculate table content to avoid scope issues in template literals
+      const tableRows = isDoubleBooked.map(l => {
+        const r = resources.find(r => r.id === l.roomId);
+        const t_main = resources.find(r => r.id === l.teacherId);
+        const t_subs = (l.subTeacherIds || []).map(id => resources.find(r => r.id === id)?.name || id).join(', ');
+        const c = resources.find(r => r.id === l.courseId);
+        
+        const startPeriodName = periods.find(p => p.id === l.startPeriodId)?.name || l.startPeriodId;
+        const endPeriodName = periods.find(p => p.id === l.endPeriodId)?.name || l.endPeriodId;
+
+        const isHighlighted = (id: string | null | undefined) => id && checkResources.includes(id);
+        const highlightStyle = 'background-color: #8b0000; color: #ffffff;';
+
+        return `
+          <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 8px; text-align: center;">${l.startDate} ${startPeriodName} - ${l.endDate} ${endPeriodName}</td>
+            <td style="padding: 8px;">${c?.name || ''}</td>
+            <td style="padding: 8px;">${l.subject || ''}</td>
+            <td style="padding: 8px; ${isHighlighted(l.roomId) ? highlightStyle : ''}">${r?.name || ''}</td>
+            <td style="padding: 8px; ${isHighlighted(l.teacherId) ? highlightStyle : ''}">${t_main?.name || ''}</td>
+            <td style="padding: 8px; ${isHighlighted(l.subTeacherIds?.join(',')) ? highlightStyle : ''}">${t_subs}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const modalHtml = `
+        <div class="dialog-box" style="width: 800px; max-height: 80vh; overflow-y: auto;">
+          <div class="dialog-header">
+            <h2>${t('Warning: Conflict Detected')}</h2>
+            <button class="close-button">×</button>
+          </div>
+          <div class="dialog-content">
+            <p>${t('The following resources are already booked for this time. Do you want to proceed anyway?')}</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+              <thead>
+                <tr style="border-bottom: 1px solid #ccc;">
+                  <th style="padding: 8px;">${t('Period')}</th>
+                  <th style="padding: 8px;">${labelCourse}</th>
+                  <th style="padding: 8px;">Subject</th>
+                  <th style="padding: 8px;">${labelRoom}</th>
+                  <th style="padding: 8px;">${labelMainTeacher}</th>
+                  <th style="padding: 8px;">${labelSubTeacher}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+              <button class="cancel-button">${t('Cancel')}</button>
+              <button class="proceed-button">${t('Proceed anyway')}</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const proceed = await new Promise<boolean>((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'dialog-overlay';
+        modal.style.zIndex = '10000';
+        modal.innerHTML = modalHtml;
+        document.body.appendChild(modal);
+
+        const close = () => { if (modal.parentNode) document.body.removeChild(modal); };
+        modal.querySelector('.close-button')?.addEventListener('click', () => { close(); resolve(false); });
+        modal.querySelector('.cancel-button')?.addEventListener('click', () => { close(); resolve(false); });
+        modal.querySelector('.proceed-button')?.addEventListener('click', () => { close(); resolve(true); });
+      });
+
+      if (!proceed) return;
     }
 
     try {
