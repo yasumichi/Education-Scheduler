@@ -111,6 +111,15 @@ export function App() {
 
   // Restore session via /auth/me on initialization
   useEffect(() => {
+    // Restore View State
+    const savedViewState = localStorage.getItem('viewState');
+    if (savedViewState) {
+      const { mode, type, date } = JSON.parse(savedViewState);
+      viewMode.value = mode;
+      viewType.value = type;
+      currentDate.value = new Date(date);
+    }
+
     const restoreSession = async () => {
       try {
         const res = await apiFetch('/auth/me');
@@ -118,10 +127,6 @@ export function App() {
           const data = await res.json();
           userSignal.value = data;
           expiresAtSignal.value = data.expiresAt;
-        } else if (res.status === 401) {
-          console.log('Session not found, please log in.');
-        } else {
-          console.error('Session restoration failed:', res.statusText);
         }
       } catch (err) {
         console.error('Session restoration failed:', err);
@@ -131,6 +136,15 @@ export function App() {
     };
     restoreSession();
   }, []);
+
+  // Save View State on changes
+  useEffect(() => {
+    localStorage.setItem('viewState', JSON.stringify({
+      mode: viewMode.value,
+      type: viewType.value,
+      date: currentDate.value.toISOString()
+    }));
+  }, [viewMode.value, viewType.value, currentDate.value]);
 
   // Ensure dropdowns are exclusive
   useEffect(() => {
