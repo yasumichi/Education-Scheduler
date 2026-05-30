@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { CourseType, Subject, ResourceLabels, SystemSetting, Resource } from '../types';
 import { apiFetch } from '../utils/api';
+import { icons } from './Icons';
 import './CourseManager.css';
 
 interface Props {
@@ -537,9 +538,11 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                       {isAdmin && <th style={{ width: '30px' }}></th>}
                       {isAdmin && <th style={{ width: '70px' }}>{t('Move')}</th>}
                       <th>{t('Name')}</th>
-                      <th>{t('Period')}</th>
-                      <th>{labels.mainTeacher}</th>
-                      <th>{labels.subTeacher}</th>
+                      <th>{t('Start Date')}</th>
+                      <th>{t('End Date')}</th>
+                      <th>{labels.mainRoom}</th>
+                      <th>{t('Manager')}</th>
+                      <th>{t('Assistant')}</th>
                       <th style={{ width: '120px' }}>{t('Actions')}</th>
                     </tr>
                   </thead>
@@ -571,7 +574,9 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                             </td>
                           )}
                           <td style={{ fontWeight: 'bold' }}>{c.name}</td>
-                          <td>{c.startDate && c.endDate ? `${c.startDate} ~ ${c.endDate}` : '-'}</td>
+                          <td>{c.startDate || '-'}</td>
+                          <td>{c.endDate || '-'}</td>
+                          <td>{c.mainRoomId ? rooms.find(r => r.id === c.mainRoomId)?.name || c.mainRoomId : '-'}</td>
                           <td>{c.chiefTeacherId ? getTeacherName(c.chiefTeacherId) : '-'}</td>
                           <td>
                             {(c.assistantTeacherIds || (c.assistantTeachers || []).map(t => t.id))
@@ -579,8 +584,8 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                           </td>
                           <td>
                             <div className="action-buttons">
-                              <button className="edit-btn" onClick={() => setEditingCourseId(c.id)}>{isAdmin ? t('Edit') : t('View')}</button>
-                              {isAdmin && <button className="delete-btn" onClick={() => handleDelete(c.id)}>{t('Delete')}</button>}
+                              <button className="icon-btn edit-btn" onClick={() => setEditingCourseId(c.id)} title={isAdmin ? t('Edit') : t('View')}>{icons.edit}</button>
+                              {isAdmin && <button className="icon-btn delete-btn" onClick={() => handleDelete(c.id)} title={t('Delete')}>{icons.delete}</button>}
                             </div>
                           </td>
                         </tr>
@@ -676,7 +681,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label>{labels.mainTeacher}</label>
+                        <label>{t('Manager')}</label>
                         <select 
                           value={formData.chiefTeacherId} 
                           onChange={(e) => setFormData({ ...formData, chiefTeacherId: e.currentTarget.value })}
@@ -687,12 +692,12 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                         </select>
                       </div>
                       <div className="form-group">
-                        <label>{t('Instructor Label (Main)')}</label>
+                        <label>{t('Manager Label')}</label>
                         <input 
                           type="text" 
                           value={formData.mainTeacherLabel} 
                           onInput={(e) => setFormData({ ...formData, mainTeacherLabel: e.currentTarget.value })}
-                          placeholder={labels.mainTeacher}
+                          placeholder={t('Manager')}
                           readOnly={!isAdmin}
                         />
                       </div>
@@ -700,7 +705,7 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label>{labels.subTeacher}</label>
+                        <label>{t('Assistant')}</label>
                         <div className="sub-teacher-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
                           {(() => {
                             const list = teachers.filter(t => t.id !== formData.chiefTeacherId);
@@ -721,12 +726,12 @@ export function CourseManager({ backendUrl, onClose, onUpdate, resources, labels
                         </div>
                       </div>
                       <div className="form-group">
-                        <label>{t('Instructor Label (Sub)')}</label>
+                        <label>{t('Assistant Label')}</label>
                         <input 
                           type="text" 
                           value={formData.subTeacherLabel} 
                           onInput={(e) => setFormData({ ...formData, subTeacherLabel: e.currentTarget.value })}
-                          placeholder={labels.subTeacher}
+                          placeholder={t('Assistant')}
                           readOnly={!isAdmin}
                         />
                       </div>

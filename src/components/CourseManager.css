@@ -1,6 +1,8 @@
 .course-manager-box {
-  max-width: 1000px; /* Increased width */
-  height: 90vh; /* Fixed height to prevent resizing on tab switch */
+  min-width: 900px;
+  max-width: 1200px;
+  width: 95%;
+  height: 90vh;
 }
 
 .status-message-banner {
@@ -27,7 +29,7 @@
 
 .manager-list {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
   padding: 0 20px 20px;
 }
 
@@ -35,18 +37,28 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  table-layout: auto;
+}
+
+.manager-list th, .manager-list td {
+  padding: 8px;
 }
 
 .manager-list th {
-  position: sticky;
-  top: 0;
-  z-index: 15;
-  background-color: #2a2a2a;
-  border-bottom: 2px solid #444;
+  white-space: nowrap;
 }
 
-.manager-list td {
-  border-bottom: 1px solid #333;
+.manager-list th:nth-child(3), .manager-list td:nth-child(3) { /* Name */
+  min-width: 150px;
+}
+
+.manager-list th:nth-child(6), .manager-list td:nth-child(6) { /* Main Room */
+  min-width: 100px;
+}
+
+.manager-list th:nth-child(9), .manager-list td:nth-child(9) { /* Actions */
+  min-width: 130px;
+  white-space: nowrap;
 }
 
 .year-filter {
