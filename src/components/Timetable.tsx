@@ -33,13 +33,14 @@ interface Props {
   onViewRoomEquipment?: (roomId: string) => void;
   onBatchCreate?: (courseId: string) => void;
   onEmptyResourceCellClick?: (resourceId: string, date: string, periodId: string) => void;
+  onUpdate?: () => void;
+  onReload?: () => void;
   }
-
-  export function Timetable({
-  periods, resources, lessons, events, viewMode, viewType, isTimelineReduced = false, baseDate, holidays, labels, systemSettings,
-  colorThemes, savedFilters, onSaveFilter, onDeleteFilter, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onRoomClick, onTeacherClick,
-  onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreate, onEmptyResourceCellClick
-  }: Props) {  const { t } = useTranslation();
+export function Timetable({
+periods, resources, lessons, events, viewMode, viewType, isTimelineReduced = false, baseDate, holidays, labels, systemSettings,
+colorThemes, savedFilters, onSaveFilter, onDeleteFilter, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onRoomClick, onTeacherClick,
+onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreate, onEmptyResourceCellClick, onUpdate, onReload
+}: Props) {  const { t } = useTranslation();
   const locale = navigator.language;
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
   const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' });
