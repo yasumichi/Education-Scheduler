@@ -1,15 +1,14 @@
-import { TimePeriod, Lesson } from '../types';
-
-export const getAbsTime = (date: string, pId: string, periods: TimePeriod[]) => {
-  const pIdx = periods.findIndex(p => p.id === pId);
+// Assuming TimePeriod and Lesson are available from Prisma, or using any if types aren't easily reachable locally.
+export const getAbsTime = (date: string, pId: string, periods: any[]) => {
+  const pIdx = periods.findIndex((p: any) => p.id === pId);
   return `${date}-${pIdx.toString().padStart(3, '0')}`;
 };
 
 export const checkCollision = (
   newLessonStart: string,
   newLessonEnd: string,
-  existingLessons: Lesson[],
-  periods: TimePeriod[]
+  existingLessons: any[],
+  periods: any[]
 ) => {
   return existingLessons.some(eL => {
     const eStart = getAbsTime(eL.startDate, eL.startPeriodId, periods);

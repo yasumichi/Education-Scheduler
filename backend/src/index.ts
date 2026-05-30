@@ -12,6 +12,7 @@ import pg from 'pg';
 import iconv from 'iconv-lite';
 import { verifyToken, AuthRequest } from './authMiddleware';
 import { checkCollision } from './utils/scheduling';
+import { performMove } from './utils/lessonOperations';
 
 const app = express();
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -757,11 +758,11 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
 
     let count = 0;
     for (const sL of sourceLessons) {
-      const sStart = `${sL.startDate}-${periods.findIndex(p => p.id === sL.startPeriodId).toString().padStart(3, '0')}`;
-      const sEnd = `${sL.endDate}-${periods.findIndex(p => p.id === sL.endPeriodId).toString().padStart(3, '0')}`;
+      const sStart = `${sL.startDate}-${periods.findIndex((p: any) => p.id === sL.startPeriodId).toString().padStart(3, '0')}`;
+      const sEnd = `${sL.endDate}-${periods.findIndex((p: any) => p.id === sL.endPeriodId).toString().padStart(3, '0')}`;
 
       // Duplication check
-      const isOverlapping = checkCollision(sStart, sEnd, existingLessons, periods);
+      const isOverlapping = checkCollision(sStart, sEnd, existingLessons, periods as any);
 
       if (!isOverlapping) {
         await prisma.lesson.create({
@@ -821,6 +822,7 @@ app.post('/api/courses/duplicate-lessons-batch', verifyToken, async (req: AuthRe
       include: { deliveryMethods: { select: { id: true } } }
     });
 
+    const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
     let totalCount = 0;
 
     for (const destinationCourseId of destinationCourseIds) {
@@ -846,11 +848,11 @@ app.post('/api/courses/duplicate-lessons-batch', verifyToken, async (req: AuthRe
       });
 
       for (const sL of sourceLessons) {
-        const sStart = `${sL.startDate}-${periods.findIndex(p => p.id === sL.startPeriodId).toString().padStart(3, '0')}`;
-        const sEnd = `${sL.endDate}-${periods.findIndex(p => p.id === sL.endPeriodId).toString().padStart(3, '0')}`;
+        const sStart = `${sL.startDate}-${periods.findIndex((p: any) => p.id === sL.startPeriodId).toString().padStart(3, '0')}`;
+        const sEnd = `${sL.endDate}-${periods.findIndex((p: any) => p.id === sL.endPeriodId).toString().padStart(3, '0')}`;
 
         // Duplication check
-        const isOverlapping = checkCollision(sStart, sEnd, existingLessons, periods);
+        const isOverlapping = checkCollision(sStart, sEnd, existingLessons, periods as any);
 
         if (!isOverlapping) {
           await prisma.lesson.create({
@@ -1076,6 +1078,24 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Failed to save lesson:', error);
     res.status(500).json({ error: 'Failed to save lesson' });
+  }
+});
+
+// Lesson manipulation (Move/Resize)
+app.post('/api/lessons/manipulate', verifyToken, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  const { type, payload } = req.body;
+  const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
+  
+  try {
+    if (type === 'move') {
+      const result = await performMove(payload.lessonId, payload.newDate, payload.newPeriodId, periods);
+      res.json(result);
+    } else {
+      res.status(400).json({ error: 'Unsupported manipulation type' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 
