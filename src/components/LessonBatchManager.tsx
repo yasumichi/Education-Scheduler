@@ -197,6 +197,44 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
               </select>
             </div>
           </div>
+          <div className="form-group">
+            <label>{labels.mainTeacher}</label>
+            <select
+              value={formData.teacherId}
+              onChange={(e) => {
+                const newTeacherId = e.currentTarget.value;
+                setFormData({
+                  ...formData,
+                  teacherId: newTeacherId,
+                  subTeacherIds: formData.subTeacherIds.filter(id => id !== newTeacherId)
+                });
+              }}
+            >
+              <option value="">{t('Select Teacher')}</option>
+              {resources.filter(r => r.type === 'teacher').map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>{labels.subTeacher}</label>
+            <div className="sub-teacher-list" style="display: flex; gap: 10px; flex-wrap: wrap;">
+              {resources.filter(r => r.type === 'teacher').map(t => (
+                <label key={t.id} className="sub-teacher-item">
+                  <input
+                    type="checkbox"
+                    checked={formData.subTeacherIds.includes(t.id)}
+                    disabled={formData.teacherId === t.id}
+                    onChange={() => {
+                      const newIds = formData.subTeacherIds.includes(t.id)
+                        ? formData.subTeacherIds.filter(id => id !== t.id)
+                        : [...formData.subTeacherIds, t.id];
+                      setFormData({...formData, subTeacherIds: newIds});
+                    }}
+                  />
+                  {t.name}
+                </label>
+              ))}
+            </div>
+          </div>
           <button className="save-button" onClick={handleBatchCreate}>{t('Create')}</button>
         </div>
       </div>
