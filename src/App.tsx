@@ -1025,11 +1025,11 @@ export function App() {
           lessons={lessons.value}
           subjects={subjects.value}
           labels={resourceLabels.value}
+          holidays={holidays.value}
           initialLesson={editingLesson.value || {}}
           user={userSignal.value!}
-        />
-      )}
-
+          />
+          )}
       {showHolidayManager.value && (
         <HolidayManager 
           backendUrl={BACKEND_URL} 

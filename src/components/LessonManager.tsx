@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../utils/api';
 import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User, Subject, AuditLog } from '../types';
-import { parseISO, differenceInDays, format } from 'date-fns';
+import { parseISO, differenceInDays, format, addDays } from 'date-fns';
 import './LessonManager.css';
 
 interface Props {
@@ -14,11 +14,12 @@ interface Props {
   lessons: Lesson[];
   subjects: Subject[];
   labels: ResourceLabels;
+  holidays: Holiday[];
   initialLesson?: Partial<Lesson>;
   user: User;
 }
 
-export function LessonManager({ backendUrl, onClose, onUpdate, periods, resources, lessons, subjects, labels, initialLesson, user }: Props) {
+export function LessonManager({ backendUrl, onClose, onUpdate, periods, resources, lessons, subjects, labels, holidays, initialLesson, user }: Props) {
   const { t } = useTranslation();
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -347,6 +348,83 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
     return hierarchicalList;
   }, [formData.courseId, formData.id, lessons, courses, periods, selectedCourse, subjects]);
+
+  const activeSubject = useMemo(() => {
+    return subjectOptions.find(s => s.id === formData.subjectId || s.name === formData.subject);
+  }, [subjectOptions, formData.subjectId, formData.subject]);
+
+  const isHolidayOrWeekend = (date: Date) => {
+    const d = format(date, 'yyyy-MM-dd');
+    if (date.getDay() === 0 || date.getDay() === 6) return true;
+    return holidays.some(h => h.date === d);
+  };
+
+  const handleAutoSchedule = (includeHolidays: boolean) => {
+    if (!activeSubject || activeSubject.remaining <= 0) return;
+
+    let periodsToFill = activeSubject.remaining;
+    let currentDate = parseISO(formData.startDate);
+    let startIdx = periods.findIndex(p => p.id === formData.startPeriodId);
+    if (startIdx === -1) startIdx = 0;
+
+    let endDate = currentDate;
+    let endPeriodId = formData.startPeriodId;
+
+    // Helper to check if a period is occupied
+    const isOccupied = (date: Date, periodId: string) => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      return lessons.some(l => 
+        l.id !== formData.id &&
+        l.courseId === formData.courseId &&
+        l.startDate === dateStr &&
+        l.startPeriodId === periodId
+      );
+    };
+
+    while (periodsToFill > 0) {
+      if (!includeHolidays && isHolidayOrWeekend(currentDate)) {
+        currentDate = addDays(currentDate, 1);
+        startIdx = 0;
+        continue;
+      }
+
+      // Check collision for current slot
+      const currentPeriodId = periods[startIdx].id;
+      if (isOccupied(currentDate, currentPeriodId)) {
+        break; // Stop if occupied
+      }
+
+      const dailyAvailable = periods.length - startIdx;
+      const nextDate = addDays(currentDate, 1);
+
+      if (!includeHolidays && isHolidayOrWeekend(nextDate)) {
+        const fillable = Math.min(periodsToFill, dailyAvailable);
+        periodsToFill -= fillable;
+        endDate = currentDate;
+        endPeriodId = periods[startIdx + fillable - 1].id;
+        break;
+      }
+
+      if (periodsToFill >= dailyAvailable) {
+        periodsToFill -= dailyAvailable;
+        endDate = currentDate;
+        endPeriodId = periods[periods.length - 1].id;
+        
+        currentDate = nextDate;
+        startIdx = 0;
+      } else {
+        endPeriodId = periods[startIdx + periodsToFill - 1].id;
+        endDate = currentDate;
+        periodsToFill = 0;
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      endDate: format(endDate, 'yyyy-MM-dd'),
+      endPeriodId: endPeriodId
+    }));
+  };
 
   const filteredSubjectOptions = useMemo(() => {
     if (!searchTerm) return subjectOptions;
@@ -733,7 +811,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group" style="height: 70px;">
               <label>{t('Start Date')} *</label>
               {canManage ? (
                 <input 
@@ -746,8 +824,27 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                 <span className="readonly-value">{formData.startDate || '-'}</span>
               )}
             </div>
-            <div className="form-group">
-              <label>{t('End Date')} *</label>
+            <div className="form-group" style="height: 70px;">
+              <div style="display: flex; gap: 10px; align-items: flex-end; height: 25px;">
+                <label>{t('End Date')} *</label>
+                {canManage && activeSubject && (
+                  <select 
+                    className="auto-schedule-btn"
+                    style="max-width: 200px; font-size: 0.8em; height: 25px;" 
+                    onChange={(e) => {
+                      const val = e.currentTarget.value;
+                      if (val) {
+                        handleAutoSchedule(val === 'include');
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  >
+                    <option value="">{t('Apply Remaining Periods')}</option>
+                    <option value="exclude">{t('Exclude Holidays')}</option>
+                    <option value="include">{t('Include Holidays')}</option>
+                  </select>
+                )}
+              </div>
               {canManage ? (
                 <input 
                   type="date" 
@@ -791,6 +888,22 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
               )}
             </div>
           </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <small>{t('Lesson Periods')}: {
+                (() => {
+                  const sIdx = periods.findIndex(p => p.id === formData.startPeriodId);
+                  const eIdx = periods.findIndex(p => p.id === formData.endPeriodId);
+                  if (sIdx === -1 || eIdx === -1) return 0;
+                  if (formData.startDate === formData.endDate) return (eIdx - sIdx + 1);
+                  const numDays = differenceInDays(parseISO(formData.endDate), parseISO(formData.startDate));
+                  return (periods.length - sIdx) + (numDays - 1) * periods.length + (eIdx + 1);
+                })()
+              }</small>
+            </div>
+          </div>
+
 
           <div className="form-row">
             <div className="form-group">
