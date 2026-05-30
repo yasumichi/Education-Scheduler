@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ScheduleEvent, TimePeriod, Resource, ResourceLabels, ColorTheme } from '../types';
 import { apiFetch } from '../utils/api';
 import './EventManager.css';
+import { MultiTeacherSelector } from './MultiTeacherSelector';
 
 interface Props {
   backendUrl: string;
@@ -219,48 +220,41 @@ export function EventManager({ backendUrl, onClose, onUpdate, periods, resources
             <label>{t('Target Resources (Optional)')}</label>
             
             {teacherResources.length > 0 && (
-              <div className="resource-section">
-                <div className="resource-section-title">{labels.teacher || t('Teacher')}</div>
-                <div className="resource-selector-list">
-                  {(() => {
-                    const selected = teacherResources.filter(r => formData.resourceIds.includes(r.id));
-                    const unselected = teacherResources.filter(r => !formData.resourceIds.includes(r.id));
-                    return [...selected, ...unselected].map(r => (
-                      <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
-                        <input 
-                          type="checkbox" 
-                          checked={formData.resourceIds.includes(r.id)}
-                          onChange={() => handleResourceToggle(r.id)}
-                        />
-                        {r.name}
-                      </label>
-                    ));
-                  })()}
+              <MultiTeacherSelector
+                label={labels.teacher || t('Teacher')}
+                teachers={teacherResources}
+                selectedIds={formData.resourceIds.filter(id => teacherResources.some(t => t.id === id))}
+                onChange={(ids) => {
+                  const otherResources = formData.resourceIds.filter(id => !teacherResources.some(t => t.id === id));
+                  setFormData({ ...formData, resourceIds: [...otherResources, ...ids] });
+                }}
+              />
+            )}
+
+            {roomResources.length > 0 && (
+              <div className="form-group">
+                <label>{labels.room || t('Room')}</label>
+                <div className="resource-section">
+                  <div className="resource-selector-list" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    {(() => {
+                      const selected = roomResources.filter(r => formData.resourceIds.includes(r.id));
+                      const unselected = roomResources.filter(r => !formData.resourceIds.includes(r.id));
+                      return [...selected, ...unselected].map(r => (
+                        <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
+                          <input 
+                            type="checkbox" 
+                            checked={formData.resourceIds.includes(r.id)}
+                            onChange={() => handleResourceToggle(r.id)}
+                          />
+                          {r.name}
+                        </label>
+                      ));
+                    })()}
+                  </div>
                 </div>
               </div>
             )}
 
-            {roomResources.length > 0 && (
-              <div className="resource-section">
-                <div className="resource-section-title">{labels.room || t('Room')}</div>
-                <div className="resource-selector-list">
-                  {(() => {
-                    const selected = roomResources.filter(r => formData.resourceIds.includes(r.id));
-                    const unselected = roomResources.filter(r => !formData.resourceIds.includes(r.id));
-                    return [...selected, ...unselected].map(r => (
-                      <label key={r.id} className={`resource-item ${formData.resourceIds.includes(r.id) ? 'selected' : ''}`}>
-                        <input 
-                          type="checkbox" 
-                          checked={formData.resourceIds.includes(r.id)}
-                          onChange={() => handleResourceToggle(r.id)}
-                        />
-                        {r.name}
-                      </label>
-                    ));
-                  })()}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
