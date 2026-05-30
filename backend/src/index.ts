@@ -1089,7 +1089,7 @@ app.post('/api/lessons/manipulate', verifyToken, async (req: AuthRequest, res) =
   
   try {
     if (type === 'move') {
-      const result = await performMove(payload.lessonId, payload.newDate, payload.newPeriodId, periods);
+      const result = await performMove(prisma, payload.lessonId, payload.newDate, payload.newPeriodId, periods);
       res.json(result);
     } else {
       res.status(400).json({ error: 'Unsupported manipulation type' });

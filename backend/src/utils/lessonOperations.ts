@@ -1,17 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-// Get absolute time index
-const getAbsIdx = (periods: any[], pId: string) => periods.findIndex((p: any) => p.id === pId);
-
 /**
  * Calculates remaining time for a subject in a course
  */
-export const getRemainingTime = async (courseId: string, subjectId: string, totalPeriods: number) => {
+export const getRemainingTime = async (prisma: PrismaClient, courseId: string, subjectId: string, totalPeriods: number) => {
   const lessons = await prisma.lesson.findMany({ where: { courseId, subjectId } });
   const usedPeriods = lessons.reduce((acc, l) => {
-    // Basic assumption: 1 period = 1 unit. Needs adjustment if periods vary in length.
     return acc + 1; 
   }, 0);
   return totalPeriods - usedPeriods;
@@ -21,6 +15,7 @@ export const getRemainingTime = async (courseId: string, subjectId: string, tota
  * Move a lesson to a new date/period, shifting subsequent lessons if necessary.
  */
 export const performMove = async (
+  prisma: PrismaClient,
   lessonId: string,
   newDate: string,
   newPeriodId: string,
@@ -45,9 +40,7 @@ export const performMove = async (
 
     // 3. If target exists, perform shift/split
     if (target) {
-      // Simple shift: move subsequent lessons (if any)
-      // For this implementation, we will move the target lesson forward by 1 period
-      // and recurse or handle simply for now.
+      // Simple shift
       await tx.lesson.update({
         where: { id: target.id },
         data: { startPeriodId: getNextPeriodId(target.startPeriodId, periods) }
