@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../utils/api';
-import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User, Subject, AuditLog } from '../types';
+import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User, Subject, AuditLog, Holiday } from '../types';
 import { parseISO, differenceInDays, format, addDays } from 'date-fns';
 import './LessonManager.css';
 
