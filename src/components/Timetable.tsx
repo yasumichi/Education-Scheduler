@@ -942,7 +942,11 @@ interface Props {
               <div key={`cell-${res.id}-${dIdx}-${pIdx}`} 
                    className={cellClass} 
                    style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: rIdx + resourceBaseRowIdx }}
-                   onDblClick={() => !isCourseTimeline && handleIntentionalClick(() => onEmptyResourceCellClick?.(res.id, dateStr, p.id))} />
+                   onDblClick={(e) => {
+                     e.stopPropagation();
+                     console.log('Empty cell dblclick:', res.id, dateStr, p.id);
+                     if (!isCourseTimeline) handleIntentionalClick(() => onEmptyResourceCellClick?.(res.id, dateStr, p.id));
+                   }} />
             ));
           })
         )}

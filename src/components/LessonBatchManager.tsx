@@ -20,6 +20,10 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
+  const teachers = useMemo(() => resources.filter(r => r.type === 'teacher'), [resources]);
+
   const [formData, setFormData] = useState({
     subject: '',
     subjectId: '',
@@ -197,22 +201,38 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
               </select>
             </div>
           </div>
-          <div className="form-group">
+...
+          <div className="form-group searchable-combo-container">
             <label>{labels.mainTeacher}</label>
-            <select
-              value={formData.teacherId}
-              onChange={(e) => {
-                const newTeacherId = e.currentTarget.value;
-                setFormData({
-                  ...formData,
-                  teacherId: newTeacherId,
-                  subTeacherIds: formData.subTeacherIds.filter(id => id !== newTeacherId)
-                });
+            <input 
+              type="text" 
+              value={teacherSearch}
+              onFocus={() => setShowTeacherDropdown(true)}
+              onInput={(e) => {
+                setTeacherSearch(e.currentTarget.value);
+                setShowTeacherDropdown(true);
               }}
-            >
-              <option value="">{t('Select Teacher')}</option>
-              {resources.filter(r => r.type === 'teacher').map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+              placeholder={t('Search or enter {{resource}}', { resource: labels.mainTeacher })}
+            />
+            {showTeacherDropdown && (
+              <div className="combo-dropdown">
+                {teachers
+                  .filter(t => !teacherSearch || t.name.toLowerCase().includes(teacherSearch.toLowerCase()))
+                  .map(t => (
+                    <div key={t.id} className="combo-item" onClick={() => {
+                      setFormData({ 
+                        ...formData, 
+                        teacherId: t.id,
+                        subTeacherIds: formData.subTeacherIds.filter(id => id !== t.id)
+                      });
+                      setTeacherSearch(t.name);
+                      setShowTeacherDropdown(false);
+                    }}>
+                      {t.name}
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
           <div className="form-group">
             <label>{labels.subTeacher}</label>

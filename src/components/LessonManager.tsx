@@ -66,6 +66,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   });
 
   const [searchTerm, setSearchTerm] = useState(formData.subject);
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -937,25 +939,45 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
             </div>
           </div>
 
-          <div className="form-group">
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
+
+  // ... (inside LessonManager component)
+
+          <div className="form-group searchable-combo-container">
             <label>{mainTeacherLabel}</label>
             {canManage ? (
               <div className="teacher-selection">
-                <select 
-                  value={formData.teacherId} 
-                  onChange={(e) => {
-                    const newTeacherId = e.currentTarget.value;
-                    setFormData({ 
-                      ...formData, 
-                      teacherId: newTeacherId,
-                      subTeacherIds: formData.subTeacherIds.filter(id => id !== newTeacherId)
-                    });
+                <input 
+                  type="text" 
+                  value={teacherSearch || teachers.find(t => t.id === formData.teacherId)?.name || ''}
+                  onFocus={() => setShowTeacherDropdown(true)}
+                  onInput={(e) => {
+                    setTeacherSearch(e.currentTarget.value);
+                    setShowTeacherDropdown(true);
                   }}
+                  placeholder={t('Search or enter {{resource}}', { resource: labels.mainTeacher })}
                   disabled={!canManage}
-                >
-                  <option value="">{t('Select Teacher')}</option>
-                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
+                />
+                {showTeacherDropdown && (
+                  <div className="combo-dropdown" style="display: block; position: absolute; background: var(--bg-color, #fff); border: 1px solid var(--border-color, #ccc); z-index: 10001; width: 100%; max-height: 200px; overflow-y: auto;">
+                    {teachers
+                      .filter(t => !teacherSearch || t.name.toLowerCase().includes(teacherSearch.toLowerCase()))
+                      .map(t => (
+                        <div key={t.id} style="padding: 5px; cursor: pointer;" onClick={() => {
+                          setFormData({ 
+                            ...formData, 
+                            teacherId: t.id,
+                            subTeacherIds: formData.subTeacherIds.filter(id => id !== t.id)
+                          });
+                          setTeacherSearch('');
+                          setShowTeacherDropdown(false);
+                        }}>
+                          {t.name}
+                        </div>
+                      ))}
+                  </div>
+                )}
                 <input 
                   type="text" 
                   value={formData.externalTeacher} 

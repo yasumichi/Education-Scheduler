@@ -91,6 +91,15 @@ export function App() {
   const auditLogs = useSignal<AuditLog[]>([]);
   const sessionRestored = useSignal<boolean>(false);
 
+  const saveViewStateAndReload = () => {
+    localStorage.setItem('viewState', JSON.stringify({
+      mode: viewMode.value,
+      type: viewType.value,
+      date: currentDate.value.toISOString()
+    }));
+    window.location.reload();
+  };
+
   // Auth signal
   const authError = useSignal<string | undefined>(undefined);
 
@@ -917,6 +926,19 @@ export function App() {
               selectedCourseIdForStats.value = courseId;
               showCourseStatistics.value = true;
             }}
+            onEmptyResourceCellClick={(resourceId, date, periodId) => {
+              const initial: Partial<Lesson> = { startDate: date, startPeriodId: periodId, endDate: date, endPeriodId: periodId };
+              if (viewMode.value === 'room') {
+                initial.roomId = resourceId;
+                const relatedCourse = resources.value.find(c => c.type === 'course' && c.mainRoomId === resourceId);
+                if (relatedCourse) initial.courseId = relatedCourse.id;
+              }
+              else if (viewMode.value === 'teacher') initial.teacherId = resourceId;
+              else if (viewMode.value === 'course') initial.courseId = resourceId;
+              editingLesson.value = initial;
+              showLessonManager.value = true;
+            }}
+            onReload={saveViewStateAndReload}
           />
         )}
       </div>
