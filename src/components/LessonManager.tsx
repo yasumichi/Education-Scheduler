@@ -813,8 +813,10 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           </div>
 
           <div className="form-row">
-            <div className="form-group" style="height: 70px;">
-              <label>{t('Start Date')} *</label>
+            <div className="form-group">
+              <div className="auto-schedule-wrapper">
+                <label>{t('Start Date')} *</label>
+              </div>
               {canManage ? (
                 <input 
                   type="date" 
@@ -826,13 +828,12 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                 <span className="readonly-value">{formData.startDate || '-'}</span>
               )}
             </div>
-            <div className="form-group" style="height: 70px;">
-              <div style="display: flex; gap: 10px; align-items: flex-end; height: 25px;">
+            <div className="form-group">
+              <div className="auto-schedule-wrapper">
                 <label>{t('End Date')} *</label>
                 {canManage && activeSubject && (
                   <select 
                     className="auto-schedule-btn"
-                    style="max-width: 200px; font-size: 0.8em; height: 25px;" 
                     onChange={(e) => {
                       const val = e.currentTarget.value;
                       if (val) {
@@ -858,7 +859,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                 <span className="readonly-value">{formData.endDate || '-'}</span>
               )}
             </div>
-          </div>
+            </div>
 
           <div className="form-row">
             <div className="form-group">
@@ -938,11 +939,6 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
               )}
             </div>
           </div>
-
-  const [teacherSearch, setTeacherSearch] = useState('');
-  const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
-
-  // ... (inside LessonManager component)
 
           <div className="form-group searchable-combo-container">
             <label>{mainTeacherLabel}</label>
