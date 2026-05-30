@@ -13,7 +13,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export function SubTeacherSelector({ label, teachers, selectedIds, onChange, bookedIds, disabledId, disabled }: Props) {
+export function MultiTeacherSelector({ label, teachers, selectedIds, onChange, bookedIds, disabledId, disabled }: Props) {
   const { t: translate } = useTranslation();
 
   const toggleTeacher = (id: string) => {

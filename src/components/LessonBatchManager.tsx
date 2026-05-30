@@ -5,7 +5,7 @@ import { Lesson, TimePeriod, Resource, Subject, Holiday, ResourceLabels } from '
 import { parseISO, format, addDays, getDay, isAfter } from 'date-fns';
 import { SubjectSelector } from './SubjectSelector';
 import { TeacherSelector } from './TeacherSelector';
-import { SubTeacherSelector } from './SubTeacherSelector';
+import { MultiTeacherSelector } from './MultiTeacherSelector';
 import { RoomSelector } from './RoomSelector';
 import { getBookedTeacherIds } from '../utils/scheduling';
 
@@ -196,7 +196,7 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
               subTeacherIds: formData.subTeacherIds.filter(sid => sid !== id)
             })}
           />
-          <SubTeacherSelector
+          <MultiTeacherSelector
             label={labels.subTeacher}
             teachers={teachers.filter(t => t.id !== formData.teacherId)}
             selectedIds={formData.subTeacherIds}

@@ -6,7 +6,7 @@ import { parseISO, differenceInDays, format, addDays } from 'date-fns';
 import './LessonManager.css';
 import { SubjectSelector } from './SubjectSelector';
 import { TeacherSelector } from './TeacherSelector';
-import { SubTeacherSelector } from './SubTeacherSelector';
+import { MultiTeacherSelector } from './MultiTeacherSelector';
 import { RoomSelector } from './RoomSelector';
 import { getBookedTeacherIds } from '../utils/scheduling';
 
@@ -924,7 +924,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
           <div className="form-group">
             {canManage ? (
               <>
-                <SubTeacherSelector
+                <MultiTeacherSelector
                   label={subTeacherLabel}
                   teachers={teachers.filter(t => t.id !== formData.teacherId)}
                   selectedIds={formData.subTeacherIds}
