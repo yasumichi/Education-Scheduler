@@ -950,6 +950,7 @@ export function App() {
           onUpdate={fetchData}
           course={editingCourse.value}
           periods={periods.value}
+          lessons={lessons.value}
           resources={resources.value}
           subjects={subjects.value}
           labels={resourceLabels.value}

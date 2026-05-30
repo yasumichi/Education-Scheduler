@@ -8,11 +8,12 @@ interface Props {
   teachers: Resource[];
   valueId: string;
   onChange: (id: string) => void;
+  bookedIds?: string[];
   disabled?: boolean;
 }
 
-export function TeacherSelector({ label, teachers, valueId, onChange, disabled }: Props) {
-  const { t } = useTranslation();
+export function TeacherSelector({ label, teachers, valueId, onChange, bookedIds, disabled }: Props) {
+  const { t: translate } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -50,27 +51,28 @@ export function TeacherSelector({ label, teachers, valueId, onChange, disabled }
             onChange('');
           }
         }}
-        placeholder={t('Search or enter {{resource}}', { resource: label })}
+        placeholder={translate('Search or enter {{resource}}', { resource: label })}
         disabled={disabled}
       />
       {isDropdownOpen && !disabled && (
         <div className="combo-dropdown">
           {filteredTeachers.length > 0 ? (
-            filteredTeachers.map(t => (
+            filteredTeachers.map(teacher => (
               <div 
-                key={t.id} 
-                className="combo-item"
+                key={teacher.id} 
+                className={`combo-item ${bookedIds?.includes(teacher.id) ? 'booked' : ''}`}
                 onClick={() => {
-                  onChange(t.id);
+                  onChange(teacher.id);
                   setSearchTerm('');
                   setIsDropdownOpen(false);
                 }}
               >
-                {t.name}
+                {teacher.name}
+                {bookedIds?.includes(teacher.id) && <span style="font-size: 0.8rem; margin-left: 5px; color: #888;">({translate('Booked')})</span>}
               </div>
             ))
           ) : (
-            <div className="combo-no-results">{t('No matches found')}</div>
+            <div className="combo-no-results">{translate('No matches found')}</div>
           )}
         </div>
       )}

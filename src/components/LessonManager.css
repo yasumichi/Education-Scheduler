@@ -378,6 +378,19 @@
   }
 }
 
+.combo-item.booked,
+.sub-teacher-item.booked {
+  opacity: 0.5;
+  background-color: #4a3b3b;
+}
+
+@media (prefers-color-scheme: light) {
+  .combo-item.booked,
+  .sub-teacher-item.booked {
+    background-color: #fce8e8;
+  }
+}
+
 .auto-schedule-wrapper {
   display: flex;
   gap: 10px;

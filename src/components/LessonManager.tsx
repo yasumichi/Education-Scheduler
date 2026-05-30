@@ -6,6 +6,8 @@ import { parseISO, differenceInDays, format, addDays } from 'date-fns';
 import './LessonManager.css';
 import { SubjectSelector } from './SubjectSelector';
 import { TeacherSelector } from './TeacherSelector';
+import { SubTeacherSelector } from './SubTeacherSelector';
+import { getBookedTeacherIds } from '../utils/scheduling';
 
 interface Props {
   backendUrl: string;
@@ -110,6 +112,13 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   const courses = resources.filter(r => r.type === 'course');
 
   const selectedCourse = useMemo(() => courses.find(c => c.id === formData.courseId), [formData.courseId, courses]);
+  
+  const bookedTeacherIds = useMemo(() => getBookedTeacherIds(
+    formData.startDate, formData.startPeriodId,
+    formData.endDate, formData.endPeriodId,
+    formData.id, lessons, periods
+  ), [formData.startDate, formData.startPeriodId, formData.endDate, formData.endPeriodId, formData.id, lessons, periods]);
+
   const mainTeacherLabel = labels.mainTeacher;
   const subTeacherLabel = labels.subTeacher;
 
@@ -891,6 +900,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
               label={mainTeacherLabel}
               teachers={teachers}
               valueId={formData.teacherId}
+              bookedIds={bookedTeacherIds}
               onChange={(id: string) => setFormData({ 
                 ...formData, 
                 teacherId: id,
@@ -898,6 +908,7 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
               })}
               disabled={!canManage}
             />
+
             {canManage && (
               <input 
                 type="text" 
@@ -915,27 +926,17 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
 
           <div className="form-group">
-            <label>{subTeacherLabel}</label>
             {canManage ? (
-              <div className="sub-teacher-container">
-                <div className="sub-teacher-list">
-                  {(() => {
-                    const list = teachers.filter(t => t.id !== formData.teacherId);
-                    const selected = list.filter(t => formData.subTeacherIds.includes(t.id));
-                    const unselected = list.filter(t => !formData.subTeacherIds.includes(t.id));
-                    return [...selected, ...unselected].map(t => (
-                      <label key={t.id} className={`sub-teacher-item ${formData.subTeacherIds.includes(t.id) ? 'selected' : ''} ${!canManage ? 'disabled' : ''}`}>
-                        <input 
-                          type="checkbox" 
-                          checked={formData.subTeacherIds.includes(t.id)}
-                          onChange={() => toggleSubTeacher(t.id)}
-                          disabled={!canManage}
-                        />
-                        {t.name}
-                      </label>
-                    ));
-                  })()}
-                </div>
+              <>
+                <SubTeacherSelector
+                  label={subTeacherLabel}
+                  teachers={teachers.filter(t => t.id !== formData.teacherId)}
+                  selectedIds={formData.subTeacherIds}
+                  bookedIds={bookedTeacherIds}
+                  onChange={(ids: string[]) => setFormData({...formData, subTeacherIds: ids})}
+                  disabledId={formData.teacherId}
+                  disabled={!canManage}
+                />
                 <input 
                   type="text" 
                   value={formData.externalSubTeachers} 
@@ -944,9 +945,10 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                   disabled={!canManage}
                   style={{ marginTop: '5px' }}
                 />
-              </div>
+              </>
             ) : (
               <div className="readonly-sub-teachers">
+                <label>{subTeacherLabel}</label>
                 <span className="readonly-value">
                   {teachers.filter(t => formData.subTeacherIds.includes(t.id)).map(t => t.name).join(', ') || '-'}
                 </span>

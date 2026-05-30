@@ -7,12 +7,13 @@ interface Props {
   teachers: Resource[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
+  bookedIds?: string[];
   disabledId?: string;
   disabled?: boolean;
 }
 
-export function SubTeacherSelector({ label, teachers, selectedIds, onChange, disabledId, disabled }: Props) {
-  const { t } = useTranslation();
+export function SubTeacherSelector({ label, teachers, selectedIds, onChange, bookedIds, disabledId, disabled }: Props) {
+  const { t: translate } = useTranslation();
 
   const toggleTeacher = (id: string) => {
     const newIds = selectedIds.includes(id)
@@ -25,15 +26,16 @@ export function SubTeacherSelector({ label, teachers, selectedIds, onChange, dis
     <div className="form-group">
       <label>{label}</label>
       <div className="sub-teacher-list" style="display: flex; gap: 10px; flex-wrap: wrap;">
-        {teachers.map(t => (
-          <label key={t.id} className={`sub-teacher-item ${selectedIds.includes(t.id) ? 'selected' : ''} ${disabled || t.id === disabledId ? 'disabled' : ''}`}>
+        {teachers.map(teacher => (
+          <label key={teacher.id} className={`sub-teacher-item ${selectedIds.includes(teacher.id) ? 'selected' : ''} ${bookedIds?.includes(teacher.id) ? 'booked' : ''} ${disabled || teacher.id === disabledId ? 'disabled' : ''}`}>
             <input
               type="checkbox"
-              checked={selectedIds.includes(t.id)}
-              disabled={disabled || t.id === disabledId}
-              onChange={() => toggleTeacher(t.id)}
+              checked={selectedIds.includes(teacher.id)}
+              disabled={disabled || teacher.id === disabledId}
+              onChange={() => toggleTeacher(teacher.id)}
             />
-            {t.name}
+            {teacher.name}
+            {bookedIds?.includes(teacher.id) && <span style="font-size: 0.7rem; margin-left: 5px;">({translate('Booked')})</span>}
           </label>
         ))}
       </div>

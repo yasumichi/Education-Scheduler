@@ -2,10 +2,11 @@ import { useState, useMemo } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../utils/api';
 import { Lesson, TimePeriod, Resource, Subject, Holiday, ResourceLabels } from '../types';
-import { parseISO, format, addDays, getDay, isAfter, isBefore } from 'date-fns';
+import { parseISO, format, addDays, getDay, isAfter } from 'date-fns';
 import { SubjectSelector } from './SubjectSelector';
 import { TeacherSelector } from './TeacherSelector';
 import { SubTeacherSelector } from './SubTeacherSelector';
+import { getBookedTeacherIds } from '../utils/scheduling';
 
 interface Props {
   backendUrl: string;
@@ -14,15 +15,14 @@ interface Props {
   course: Resource;
   periods: TimePeriod[];
   resources: Resource[];
+  lessons: Lesson[];
   subjects: Subject[];
   labels: ResourceLabels;
   holidays: Holiday[];
 }
 
-export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, periods, resources, subjects, labels, holidays }: Props) {
+export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, periods, resources, lessons, subjects, labels, holidays }: Props) {
   const { t } = useTranslation();
-  const [teacherSearch, setTeacherSearch] = useState('');
-  const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
   const teachers = useMemo(() => resources.filter(r => r.type === 'teacher'), [resources]);
 
   const [formData, setFormData] = useState({
@@ -37,13 +37,15 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
     subTeacherIds: course.assistantTeacherIds || [],
   });
 
+  const bookedTeacherIds = useMemo(() => getBookedTeacherIds(
+    formData.startDate, formData.startPeriodId,
+    formData.endDate, formData.endPeriodId,
+    undefined, lessons, periods
+  ), [formData.startDate, formData.startPeriodId, formData.endDate, formData.endPeriodId, lessons, periods]);
+
   const subjectOptions = useMemo(() => {
     const courseSubjects = course.subjects || [];
-    
-    // 1. Identify all subject IDs that are explicitly linked to this course
     const linkedSubjectIds = new Set(courseSubjects.map(cs => cs.subjectId).filter(Boolean));
-    
-    // 2. Identify all relevant subject IDs (linked subjects + their ancestors)
     const relevantSubjectIds = new Set<string>();
     linkedSubjectIds.forEach(id => {
       let currentId: string | undefined | null = id;
@@ -54,7 +56,6 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
       }
     });
 
-    // 3. Build hierarchy of relevant subjects only
     const hierarchicalList: any[] = [];
     const addChildren = (parentId: string | null) => {
       subjects
@@ -135,7 +136,7 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
             options={subjectOptions}
             valueId={formData.subjectId}
             valueName={formData.subject}
-            onChange={(id, name) => setFormData({...formData, subject: name, subjectId: id})}
+            onChange={(id: string, name: string) => setFormData({...formData, subject: name, subjectId: id})}
           />
           <div className="form-group">
             <label>{t('Days of Week')}</label>
@@ -175,11 +176,12 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
               </select>
             </div>
           </div>
-...
+          
           <TeacherSelector
             label={labels.mainTeacher}
             teachers={teachers}
             valueId={formData.teacherId}
+            bookedIds={bookedTeacherIds}
             onChange={(id: string) => setFormData({ 
               ...formData, 
               teacherId: id,
@@ -188,8 +190,9 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
           />
           <SubTeacherSelector
             label={labels.subTeacher}
-            teachers={teachers}
+            teachers={teachers.filter(t => t.id !== formData.teacherId)}
             selectedIds={formData.subTeacherIds}
+            bookedIds={bookedTeacherIds}
             onChange={(ids: string[]) => setFormData({...formData, subTeacherIds: ids})}
             disabledId={formData.teacherId}
           />
