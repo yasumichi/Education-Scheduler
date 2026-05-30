@@ -1081,21 +1081,45 @@ app.post('/api/lessons', verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
-// Lesson manipulation (Move/Resize)
-app.post('/api/lessons/manipulate', verifyToken, async (req: AuthRequest, res) => {
+// Bulk create lessons
+app.post('/api/lessons/batch', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
-  const { type, payload } = req.body;
-  const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
-  
+  const { lessons } = req.body;
   try {
-    if (type === 'move') {
-      const result = await performMove(prisma, payload.lessonId, payload.newDate, payload.newPeriodId, periods);
-      res.json(result);
-    } else {
-      res.status(400).json({ error: 'Unsupported manipulation type' });
-    }
+    const subjects = await prisma.subject.findMany();
+    const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
+    const courseId = lessons[0]?.courseId;
+    const existingLessons = courseId ? await prisma.lesson.findMany({ where: { courseId } }) : [];
+    
+    const createdLessons = await prisma.$transaction(
+      lessons.filter((l: any) => {
+        const sStart = `${l.startDate}-${periods.findIndex((p: any) => p.id === l.startPeriodId).toString().padStart(3, '0')}`;
+        const sEnd = `${l.endDate}-${periods.findIndex((p: any) => p.id === l.endPeriodId).toString().padStart(3, '0')}`;
+        return !checkCollision(sStart, sEnd, existingLessons, periods as any);
+      }).map((l: any) => {
+        const subjectName = l.subjectId 
+          ? subjects.find(s => s.id === l.subjectId)?.name || '' 
+          : l.subject;
+
+        return prisma.lesson.create({
+          data: {
+            course: { connect: { id: l.courseId } },
+            subject: subjectName,
+            subjectRef: l.subjectId ? { connect: { id: l.subjectId } } : undefined,
+            startDate: l.startDate,
+            endDate: l.endDate,
+            startPeriodId: l.startPeriodId,
+            endPeriodId: l.endPeriodId,
+            teacher: l.teacherId ? { connect: { id: l.teacherId } } : undefined,
+            subTeachers: l.subTeacherIds && l.subTeacherIds.length > 0 ? { connect: l.subTeacherIds.map((id: string) => ({ id })) } : undefined,
+          }
+        });
+      })
+    );
+    res.json(createdLessons);
   } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create lessons' });
   }
 });
 

@@ -31,13 +31,14 @@ interface Props {
   onViewStats?: (courseId: string) => void;
   onViewTeacherStats?: (teacherId: string) => void;
   onViewRoomEquipment?: (roomId: string) => void;
+  onBatchCreate?: (courseId: string) => void;
   onEmptyResourceCellClick?: (resourceId: string, date: string, periodId: string) => void;
   }
 
   export function Timetable({
   periods, resources, lessons, events, viewMode, viewType, isTimelineReduced = false, baseDate, holidays, labels, systemSettings,
   colorThemes, savedFilters, onSaveFilter, onDeleteFilter, onEventClick, onEmptyEventClick, onLessonClick, onCourseClick, onRoomClick, onTeacherClick,
-  onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onEmptyResourceCellClick
+  onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreate, onEmptyResourceCellClick
   }: Props) {  const { t } = useTranslation();
   const locale = navigator.language;
   const dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', weekday: 'short' });
@@ -840,6 +841,18 @@ interface Props {
 
         {viewMode === 'course' && (
           <div className="label-actions">
+            <button 
+              className="batch-create-btn" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onBatchCreate?.(r.id);
+              }}
+              title={t('Bulk Create Lessons')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2v20M2 12h20"></path>
+              </svg>
+            </button>
             <button 
               className="weekly-view-btn" 
               onClick={(e) => {

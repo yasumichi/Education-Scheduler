@@ -10,6 +10,7 @@ import { RoomManager } from './components/RoomManager';
 import { TeacherManager } from './components/TeacherManager';
 import { EventManager } from './components/EventManager';
 import { LessonManager } from './components/LessonManager';
+import { LessonBatchManager } from './components/LessonBatchManager';
 import { HolidayManager } from './components/HolidayManager';
 import { UserManager } from './components/UserManager';
 import { ProfileManager, ProfileMode } from './components/ProfileManager';
@@ -79,6 +80,8 @@ export function App() {
   const editingCourseId = useSignal<string | null>(null);
   const editingRoomId = useSignal<string | null>(null);
   const editingTeacherId = useSignal<string | null>(null);
+  const showLessonBatchManager = useSignal<boolean>(false);
+  const editingCourse = useSignal<Resource | null>(null);
   const showSettingsDropdown = useSignal<boolean>(false);
   const showUserDropdown = useSignal<boolean>(false);
   const resources = useSignal<Resource[]>([]);
@@ -903,42 +906,34 @@ export function App() {
               showCourseWeekly.value = true;
               showPersonalMonthly.value = false;
             }}
+            onBatchCreate={(courseId) => {
+              const course = resources.value.find(r => r.id === courseId);
+              if (course) {
+                editingCourse.value = course;
+                showLessonBatchManager.value = true;
+              }
+            }}
             onViewStats={(courseId) => {
               selectedCourseIdForStats.value = courseId;
               showCourseStatistics.value = true;
-            }}
-            onViewTeacherStats={(teacherId) => {
-              selectedTeacherIdForStats.value = teacherId;
-              showTeacherStatistics.value = true;
-            }}
-            onViewRoomEquipment={(roomId) => {
-              selectedRoomIdForEquipment.value = roomId;
-              showRoomEquipmentView.value = true;
-            }}
-            onRoomClick={(room) => {              editingRoomId.value = room.id;
-              showRoomManager.value = true;
-            }}
-            onTeacherClick={(teacher) => {
-              editingTeacherId.value = teacher.id;
-              showTeacherManager.value = true;
-            }}
-            onEmptyResourceCellClick={(resourceId, date, periodId) => {
-              const initial: Partial<Lesson> = { startDate: date, startPeriodId: periodId, endDate: date, endPeriodId: periodId };
-              if (viewMode.value === 'room') {
-                initial.roomId = resourceId;
-                // Initially select the course that has this room as its main room, if any
-                const relatedCourse = resources.value.find(c => c.type === 'course' && c.mainRoomId === resourceId);
-                if (relatedCourse) initial.courseId = relatedCourse.id;
-              }
-              else if (viewMode.value === 'teacher') initial.teacherId = resourceId;
-              else if (viewMode.value === 'course') initial.courseId = resourceId;
-              editingLesson.value = initial;
-              showLessonManager.value = true;
             }}
           />
         )}
       </div>
 
+      {showLessonBatchManager.value && editingCourse.value && (
+        <LessonBatchManager
+          backendUrl={BACKEND_URL}
+          onClose={() => showLessonBatchManager.value = false}
+          onUpdate={fetchData}
+          course={editingCourse.value}
+          periods={periods.value}
+          resources={resources.value}
+          subjects={subjects.value}
+          labels={resourceLabels.value}
+          holidays={holidays.value}
+        />
+      )}
       {showPeriodManager.value && (
         <PeriodManager 
           backendUrl={BACKEND_URL} 
