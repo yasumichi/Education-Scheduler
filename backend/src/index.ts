@@ -11,6 +11,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import iconv from 'iconv-lite';
 import { verifyToken, AuthRequest } from './authMiddleware';
+import { checkCollision } from './utils/scheduling';
 
 const app = express();
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -738,10 +739,6 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
 
     // Get all time periods (for absolute time calculation)
     const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
-    const getAbsTime = (date: string, pId: string) => {
-      const pIdx = periods.findIndex(p => p.id === pId);
-      return `${date}-${pIdx.toString().padStart(3, '0')}`;
-    };
 
     // Get source lessons
     const sourceLessons = await prisma.lesson.findMany({
@@ -760,15 +757,11 @@ app.post('/api/courses/:id/duplicate-lessons', verifyToken, async (req: AuthRequ
 
     let count = 0;
     for (const sL of sourceLessons) {
-      const sStart = getAbsTime(sL.startDate, sL.startPeriodId);
-      const sEnd = getAbsTime(sL.endDate, sL.endPeriodId);
+      const sStart = `${sL.startDate}-${periods.findIndex(p => p.id === sL.startPeriodId).toString().padStart(3, '0')}`;
+      const sEnd = `${sL.endDate}-${periods.findIndex(p => p.id === sL.endPeriodId).toString().padStart(3, '0')}`;
 
       // Duplication check
-      const isOverlapping = existingLessons.some(eL => {
-        const eStart = getAbsTime(eL.startDate, eL.startPeriodId);
-        const eEnd = getAbsTime(eL.endDate, eL.endPeriodId);
-        return sStart <= eEnd && eStart <= sEnd;
-      });
+      const isOverlapping = checkCollision(sStart, sEnd, existingLessons, periods);
 
       if (!isOverlapping) {
         await prisma.lesson.create({
@@ -818,13 +811,6 @@ app.post('/api/courses/duplicate-lessons-batch', verifyToken, async (req: AuthRe
       if (!hasPermission) return res.status(403).json({ error: `Access denied to destination course: ${dId}` });
     }
 
-    // Get all time periods (for absolute time calculation)
-    const periods = await prisma.timePeriod.findMany({ orderBy: { order: 'asc' } });
-    const getAbsTime = (date: string, pId: string) => {
-      const pIdx = periods.findIndex(p => p.id === pId);
-      return `${date}-${pIdx.toString().padStart(3, '0')}`;
-    };
-
     // Get source lessons
     const sourceLessons = await prisma.lesson.findMany({
       where: {
@@ -860,15 +846,11 @@ app.post('/api/courses/duplicate-lessons-batch', verifyToken, async (req: AuthRe
       });
 
       for (const sL of sourceLessons) {
-        const sStart = getAbsTime(sL.startDate, sL.startPeriodId);
-        const sEnd = getAbsTime(sL.endDate, sL.endPeriodId);
+        const sStart = `${sL.startDate}-${periods.findIndex(p => p.id === sL.startPeriodId).toString().padStart(3, '0')}`;
+        const sEnd = `${sL.endDate}-${periods.findIndex(p => p.id === sL.endPeriodId).toString().padStart(3, '0')}`;
 
         // Duplication check
-        const isOverlapping = existingLessons.some(eL => {
-          const eStart = getAbsTime(eL.startDate, eL.startPeriodId);
-          const eEnd = getAbsTime(eL.endDate, eL.endPeriodId);
-          return sStart <= eEnd && eStart <= sEnd;
-        });
+        const isOverlapping = checkCollision(sStart, sEnd, existingLessons, periods);
 
         if (!isOverlapping) {
           await prisma.lesson.create({
