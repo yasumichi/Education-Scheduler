@@ -6,6 +6,7 @@ import { parseISO, format, addDays, getDay, isAfter } from 'date-fns';
 import { SubjectSelector } from './SubjectSelector';
 import { TeacherSelector } from './TeacherSelector';
 import { SubTeacherSelector } from './SubTeacherSelector';
+import { RoomSelector } from './RoomSelector';
 import { getBookedTeacherIds } from '../utils/scheduling';
 
 interface Props {
@@ -28,6 +29,7 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
   const [formData, setFormData] = useState({
     subject: '',
     subjectId: '',
+    roomId: course.mainRoomId || '',
     startDate: course.startDate || '',
     endDate: course.endDate || '',
     daysOfWeek: [] as number[],
@@ -177,6 +179,12 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
             </div>
           </div>
           
+          <RoomSelector
+            label={labels.room}
+            rooms={resources.filter(r => r.type === 'room')}
+            valueId={formData.roomId || ''}
+            onChange={(id: string) => setFormData({...formData, roomId: id})}
+          />
           <TeacherSelector
             label={labels.mainTeacher}
             teachers={teachers}

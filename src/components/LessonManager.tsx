@@ -7,6 +7,7 @@ import './LessonManager.css';
 import { SubjectSelector } from './SubjectSelector';
 import { TeacherSelector } from './TeacherSelector';
 import { SubTeacherSelector } from './SubTeacherSelector';
+import { RoomSelector } from './RoomSelector';
 import { getBookedTeacherIds } from '../utils/scheduling';
 
 interface Props {
@@ -865,19 +866,14 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
 
           <div className="form-row">
             <div className="form-group">
-              <label>{t('Room')}</label>
-              {canManage ? (
-                <select 
-                  value={formData.roomId} 
-                  onChange={(e) => setFormData({ ...formData, roomId: e.currentTarget.value })}
-                  disabled={!canManage}
-                >
-                  <option value="">{t('Select Room')}</option>
-                  {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
-              ) : (
-                <span className="readonly-value">{rooms.find(r => r.id === formData.roomId)?.name || '-'}</span>
-              )}
+              <RoomSelector
+                label={labels.room}
+                rooms={rooms}
+                valueId={formData.roomId}
+                onChange={(id: string) => setFormData({ ...formData, roomId: id })}
+                disabled={!canManage}
+              />
+
             </div>
             <div className="form-group">
               <label>{t('Other locations')}</label>
