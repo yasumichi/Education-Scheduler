@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
+import { useState, useEffect, useMemo } from 'preact/hooks';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../utils/api';
 import { Lesson, TimePeriod, Resource, ResourceLabels, DeliveryMethod, User, Subject, AuditLog, Holiday } from '../types';
 import { parseISO, differenceInDays, format, addDays } from 'date-fns';
 import './LessonManager.css';
+import { SubjectSelector } from './SubjectSelector';
+import { TeacherSelector } from './TeacherSelector';
 
 interface Props {
   backendUrl: string;
@@ -22,8 +24,6 @@ interface Props {
 export function LessonManager({ backendUrl, onClose, onUpdate, periods, resources, lessons, subjects, labels, holidays, initialLesson, user }: Props) {
   const { t } = useTranslation();
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [historyLogs, setHistoryLogs] = useState<AuditLog[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -65,18 +65,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
     externalSubTeachers: initialLesson?.externalSubTeachers || '',
   });
 
-  const [searchTerm, setSearchTerm] = useState(formData.subject);
-  const [teacherSearch, setTeacherSearch] = useState('');
-  const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
-
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    // Dropdown handling moved to SubjectSelector
   }, []);
 
   useEffect(() => {
@@ -429,10 +419,8 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   };
 
   const filteredSubjectOptions = useMemo(() => {
-    if (!searchTerm) return subjectOptions;
-    const lowerSearch = searchTerm.toLowerCase();
-    return subjectOptions.filter(opt => opt.name.toLowerCase().includes(lowerSearch));
-  }, [searchTerm, subjectOptions]);
+    return subjectOptions;
+  }, [subjectOptions]);
 
   const handleSave = async () => {
     // Basic validation
@@ -750,7 +738,6 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
                 value={formData.courseId} 
                 onChange={(e) => {
                   setFormData({ ...formData, courseId: e.currentTarget.value, subject: '', subjectId: '' });
-                  setSearchTerm('');
                 }}
                 disabled={!canManage}
               >
@@ -762,55 +749,14 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
             )}
           </div>
 
-          <div className="form-group">
-            <label>{labels.subject} *</label>
-            {canManage ? (
-              <div className="searchable-combo-container" ref={dropdownRef}>
-                <input 
-                  type="text"
-                  className="combo-input"
-                  value={searchTerm}
-                  onInput={(e) => {
-                    const val = e.currentTarget.value;
-                    setSearchTerm(val);
-                    setFormData({ ...formData, subject: val, subjectId: '' });
-                    setIsDropdownOpen(true);
-                  }}
-                  onFocus={() => setIsDropdownOpen(true)}
-                  placeholder={t('Search or enter {{resource}}', { resource: labels.subject })}
-                  disabled={!formData.courseId}
-                />
-                {isDropdownOpen && formData.courseId && (
-                  <div className="combo-dropdown">
-                    {filteredSubjectOptions.length > 0 ? (
-                      filteredSubjectOptions.map(opt => (
-                        <div 
-                          key={opt.id || opt.name}
-                          className={`combo-item level-${opt.level} ${!opt.isSelectable ? 'not-selectable' : ''} ${opt.remaining <= 0 && opt.isSelectable ? 'no-remaining' : ''}`}
-                          onClick={() => {
-                            if (opt.isSelectable) {
-                              setFormData({ ...formData, subject: opt.name, subjectId: opt.id });
-                              setSearchTerm(opt.name);
-                              setIsDropdownOpen(false);
-                            }
-                          }}
-                        >
-                          <span className="item-name">{opt.name}</span>
-                          {opt.isSelectable && (
-                            <span className="item-stats">({t('Remaining')}: {opt.remaining}/{opt.total})</span>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="combo-no-results">{t('No matches found')}</div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <span className="readonly-value">{formData.subject || '-'}</span>
-            )}
-          </div>
+          <SubjectSelector
+            label={labels.subject}
+            options={subjectOptions}
+            valueId={formData.subjectId}
+            valueName={formData.subject}
+            onChange={(id, name) => setFormData({ ...formData, subject: name, subjectId: id })}
+            disabled={!canManage || !formData.courseId}
+          />
 
           <div className="form-row">
             <div className="form-group">
@@ -940,56 +886,33 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
             </div>
           </div>
 
-          <div className="form-group searchable-combo-container">
-            <label>{mainTeacherLabel}</label>
-            {canManage ? (
-              <div className="teacher-selection">
-                <input 
-                  type="text" 
-                  value={teacherSearch || teachers.find(t => t.id === formData.teacherId)?.name || ''}
-                  onFocus={() => setShowTeacherDropdown(true)}
-                  onInput={(e) => {
-                    setTeacherSearch(e.currentTarget.value);
-                    setShowTeacherDropdown(true);
-                  }}
-                  placeholder={t('Search or enter {{resource}}', { resource: labels.mainTeacher })}
-                  disabled={!canManage}
-                />
-                {showTeacherDropdown && (
-                  <div className="combo-dropdown" style="display: block; position: absolute; background: var(--bg-color, #fff); border: 1px solid var(--border-color, #ccc); z-index: 10001; width: 100%; max-height: 200px; overflow-y: auto;">
-                    {teachers
-                      .filter(t => !teacherSearch || t.name.toLowerCase().includes(teacherSearch.toLowerCase()))
-                      .map(t => (
-                        <div key={t.id} style="padding: 5px; cursor: pointer;" onClick={() => {
-                          setFormData({ 
-                            ...formData, 
-                            teacherId: t.id,
-                            subTeacherIds: formData.subTeacherIds.filter(id => id !== t.id)
-                          });
-                          setTeacherSearch('');
-                          setShowTeacherDropdown(false);
-                        }}>
-                          {t.name}
-                        </div>
-                      ))}
-                  </div>
-                )}
-                <input 
-                  type="text" 
-                  value={formData.externalTeacher} 
-                  onInput={(e) => setFormData({ ...formData, externalTeacher: e.currentTarget.value })}
-                  placeholder={t('External {{resource}} (if not managed)', { resource: labels.mainTeacher })}
-                  disabled={!canManage}
-                  style={{ marginTop: '5px' }}
-                />
-              </div>
-            ) : (
-              <div className="readonly-teacher">
-                <span className="readonly-value">{teachers.find(t => t.id === formData.teacherId)?.name || '-'}</span>
-                {formData.externalTeacher && <span className="readonly-value"> ({formData.externalTeacher})</span>}
-              </div>
+          <div className="form-group">
+            <TeacherSelector
+              label={mainTeacherLabel}
+              teachers={teachers}
+              valueId={formData.teacherId}
+              onChange={(id: string) => setFormData({ 
+                ...formData, 
+                teacherId: id,
+                subTeacherIds: formData.subTeacherIds.filter(sid => sid !== id)
+              })}
+              disabled={!canManage}
+            />
+            {canManage && (
+              <input 
+                type="text" 
+                value={formData.externalTeacher} 
+                onInput={(e) => setFormData({ ...formData, externalTeacher: e.currentTarget.value })}
+                placeholder={t('External {{resource}} (if not managed)', { resource: labels.mainTeacher })}
+                disabled={!canManage}
+                style={{ marginTop: '5px' }}
+              />
+            )}
+            {!canManage && formData.externalTeacher && (
+              <span className="readonly-value"> ({formData.externalTeacher})</span>
             )}
           </div>
+
 
           <div className="form-group">
             <label>{subTeacherLabel}</label>

@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../utils/api';
 import { Lesson, TimePeriod, Resource, Subject, Holiday, ResourceLabels } from '../types';
 import { parseISO, format, addDays, getDay, isAfter, isBefore } from 'date-fns';
+import { SubjectSelector } from './SubjectSelector';
+import { TeacherSelector } from './TeacherSelector';
+import { SubTeacherSelector } from './SubTeacherSelector';
 
 interface Props {
   backendUrl: string;
@@ -18,8 +21,6 @@ interface Props {
 
 export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, periods, resources, subjects, labels, holidays }: Props) {
   const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [teacherSearch, setTeacherSearch] = useState('');
   const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
   const teachers = useMemo(() => resources.filter(r => r.type === 'teacher'), [resources]);
@@ -77,11 +78,6 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
     return hierarchicalList;
   }, [course, subjects]);
 
-  const filteredSubjects = useMemo(() => {
-    if (!searchTerm) return subjectOptions;
-    return subjectOptions.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [searchTerm, subjectOptions]);
-
   const isHoliday = (date: Date) => {
     const d = format(date, 'yyyy-MM-dd');
     if (date.getDay() === 0 || date.getDay() === 6) return true;
@@ -134,35 +130,13 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
           <button onClick={onClose}>×</button>
         </div>
         <div className="dialog-content">
-          <div className="form-group searchable-combo-container">
-            <label>{labels.subject}</label>
-            <input 
-              type="text"
-              value={searchTerm}
-              onFocus={() => setIsDropdownOpen(true)}
-              onInput={e => { setSearchTerm(e.currentTarget.value); setIsDropdownOpen(true); }}
-              placeholder={t('Search or enter {{resource}}', { resource: labels.subject })}
-            />
-            {isDropdownOpen && (
-              <div className="combo-dropdown">
-                {filteredSubjects.length > 0 ? (
-                  filteredSubjects.map(opt => (
-                    <div key={opt.id || opt.name}
-                         className={`combo-item level-${opt.level}`}
-                         onClick={() => {
-                           setFormData({...formData, subject: opt.name, subjectId: opt.id});
-                           setSearchTerm(opt.name);
-                           setIsDropdownOpen(false);
-                         }}>
-                      {opt.name}
-                    </div>
-                  ))
-                ) : (
-                  <div className="combo-no-results">{t('No matches found')}</div>
-                )}
-              </div>
-            )}
-          </div>
+          <SubjectSelector
+            label={labels.subject}
+            options={subjectOptions}
+            valueId={formData.subjectId}
+            valueName={formData.subject}
+            onChange={(id, name) => setFormData({...formData, subject: name, subjectId: id})}
+          />
           <div className="form-group">
             <label>{t('Days of Week')}</label>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -202,59 +176,23 @@ export function LessonBatchManager({ backendUrl, onClose, onUpdate, course, peri
             </div>
           </div>
 ...
-          <div className="form-group searchable-combo-container">
-            <label>{labels.mainTeacher}</label>
-            <input 
-              type="text" 
-              value={teacherSearch}
-              onFocus={() => setShowTeacherDropdown(true)}
-              onInput={(e) => {
-                setTeacherSearch(e.currentTarget.value);
-                setShowTeacherDropdown(true);
-              }}
-              placeholder={t('Search or enter {{resource}}', { resource: labels.mainTeacher })}
-            />
-            {showTeacherDropdown && (
-              <div className="combo-dropdown">
-                {teachers
-                  .filter(t => !teacherSearch || t.name.toLowerCase().includes(teacherSearch.toLowerCase()))
-                  .map(t => (
-                    <div key={t.id} className="combo-item" onClick={() => {
-                      setFormData({ 
-                        ...formData, 
-                        teacherId: t.id,
-                        subTeacherIds: formData.subTeacherIds.filter(id => id !== t.id)
-                      });
-                      setTeacherSearch(t.name);
-                      setShowTeacherDropdown(false);
-                    }}>
-                      {t.name}
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-          <div className="form-group">
-            <label>{labels.subTeacher}</label>
-            <div className="sub-teacher-list" style="display: flex; gap: 10px; flex-wrap: wrap;">
-              {resources.filter(r => r.type === 'teacher').map(t => (
-                <label key={t.id} className="sub-teacher-item">
-                  <input
-                    type="checkbox"
-                    checked={formData.subTeacherIds.includes(t.id)}
-                    disabled={formData.teacherId === t.id}
-                    onChange={() => {
-                      const newIds = formData.subTeacherIds.includes(t.id)
-                        ? formData.subTeacherIds.filter(id => id !== t.id)
-                        : [...formData.subTeacherIds, t.id];
-                      setFormData({...formData, subTeacherIds: newIds});
-                    }}
-                  />
-                  {t.name}
-                </label>
-              ))}
-            </div>
-          </div>
+          <TeacherSelector
+            label={labels.mainTeacher}
+            teachers={teachers}
+            valueId={formData.teacherId}
+            onChange={(id: string) => setFormData({ 
+              ...formData, 
+              teacherId: id,
+              subTeacherIds: formData.subTeacherIds.filter(sid => sid !== id)
+            })}
+          />
+          <SubTeacherSelector
+            label={labels.subTeacher}
+            teachers={teachers}
+            selectedIds={formData.subTeacherIds}
+            onChange={(ids: string[]) => setFormData({...formData, subTeacherIds: ids})}
+            disabledId={formData.teacherId}
+          />
           <button className="save-button" onClick={handleBatchCreate}>{t('Create')}</button>
         </div>
       </div>
