@@ -395,9 +395,12 @@ app.get('/api/settings', async (req, res) => {
         } 
       });
     }
-    // Exclude sensitive secret from response
+    // Exclude sensitive secret from response, or mask it
     const { ssoClientSecret, ...settingsWithoutSecret } = settings;
-    res.json(settingsWithoutSecret);
+    res.json({
+      ...settingsWithoutSecret,
+      ssoClientSecret: ssoClientSecret ? '********' : null
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch settings' });
   }
@@ -420,11 +423,14 @@ app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
       ssoEnabled: !!ssoEnabled,
       ssoForceRedirect: !!ssoForceRedirect,
       ssoClientId: ssoClientId || null,
-      ssoClientSecret: ssoClientSecret || null,
       ssoIssuerUrl: ssoIssuerUrl || null,
       ssoAllowedDomain: ssoAllowedDomain || null,
       ssoAutoProvisioning: !!ssoAutoProvisioning
     };
+
+    if (ssoClientSecret !== '********') {
+      data.ssoClientSecret = ssoClientSecret || null;
+    }
 
     if (settings) {
       settings = await prisma.systemSetting.update({

@@ -156,7 +156,16 @@
   .theme-preview-item.selected {
     border-color: #646cff;
   }
-  .tab-navigation { border-bottom-color: #ccc; }
-  .tab-button { color: #666; }
-  .tab-button.active { color: #333; }
+
+.secret-input-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.secret-input-wrapper input {
+  flex-grow: 1;
+}
+
+.secret-input-wrapper button {
+  flex-shrink: 0;
 }

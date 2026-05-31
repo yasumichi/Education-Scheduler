@@ -15,6 +15,7 @@ import { HolidayManager } from './components/HolidayManager';
 import { UserManager } from './components/UserManager';
 import { ProfileManager, ProfileMode } from './components/ProfileManager';
 import { SystemSettingManager } from './components/SystemSettingManager';
+import { SSOConfigDialog } from './components/SSOConfigDialog';
 import { DeliveryMethodManager } from './components/DeliveryMethodManager';
 import { ColorThemeManager } from './components/ColorThemeManager';
 import { SubjectManager } from './components/SubjectManager';
@@ -61,6 +62,7 @@ export function App() {
   const showHolidayManager = useSignal<boolean>(false);
   const showUserManager = useSignal<boolean>(false);
   const showProfileManager = useSignal<boolean>(false);
+  const showSSOConfigDialog = useSignal<boolean>(false);
   const profileMode = useSignal<ProfileMode>('profile');
   const showSystemSettingManager = useSignal<boolean>(false);
   const showDeliveryMethodManager = useSignal<boolean>(false);
@@ -494,31 +496,24 @@ export function App() {
                           >
                             {t('Manage {{resource}}', { resource: resourceLabels.value.subject })}
                           </button>
-                        </>
-                      )}
-
-                      <button
-                       className="dropdown-item"
-                       onClick={() => {
-                         showEquipmentManager.value = true;
-                         showSettingsDropdown.value = false;
-                       }}
-                      >
-                       {t('Manage {{resource}}', { resource: resourceLabels.value.equipment })}
-                      </button>
-
-                      <button
-                       className="dropdown-item"
-                       onClick={() => {
-                         showRoomManager.value = true;
-                         showSettingsDropdown.value = false;
-                       }}
-                      >
-                        {t('Manage {{resource}}', { resource: resourceLabels.value.room })}
-                      </button>
-
-                      {userSignal.value.role === 'ADMIN' && (
-                        <>
+                          <button
+                           className="dropdown-item"
+                           onClick={() => {
+                             showEquipmentManager.value = true;
+                             showSettingsDropdown.value = false;
+                           }}
+                          >
+                           {t('Manage {{resource}}', { resource: resourceLabels.value.equipment })}
+                          </button>
+                          <button
+                           className="dropdown-item"
+                           onClick={() => {
+                             showRoomManager.value = true;
+                             showSettingsDropdown.value = false;
+                           }}
+                          >
+                            {t('Manage {{resource}}', { resource: resourceLabels.value.room })}
+                          </button>
                           <button 
                             className="dropdown-item" 
                             onClick={() => {
@@ -581,6 +576,15 @@ export function App() {
                             }}
                           >
                             {t('Manage Users')}
+                          </button>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              showSSOConfigDialog.value = true;
+                              showSettingsDropdown.value = false;
+                            }}
+                          >
+                            {t('SSO Configuration')}
                           </button>
                           <button
                             className="dropdown-item"
@@ -1094,6 +1098,13 @@ export function App() {
           backendUrl={BACKEND_URL} 
           onClose={() => showSystemSettingManager.value = false}
           themes={colorThemes.value}
+        />
+      )}
+
+      {showSSOConfigDialog.value && (
+        <SSOConfigDialog
+          backendUrl={BACKEND_URL}
+          onClose={() => showSSOConfigDialog.value = false}
         />
       )}
 
