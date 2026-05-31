@@ -203,7 +203,8 @@ app.get('/api/auth/sso/callback', async (req, res) => {
     
     // 2. Decode and verify ID token (simplified for now, assume JWT is valid)
     const decodedIdToken = jwt.decode(tokens.id_token) as any;
-    const { email, sub } = decodedIdToken;
+    const sub = decodedIdToken.sub;
+    const email = decodedIdToken.email || `${sub}@generated.sso.user`;
 
     // 3. Find or create user
     let user = await prisma.user.findFirst({ where: { OR: [{ email }, { ssoId: sub }] } });
