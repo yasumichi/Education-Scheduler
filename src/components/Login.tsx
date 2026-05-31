@@ -16,7 +16,9 @@ export function Login({ onLogin, error: loginError, backendUrl }: Props) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [allowPublicSignup, setAllowPublicSignup] = useState(false);
+  const [ssoEnabled, setSsoEnabled] = useState(false);
   const [error, setError] = useState<string | undefined>(loginError);
+  const [isSsoLoading, setIsSsoLoading] = useState(false);
 
   useEffect(() => {
     setError(loginError);
@@ -29,6 +31,16 @@ export function Login({ onLogin, error: loginError, backendUrl }: Props) {
         if (res.ok) {
           const data = await res.json();
           setAllowPublicSignup(data.allowPublicSignup);
+          setSsoEnabled(data.ssoEnabled);
+          
+          // SSO Auto Redirect logic
+          const urlParams = new URLSearchParams(window.location.search);
+          const isDirect = urlParams.get('direct') === 'true';
+          
+          if (data.ssoEnabled && data.ssoForceRedirect && !isDirect) {
+            setIsSsoLoading(true);
+            window.location.href = `${backendUrl}/auth/sso/login`;
+          }
         }
       } catch (err) {
         console.error('Failed to fetch settings:', err);
@@ -68,12 +80,17 @@ export function Login({ onLogin, error: loginError, backendUrl }: Props) {
     }
   };
 
+  if (isSsoLoading) {
+    return <div className="login-container"><div className="login-box">{t('Redirecting to SSO...')}</div></div>;
+  }
+
   return (
     <div className="login-container">
       <div className="login-box">
         <h2>ScholaTile</h2>
         <p>{isSignup ? t('Create your account') : t('Please sign in to continue')}</p>
         <form onSubmit={handleSubmit}>
+          {/* ... (Form Fields) */}
           <div className="form-group">
             <label>{t('Email')}</label>
             <input 
@@ -108,6 +125,14 @@ export function Login({ onLogin, error: loginError, backendUrl }: Props) {
             {isSignup ? t('Sign Up') : t('Sign In')}
           </button>
         </form>
+
+        {ssoEnabled && !isSignup && (
+          <div className="sso-link">
+            <a href={`${backendUrl}/auth/sso/login`} className="sso-button">
+              {t('Sign in with SSO')}
+            </a>
+          </div>
+        )}
 
         {!isSignup && allowPublicSignup && (
           <div className="signup-link">

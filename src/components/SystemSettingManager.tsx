@@ -12,11 +12,18 @@ interface Props {
 
 export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<'general' | 'sso'>('general');
   const [allowPublicSignup, setAllowPublicSignup] = useState(true);
   const [yearViewStartMonth, setYearViewStartMonth] = useState(4);
   const [yearViewStartDay, setYearViewStartDay] = useState(1);
-  // Default format: day:themeId:isWeekend
   const [weekendDays, setWeekendDays] = useState("0:default:true,1:default:false,2:default:false,3:default:false,4:default:false,5:default:false,6:vivid:true");
+  const [ssoEnabled, setSsoEnabled] = useState(false);
+  const [ssoForceRedirect, setSsoForceRedirect] = useState(false);
+  const [ssoClientId, setSsoClientId] = useState('');
+  const [ssoClientSecret, setSsoClientSecret] = useState('');
+  const [ssoIssuerUrl, setSsoIssuerUrl] = useState('');
+  const [ssoAllowedDomain, setSsoAllowedDomain] = useState('');
+  const [ssoAutoProvisioning, setSsoAutoProvisioning] = useState(false);
 
   const holidayThemes = themes.filter(t => t.category === 'HOLIDAY');
 
@@ -30,6 +37,12 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
           setYearViewStartMonth(data.yearViewStartMonth || 4);
           setYearViewStartDay(data.yearViewStartDay || 1);
           setWeekendDays(data.weekendDays || "0:default:true,1:default:false,2:default:false,3:default:false,4:default:false,5:default:false,6:vivid:true");
+          setSsoEnabled(data.ssoEnabled || false);
+          setSsoForceRedirect(data.ssoForceRedirect || false);
+          setSsoClientId(data.ssoClientId || '');
+          setSsoIssuerUrl(data.ssoIssuerUrl || '');
+          setSsoAllowedDomain(data.ssoAllowedDomain || '');
+          setSsoAutoProvisioning(data.ssoAutoProvisioning || false);
         }
       } catch (err) {
         console.error('Failed to fetch settings:', err);
@@ -72,6 +85,8 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
     setWeekendDays(newParts.join(','));
   };
 
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
   const handleSave = async () => {
     try {
       const res = await apiFetch(`${backendUrl}/settings`, {
@@ -82,7 +97,14 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
           yearViewStartMonth,
           yearViewStartDay,
           weekendDays,
-          holidayTheme: 'default'
+          holidayTheme: 'default',
+          ssoEnabled,
+          ssoForceRedirect,
+          ssoClientId,
+          ssoClientSecret: ssoClientSecret || null,
+          ssoIssuerUrl,
+          ssoAllowedDomain,
+          ssoAutoProvisioning
         })
       });
       if (res.ok) {
@@ -97,8 +119,6 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
     }
   };
 
-  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
   return (
     <div className="dialog-overlay">
       <div className="dialog-box">
@@ -106,94 +126,144 @@ export function SystemSettingManager({ backendUrl, onClose, themes }: Props) {
           <h2>{t('System Settings')}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
+        
+        <div className="tab-navigation">
+          <button 
+            className={`tab-button ${activeTab === 'general' ? 'active' : ''}`}
+            onClick={() => setActiveTab('general')}
+          >
+            {t('General')}
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'sso' ? 'active' : ''}`}
+            onClick={() => setActiveTab('sso')}
+          >
+            {t('SSO Configuration')}
+          </button>
+        </div>
 
         <div className="dialog-content">
-          <div className="setting-item">
-            <label className="checkbox-label">
-              <input 
-                type="checkbox" 
-                checked={allowPublicSignup} 
-                onChange={(e) => setAllowPublicSignup(e.currentTarget.checked)}
-              />
-              {t('Allow Public Signup')}
-            </label>
-            <p className="setting-description">
-              {t('If enabled, anyone can create an account from the login page.')}
-            </p>
-          </div>
-
-          <div className="setting-item">
-            <label className="field-label">{t('Year View Start Date')}</label>
-            <div className="form-row">
-              <div className="form-group">
-                <label>{t('Month')}</label>
-                <select 
-                  value={yearViewStartMonth} 
-                  onChange={(e) => setYearViewStartMonth(parseInt(e.currentTarget.value))}
-                >
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>{i + 1}</option>
-                  ))}
-                </select>
+          {activeTab === 'general' ? (
+            <>
+              <div className="setting-item">
+                <label className="checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    checked={allowPublicSignup} 
+                    onChange={(e) => setAllowPublicSignup(e.currentTarget.checked)}
+                  />
+                  {t('Allow Public Signup')}
+                </label>
+                <p className="setting-description">
+                  {t('If enabled, anyone can create an account from the login page.')}
+                </p>
               </div>
-              <div className="form-group">
-                <label>{t('Day')}</label>
-                <select 
-                  value={yearViewStartDay} 
-                  onChange={(e) => setYearViewStartDay(parseInt(e.currentTarget.value))}
-                >
-                  {Array.from({ length: 31 }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>{i + 1}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <p className="setting-description">
-              {t('Used as the start date for the year-based views (3 months, 6 months, 1 year).')}
-            </p>
-          </div>
 
-          <div className="setting-item">
-            <label className="field-label">{t('Weekend Days')}</label>
-            <div className="weekend-selector-vertical">
-              {daysOfWeek.map((day, i) => {
-                const { themeId, isWeekend } = getDayInfo(i);
-                return (
-                  <div key={i} className="weekend-day-row">
-                    <label className="checkbox-label">
-                      <input 
-                        type="checkbox" 
-                        checked={isWeekend}
-                        onChange={() => updateDayInfo(i, themeId, !isWeekend)}
-                      />
-                      {t(day)}
-                    </label>
-                    {isWeekend && (
-                      <div className="theme-preview-list">
-                        {holidayThemes.map(theme => {
-                          const isSelected = (theme.key || theme.id) === themeId;
-                          return (
-                            <div 
-                              key={theme.id}
-                              className={`theme-preview-item ${isSelected ? 'selected' : ''}`}
-                              style={{ backgroundColor: theme.background, color: theme.foreground }}
-                              onClick={() => updateDayInfo(i, theme.key || theme.id, isWeekend)}
-                              title={t(theme.name)}
-                            >
-                              Aa
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+              <div className="setting-item">
+                <label className="field-label">{t('Year View Start Date')}</label>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>{t('Month')}</label>
+                    <select 
+                      value={yearViewStartMonth} 
+                      onChange={(e) => setYearViewStartMonth(parseInt(e.currentTarget.value))}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                      ))}
+                    </select>
                   </div>
-                );
-              })}
+                  <div className="form-group">
+                    <label>{t('Day')}</label>
+                    <select 
+                      value={yearViewStartDay} 
+                      onChange={(e) => setYearViewStartDay(parseInt(e.currentTarget.value))}
+                    >
+                      {Array.from({ length: 31 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <p className="setting-description">
+                  {t('Used as the start date for the year-based views (3 months, 6 months, 1 year).')}
+                </p>
+              </div>
+
+              <div className="setting-item">
+                <label className="field-label">{t('Weekend Days')}</label>
+                <div className="weekend-selector-vertical">
+                  {daysOfWeek.map((day, i) => {
+                    const { themeId, isWeekend } = getDayInfo(i);
+                    return (
+                      <div key={i} className="weekend-day-row">
+                        <label className="checkbox-label">
+                          <input 
+                            type="checkbox" 
+                            checked={isWeekend}
+                            onChange={() => updateDayInfo(i, themeId, !isWeekend)}
+                          />
+                          {t(day)}
+                        </label>
+                        {isWeekend && (
+                          <div className="theme-preview-list">
+                            {holidayThemes.map(theme => {
+                              const isSelected = (theme.key || theme.id) === themeId;
+                              return (
+                                <div 
+                                  key={theme.id}
+                                  className={`theme-preview-item ${isSelected ? 'selected' : ''}`}
+                                  style={{ backgroundColor: theme.background, color: theme.foreground }}
+                                  onClick={() => updateDayInfo(i, theme.key || theme.id, isWeekend)}
+                                  title={t(theme.name)}
+                                >
+                                  Aa
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="setting-description">
+                  {t('Selected days will be styled as weekends in the calendar.')}
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="setting-item">
+              <label className="checkbox-label">
+                <input type="checkbox" checked={ssoEnabled} onChange={(e) => setSsoEnabled(e.currentTarget.checked)} />
+                {t('Enable SSO')}
+              </label>
+              <label className="checkbox-label">
+                <input type="checkbox" checked={ssoForceRedirect} onChange={(e) => setSsoForceRedirect(e.currentTarget.checked)} />
+                {t('Force SSO Redirect')}
+              </label>
+              <div className="form-group">
+                <label>{t('Client ID')}</label>
+                <input type="text" value={ssoClientId} onChange={(e) => setSsoClientId(e.currentTarget.value)} />
+              </div>
+              <div className="form-group">
+                <label>{t('Client Secret')}</label>
+                <input type="password" value={ssoClientSecret} onChange={(e) => setSsoClientSecret(e.currentTarget.value)} placeholder={t('Leave blank to keep existing')} />
+              </div>
+              <div className="form-group">
+                <label>{t('Issuer URL')}</label>
+                <input type="text" value={ssoIssuerUrl} onChange={(e) => setSsoIssuerUrl(e.currentTarget.value)} />
+              </div>
+              <div className="form-group">
+                <label>{t('Allowed Domain')}</label>
+                <input type="text" value={ssoAllowedDomain} onChange={(e) => setSsoAllowedDomain(e.currentTarget.value)} />
+              </div>
+              <label className="checkbox-label">
+                <input type="checkbox" checked={ssoAutoProvisioning} onChange={(e) => setSsoAutoProvisioning(e.currentTarget.checked)} />
+                {t('Auto Provisioning')}
+              </label>
             </div>
-            <p className="setting-description">
-              {t('Selected days will be styled as weekends in the calendar.')}
-            </p>
-          </div>
+          )}
         </div>
 
         <div className="dialog-footer">

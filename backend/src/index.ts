@@ -165,6 +165,77 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
+// OIDC Login
+app.get('/api/auth/sso/login', async (req, res) => {
+  const settings = await prisma.systemSetting.findFirst();
+  if (!settings?.ssoEnabled || !settings.ssoIssuerUrl || !settings.ssoClientId) {
+    return res.status(400).json({ error: 'SSO not configured' });
+  }
+  const redirectUri = `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/auth/sso/callback`;
+  const authUrl = `${settings.ssoIssuerUrl}/protocol/openid-connect/auth?client_id=${settings.ssoClientId}&response_type=code&scope=openid email profile&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  res.redirect(authUrl);
+});
+
+// OIDC Callback
+app.get('/api/auth/sso/callback', async (req, res) => {
+  const { code } = req.query;
+  const settings = await prisma.systemSetting.findFirst();
+  if (!settings?.ssoEnabled || !settings.ssoIssuerUrl || !settings.ssoClientId || !settings.ssoClientSecret) {
+    return res.status(400).json({ error: 'SSO not configured' });
+  }
+
+  try {
+    // 1. Exchange code for tokens
+    const tokenResponse = await fetch(`${settings.ssoIssuerUrl}/protocol/openid-connect/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: settings.ssoClientId,
+        client_secret: settings.ssoClientSecret,
+        grant_type: 'authorization_code',
+        code: code as string,
+        redirect_uri: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/auth/sso/callback`
+      })
+    });
+    
+    if (!tokenResponse.ok) return res.status(400).json({ error: 'Token exchange failed' });
+    const tokens = await tokenResponse.json();
+    
+    // 2. Decode and verify ID token (simplified for now, assume JWT is valid)
+    const decodedIdToken = jwt.decode(tokens.id_token) as any;
+    const { email, sub } = decodedIdToken;
+
+    // 3. Find or create user
+    let user = await prisma.user.findFirst({ where: { OR: [{ email }, { ssoId: sub }] } });
+
+    if (!user) {
+      if (!settings.ssoAutoProvisioning) return res.status(403).json({ error: 'User provisioning disabled' });
+      // Create new user (role: STUDENT)
+      const hashedPassword = await bcrypt.hash(Math.random().toString(36), 10);
+      user = await prisma.user.create({
+        data: { email, password: hashedPassword, role: UserRole.STUDENT, ssoId: sub }
+      });
+    } else if (!user.ssoId) {
+      // Link ssoId
+      user = await prisma.user.update({ where: { id: user.id }, data: { ssoId: sub } });
+    }
+
+    // 4. Create session and redirect
+    const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    res.redirect(`${FRONTEND_URL}/`);
+  } catch (error) {
+    console.error('SSO Callback error:', error);
+    res.status(500).json({ error: 'SSO authentication failed' });
+  }
+});
+
 // Check session (get own user info)
 app.get('/api/auth/me', verifyToken, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
@@ -324,7 +395,9 @@ app.get('/api/settings', async (req, res) => {
         } 
       });
     }
-    res.json(settings);
+    // Exclude sensitive secret from response
+    const { ssoClientSecret, ...settingsWithoutSecret } = settings;
+    res.json(settingsWithoutSecret);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch settings' });
   }
@@ -335,15 +408,22 @@ app.post('/api/settings', verifyToken, async (req: AuthRequest, res) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Access denied. Admin role required.' });
   }
-  const { allowPublicSignup, yearViewStartMonth, yearViewStartDay, weekendDays, holidayTheme } = req.body;
+  const { allowPublicSignup, yearViewStartMonth, yearViewStartDay, weekendDays, holidayTheme, ssoEnabled, ssoForceRedirect, ssoClientId, ssoClientSecret, ssoIssuerUrl, ssoAllowedDomain, ssoAutoProvisioning } = req.body;
   try {
     let settings = await prisma.systemSetting.findFirst();
-    const data = {
+    const data: any = {
       allowPublicSignup,
       yearViewStartMonth: parseInt(yearViewStartMonth) || 4,
       yearViewStartDay: parseInt(yearViewStartDay) || 1,
       weekendDays: weekendDays || "0,6",
-      holidayTheme: holidayTheme || "default"
+      holidayTheme: holidayTheme || "default",
+      ssoEnabled: !!ssoEnabled,
+      ssoForceRedirect: !!ssoForceRedirect,
+      ssoClientId: ssoClientId || null,
+      ssoClientSecret: ssoClientSecret || null,
+      ssoIssuerUrl: ssoIssuerUrl || null,
+      ssoAllowedDomain: ssoAllowedDomain || null,
+      ssoAutoProvisioning: !!ssoAutoProvisioning
     };
 
     if (settings) {

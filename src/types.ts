@@ -66,6 +66,14 @@ export interface SystemSetting {
   yearViewStartDay: number;
   weekendDays: string; // "0,6"
   holidayTheme: string; // "default"
+
+  ssoEnabled: boolean;
+  ssoForceRedirect: boolean;
+  ssoClientId?: string | null;
+  ssoClientSecret?: string | null;
+  ssoIssuerUrl?: string | null;
+  ssoAllowedDomain?: string | null;
+  ssoAutoProvisioning: boolean;
 }
 
 export interface CourseType {
