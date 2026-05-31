@@ -12,6 +12,7 @@ model User {
   password String
   role     UserRole  @default(STUDENT)
   resource Resource? @relation("UserResource")
+  ssoId    String?   @unique
 }
 
 model Resource {
@@ -190,6 +191,14 @@ model SystemSetting {
   yearViewStartDay   Int     @default(1)
   weekendDays        String  @default("0,6") // Comma-separated day indices (0=Sun, 6=Sat)
   holidayTheme       String  @default("default")
+
+  ssoEnabled          Boolean @default(false)
+  ssoForceRedirect    Boolean @default(false)
+  ssoClientId         String?
+  ssoClientSecret     String?
+  ssoIssuerUrl        String?
+  ssoAllowedDomain    String?
+  ssoAutoProvisioning Boolean @default(false)
 }
 
 model ColorTheme {
