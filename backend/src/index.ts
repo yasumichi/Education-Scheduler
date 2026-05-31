@@ -204,7 +204,13 @@ app.get('/api/auth/sso/callback', async (req, res) => {
     // 2. Decode and verify ID token (simplified for now, assume JWT is valid)
     const decodedIdToken = jwt.decode(tokens.id_token) as any;
     const sub = decodedIdToken.sub;
-    const email = decodedIdToken.email || `${sub}@generated.sso.user`;
+    const email = decodedIdToken.email;
+
+    // メールアドレスが取得できない場合は認証を拒否
+    if (!email) {
+      console.error(`SSO Authentication failed: Email missing for sub=${sub}`);
+      return res.status(400).json({ error: 'Email claim missing in ID token' });
+    }
 
     // 3. Find or create user
     let user = await prisma.user.findFirst({ where: { OR: [{ email }, { ssoId: sub }] } });
