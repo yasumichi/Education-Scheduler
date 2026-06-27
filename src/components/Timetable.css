@@ -839,3 +839,49 @@
     color: #15803d;
   }
 }
+
+/* Drag & Resize styling for Course View */
+.lesson-card.is-draggable-course {
+  cursor: grab;
+}
+
+.lesson-card.is-draggable-course:active {
+  cursor: grabbing;
+}
+
+.lesson-card .resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background-color: transparent;
+  cursor: col-resize;
+  z-index: 10;
+  transition: background-color 0.2s;
+}
+
+.lesson-card .resize-handle:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.lesson-card .resize-handle-left {
+  left: 0;
+}
+
+.lesson-card .resize-handle-right {
+  right: 0;
+}
+
+.timetable-container.grid-is-dragging {
+  user-select: none;
+}
+
+.timetable-container.grid-is-dragging .lesson-card,
+.timetable-container.grid-is-dragging .event-card {
+  pointer-events: none !important;
+}
+
+.timetable-container.grid-is-dragging .grid-cell:hover {
+  background-color: rgba(100, 108, 255, 0.2) !important;
+}
+

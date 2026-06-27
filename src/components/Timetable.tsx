@@ -4,6 +4,29 @@ import './Timetable.css';
 import { useTranslation } from 'react-i18next';
 import { JSX, Fragment } from 'preact';
 import { useSignal } from '@preact/signals';
+import { apiFetch } from '../utils/api';
+
+interface DragState {
+  type: 'move' | 'resize-left' | 'resize-right';
+  lesson: Lesson;
+  courseId: string;
+  startColumn: number;
+  endColumn: number;
+  currentColumn: number;
+  initialColumnOffset: number;
+}
+
+interface PendingDragState {
+  type: 'move' | 'resize-left' | 'resize-right';
+  lesson: Lesson;
+  courseId: string;
+  startColumn: number;
+  endColumn: number;
+  initialCol: number;
+  initialX: number;
+  initialY: number;
+  initialColumnOffset: number;
+}
 
 interface Props {
   periods: TimePeriod[];
@@ -148,6 +171,266 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
   const isDayView = viewType === 'day';
   const isCourseTimeline = viewType === 'course_timeline';
   const effectivePeriods = isCourseTimeline ? [{ id: 'p-all', name: '', startTime: '', endTime: '', order: 0 }] : periods;
+
+  const dragState = useSignal<DragState | null>(null);
+  const pendingDrag = useSignal<PendingDragState | null>(null);
+
+  const getColumnFromCoords = (clientX: number, clientY: number): number | null => {
+    const el = document.elementFromPoint(clientX, clientY);
+    const cell = el?.closest('[data-column]');
+    if (cell) {
+      const colStr = cell.getAttribute('data-column');
+      if (colStr) {
+        return parseInt(colStr, 10);
+      }
+    }
+    return null;
+  };
+
+  const getCellFromColumn = (col: number) => {
+    const zeroBasedCol = col - 2;
+    const numPeriods = effectivePeriods.length;
+    const dIdx = Math.floor(zeroBasedCol / numPeriods);
+    const pIdx = zeroBasedCol % numPeriods;
+    
+    if (dIdx >= 0 && dIdx < displayDates.length && pIdx >= 0 && pIdx < effectivePeriods.length) {
+      return {
+        date: displayDates[dIdx],
+        period: effectivePeriods[pIdx]
+      };
+    }
+    return null;
+  };
+
+  const handlePointerMove = (e: PointerEvent) => {
+    if (!dragState.value) return;
+    const col = getColumnFromCoords(e.clientX, e.clientY);
+    if (col !== null) {
+      dragState.value = {
+        ...dragState.value,
+        currentColumn: col
+      };
+    }
+  };
+
+  const handlePointerUp = async (e: PointerEvent) => {
+    window.removeEventListener('pointermove', handlePointerMove);
+    window.removeEventListener('pointerup', handlePointerUp);
+    
+    if (!dragState.value) return;
+    
+    const state = dragState.value;
+    dragState.value = null; // Reset early
+    
+    const maxCol = displayDates.length * effectivePeriods.length + 1;
+    let previewStart = state.startColumn;
+    let previewEnd = state.endColumn;
+    
+    if (state.type === 'move') {
+      const duration = state.endColumn - state.startColumn;
+      let newStart = state.currentColumn - state.initialColumnOffset;
+      if (newStart < 2) newStart = 2;
+      if (newStart + duration > maxCol) newStart = maxCol - duration;
+      previewStart = newStart;
+      previewEnd = newStart + duration;
+    } else if (state.type === 'resize-left') {
+      let newStart = state.currentColumn;
+      if (newStart < 2) newStart = 2;
+      if (newStart > state.endColumn) newStart = state.endColumn;
+      previewStart = newStart;
+      previewEnd = state.endColumn;
+    } else if (state.type === 'resize-right') {
+      let newEnd = state.currentColumn;
+      if (newEnd > maxCol) newEnd = maxCol;
+      if (newEnd < state.startColumn) newEnd = state.startColumn;
+      previewStart = state.startColumn;
+      previewEnd = newEnd;
+    }
+    
+    // If the columns didn't actually change, do nothing
+    if (previewStart === state.startColumn && previewEnd === state.endColumn) {
+      return;
+    }
+    
+    const startCell = getCellFromColumn(previewStart);
+    const endCell = getCellFromColumn(previewEnd);
+    
+    if (!startCell || !endCell) return;
+    
+    const newStartDate = format(startCell.date, 'yyyy-MM-dd');
+    const newStartPeriodId = startCell.period.id;
+    const newEndDate = format(endCell.date, 'yyyy-MM-dd');
+    const newEndPeriodId = endCell.period.id;
+    
+    // Run double-booking conflict validation
+    const checkResources = [
+      state.lesson.roomId,
+      state.lesson.teacherId,
+      ...(state.lesson.subTeacherIds || state.lesson.subTeachers?.map(t => t.id) || [])
+    ].filter(id => id && id !== '');
+    
+    const getAbsTime = (date: string, pId: string) => {
+      const pIdx = periods.findIndex(p => p.id === pId);
+      return `${date}-${pIdx.toString().padStart(3, '0')}`;
+    };
+    
+    const formStart = getAbsTime(newStartDate, newStartPeriodId);
+    const formEnd = getAbsTime(newEndDate, newEndPeriodId);
+    
+    const conflicts = lessons.filter(l => {
+      if (l.id === state.lesson.id) return false;
+      
+      const lStart = getAbsTime(l.startDate, l.startPeriodId);
+      const lEnd = getAbsTime(l.endDate, l.endPeriodId);
+      const timeOverlap = formStart <= lEnd && lStart <= formEnd;
+      if (!timeOverlap) return false;
+      
+      const lResources = [l.roomId, l.teacherId, ...(l.subTeacherIds || l.subTeachers?.map(t => t.id) || [])].filter(id => id && id !== '');
+      return checkResources.some(rid => lResources.includes(rid));
+    });
+    
+    if (conflicts.length > 0) {
+      const proceed = window.confirm(t('The following resources are already booked for this time. Do you want to proceed anyway?'));
+      if (!proceed) {
+        return;
+      }
+    }
+    
+    try {
+      const res = await apiFetch(`/lessons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: state.lesson.id,
+          subject: state.lesson.subject,
+          subjectId: state.lesson.subjectId,
+          teacherId: state.lesson.teacherId,
+          subTeacherIds: state.lesson.subTeacherIds || state.lesson.subTeachers?.map(t => t.id),
+          roomId: state.lesson.roomId,
+          courseId: state.lesson.courseId,
+          location: state.lesson.location,
+          startDate: newStartDate,
+          startPeriodId: newStartPeriodId,
+          endDate: newEndDate,
+          endPeriodId: newEndPeriodId,
+          deliveryMethodIds: state.lesson.deliveryMethodIds || state.lesson.deliveryMethods?.map(m => m.id),
+          remarks: state.lesson.remarks,
+          externalTeacher: state.lesson.externalTeacher,
+          externalSubTeachers: state.lesson.externalSubTeachers
+        })
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json();
+        alert(t(errData.error || 'Failed to save lesson'));
+        return;
+      }
+      
+      if (onUpdate) {
+        onUpdate();
+      } else {
+        onReload?.();
+      }
+    } catch (err) {
+      console.error('Failed to update lesson position:', err);
+      alert(t('Failed to save lesson'));
+    }
+  };
+
+  const handleDragStart = (e: PointerEvent, lesson: Lesson, startCol: number, endCol: number) => {
+    if (viewMode !== 'course') return;
+    e.preventDefault();
+    
+    const cardEl = (e.currentTarget as HTMLElement).closest('.lesson-card') as HTMLElement | null;
+    let initialCol: number | null = null;
+    if (cardEl) {
+      const prevEvents = cardEl.style.pointerEvents;
+      cardEl.style.pointerEvents = 'none';
+      initialCol = getColumnFromCoords(e.clientX, e.clientY);
+      cardEl.style.pointerEvents = prevEvents;
+    }
+    if (initialCol === null) {
+      initialCol = startCol;
+    }
+    
+    const initialColumnOffset = initialCol - startCol;
+    
+    dragState.value = {
+      type: 'move',
+      lesson,
+      courseId: lesson.courseId,
+      startColumn: startCol,
+      endColumn: endCol,
+      currentColumn: initialCol,
+      initialColumnOffset
+    };
+    
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
+  const handleResizeLeftStart = (e: PointerEvent, lesson: Lesson, startCol: number, endCol: number) => {
+    if (viewMode !== 'course') return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const cardEl = (e.currentTarget as HTMLElement).closest('.lesson-card') as HTMLElement | null;
+    let initialCol: number | null = null;
+    if (cardEl) {
+      const prevEvents = cardEl.style.pointerEvents;
+      cardEl.style.pointerEvents = 'none';
+      initialCol = getColumnFromCoords(e.clientX, e.clientY);
+      cardEl.style.pointerEvents = prevEvents;
+    }
+    if (initialCol === null) {
+      initialCol = startCol;
+    }
+    
+    dragState.value = {
+      type: 'resize-left',
+      lesson,
+      courseId: lesson.courseId,
+      startColumn: startCol,
+      endColumn: endCol,
+      currentColumn: initialCol,
+      initialColumnOffset: 0
+    };
+    
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
+  const handleResizeRightStart = (e: PointerEvent, lesson: Lesson, startCol: number, endCol: number) => {
+    if (viewMode !== 'course') return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const cardEl = (e.currentTarget as HTMLElement).closest('.lesson-card') as HTMLElement | null;
+    let initialCol: number | null = null;
+    if (cardEl) {
+      const prevEvents = cardEl.style.pointerEvents;
+      cardEl.style.pointerEvents = 'none';
+      initialCol = getColumnFromCoords(e.clientX, e.clientY);
+      cardEl.style.pointerEvents = prevEvents;
+    }
+    if (initialCol === null) {
+      initialCol = endCol;
+    }
+    
+    dragState.value = {
+      type: 'resize-right',
+      lesson,
+      courseId: lesson.courseId,
+      startColumn: startCol,
+      endColumn: endCol,
+      currentColumn: initialCol,
+      initialColumnOffset: 0
+    };
+    
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
 
   const allResourcesOfMode = resources
     .filter(r => {
@@ -392,7 +675,8 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
       return (
         <div key={`period-${date.toISOString()}-${p.id}`} 
              className={className} 
-             style={{ ...style, gridColumn: dIdx * periods.length + pIdx + 2, gridRow: 2 }}>
+             style={{ ...style, gridColumn: dIdx * periods.length + pIdx + 2, gridRow: 2 }}
+             data-column={dIdx * periods.length + pIdx + 2}>
           {p.name}
         </div>
       );
@@ -764,13 +1048,50 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
             tooltipText += `\n\n${t('Remarks')}:\n${l.remarks}`;
           }
 
+          let previewStart = layout.start;
+          let previewEnd = layout.end;
+          let extraClass = '';
+
+          if (dragState.value && dragState.value.lesson.id === l.id) {
+            const { type, startColumn, endColumn, currentColumn, initialColumnOffset } = dragState.value;
+            const maxCol = displayDates.length * effectivePeriods.length + 1;
+            
+            if (type === 'move') {
+              const duration = endColumn - startColumn;
+              let newStart = currentColumn - initialColumnOffset;
+              if (newStart < 2) newStart = 2;
+              if (newStart + duration > maxCol) newStart = maxCol - duration;
+              previewStart = newStart;
+              previewEnd = newStart + duration;
+              extraClass += ' is-dragging';
+            } else if (type === 'resize-left') {
+              let newStart = currentColumn;
+              if (newStart < 2) newStart = 2;
+              if (newStart > endColumn) newStart = endColumn;
+              previewStart = newStart;
+              previewEnd = endColumn;
+              extraClass += ' is-resizing';
+            } else if (type === 'resize-right') {
+              let newEnd = currentColumn;
+              if (newEnd > maxCol) newEnd = maxCol;
+              if (newEnd < startColumn) newEnd = startColumn;
+              previewStart = startColumn;
+              previewEnd = newEnd;
+              extraClass += ' is-resizing';
+            }
+          }
+
+          if (viewMode === 'course') {
+            extraClass += ' is-draggable-course';
+          }
+
           resourceRowItems.push(
             <div key={layout.id} 
-              className={`lesson-card ${(!l.teacherId && !l.externalTeacher) ? 'no-main-teacher' : ''}`}
+              className={`lesson-card ${(!l.teacherId && !l.externalTeacher) ? 'no-main-teacher' : ''}${extraClass}`}
               style={{
-                gridColumn: `${layout.start} / ${layout.end + 1}`,
+                gridColumn: `${previewStart} / ${previewEnd + 1}`,
                 gridRow: resIdx + resourceBaseRowIdx,
-                cursor: 'pointer',
+                cursor: viewMode === 'course' ? 'grab' : 'pointer',
                 backgroundColor: bgColor,
                 color: textColor,
                 top: `${top}px`,
@@ -779,15 +1100,32 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
               }}
               title={tooltipText}
               onDblClick={() => handleIntentionalClick(() => onLessonClick?.(l))}
+              onPointerDown={(e) => {
+                if (viewMode === 'course') {
+                  // Prevent initiating drag on double-click (e.detail > 1)
+                  if (e.detail > 1) return;
+                  const target = e.target as HTMLElement;
+                  if (target.classList.contains('resize-handle') || target.closest('.edit-icon')) return;
+                  handleDragStart(e, l, layout.start, layout.end);
+                }
+              }}
             >
-              <div className="lesson-subject"><div className="lesson-delivery-methods">{translatedSubject}
-              {l.deliveryMethods && l.deliveryMethods.length > 0 && (
-                  l.deliveryMethods.map(m => (
-                    <span key={m.id} className="delivery-method-tag" style={{ backgroundColor: m.color || '#646cff' }}>
-                      {m.name}
-                    </span>
-                  ))
-              )}</div></div>
+              {viewMode === 'course' && (
+                <>
+                  <div className="resize-handle resize-handle-left" onPointerDown={(e) => handleResizeLeftStart(e, l, layout.start, layout.end)} />
+                  <div className="resize-handle resize-handle-right" onPointerDown={(e) => handleResizeRightStart(e, l, layout.start, layout.end)} />
+
+                </>
+              )} <div className="lesson-subject">
+  <span className="edit-icon" onPointerDown={(e) => e.stopPropagation()} onClick={() => handleIntentionalClick(() => onLessonClick?.(l))} title={t('Edit')}>✎</span>
+  <span className="subject-text">{translatedSubject}</span>
+  {l.deliveryMethods && l.deliveryMethods.length > 0 && (
+    l.deliveryMethods.map(m => (
+      <span key={m.id} className="delivery-method-tag" style={{ backgroundColor: m.color || '#646cff' }}>{m.name}</span>
+    ))
+  )}
+</div>
+
               {layout.maxLevelInGroup === 1 && (
                 <div className="lesson-details">
                   {infoItems.map((item, idx) => (
@@ -920,7 +1258,7 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
     <div className={`timetable-wrapper holiday-theme-${holidayTheme}`} style={wrapperStyle}>
       <div 
         key={`grid-${viewType}-${baseDate.getTime()}-${viewMode}`}
-        className={`timetable-container ${isTimelineReduced ? 'is-reduced' : ''}`} 
+        className={`timetable-container ${isTimelineReduced ? 'is-reduced' : ''}${dragState.value ? ' grid-is-dragging' : ''}`} 
         style={gridStyle}
       >
         {filterButton}
@@ -943,6 +1281,7 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
               <div key={`cell-${res.id}-${dIdx}-${pIdx}`} 
                    className={cellClass} 
                    style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: rIdx + resourceBaseRowIdx }}
+                   data-column={dIdx * effectivePeriods.length + pIdx + 2}
                    onDblClick={(e) => {
                      e.stopPropagation();
                      console.log('Empty cell dblclick:', res.id, dateStr, p.id);

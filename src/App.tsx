@@ -942,6 +942,7 @@ export function App() {
               editingLesson.value = initial;
               showLessonManager.value = true;
             }}
+            onUpdate={fetchData}
             onReload={saveViewStateAndReload}
           />
         )}

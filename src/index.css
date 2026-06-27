@@ -555,3 +555,11 @@ h1 {
   }
 }
 
+/* Lesson subject edit icon hover */
+.lesson-subject .edit-icon {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.lesson-subject:hover .edit-icon {
+  opacity: 1;
+}
