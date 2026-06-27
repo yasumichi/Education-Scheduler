@@ -488,7 +488,7 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
     minWidth: (isDayView) ? '0' : `${totalWidth}px`,
     gridTemplateColumns: `150px repeat(${totalCols}, ${colWidth})`,
     gridTemplateRows: gridRows,
-  } as JSX.CSSProperties;
+      } as JSX.CSSProperties;
 
   const stickyLeft = { position: 'sticky', left: 0 } as JSX.CSSProperties;
   const eventRowHeight = isCourseTimeline && isTimelineReduced ? 40 : 80;
@@ -1116,8 +1116,8 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
                   <div className="resize-handle resize-handle-right" onPointerDown={(e) => handleResizeRightStart(e, l, layout.start, layout.end)} />
 
                 </>
-              )} <div className="lesson-subject">
-  <span className="edit-icon" onPointerDown={(e) => e.stopPropagation()} onClick={() => handleIntentionalClick(() => onLessonClick?.(l))} title={t('Edit')}>✎</span>
+              )} <span className="edit-icon" onPointerDown={(e) => e.stopPropagation()} onClick={() => handleIntentionalClick(() => onLessonClick?.(l))} title={t('Edit')}>✎</span>
+<div className="lesson-subject">
   <span className="subject-text">{translatedSubject}</span>
   {l.deliveryMethods && l.deliveryMethods.length > 0 && (
     l.deliveryMethods.map(m => (

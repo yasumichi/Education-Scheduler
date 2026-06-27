@@ -555,11 +555,18 @@ h1 {
   }
 }
 
-/* Lesson subject edit icon hover */
-.lesson-subject .edit-icon {
+/* Lesson subject edit icon positioning */
+.lesson-subject {
+  position: relative;
+}
+.lesson-card .edit-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
   opacity: 0;
   transition: opacity 0.2s ease;
+  z-index: 30; /* above other elements */
 }
-.lesson-subject:hover .edit-icon {
+.lesson-card:hover .edit-icon {
   opacity: 1;
 }
