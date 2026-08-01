@@ -914,6 +914,14 @@ export function App() {
               editingCourseId.value = course.id;
               showCourseManager.value = true;
             }}
+            onViewRoomEquipment={(roomId) => {
+              selectedRoomIdForEquipment.value = roomId;
+              showRoomEquipmentView.value = true;
+            }}
+            onViewTeacherStats={(teacherId) => {
+              selectedTeacherIdForStats.value = teacherId;
+              showTeacherStatistics.value = true;
+            }}
             onViewWeekly={(courseId) => {
               selectedCourseIdForWeekly.value = courseId;
               showCourseWeekly.value = true;
