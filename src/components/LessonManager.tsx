@@ -362,70 +362,98 @@ export function LessonManager({ backendUrl, onClose, onUpdate, periods, resource
   };
 
   const handleAutoSchedule = (includeHolidays: boolean) => {
-    if (!activeSubject || activeSubject.remaining <= 0) return;
+    if (!activeSubject) return;
 
     let periodsToFill = activeSubject.remaining;
+    if (periodsToFill <= 0) return;
+
     let currentDate = parseISO(formData.startDate);
     let startIdx = periods.findIndex(p => p.id === formData.startPeriodId);
     if (startIdx === -1) startIdx = 0;
 
-    let endDate = currentDate;
-    let endPeriodId = formData.startPeriodId;
+    // If starting date is a holiday/weekend when excluding holidays, advance to the first working day
+    if (!includeHolidays && isHolidayOrWeekend(currentDate)) {
+      while (isHolidayOrWeekend(currentDate)) {
+        currentDate = addDays(currentDate, 1);
+      }
+      startIdx = 0;
+    }
 
-    // Helper to check if a period is occupied
-    const isOccupied = (date: Date, periodId: string) => {
+    const effectiveStartDate = currentDate;
+    const effectiveStartPeriodId = periods[startIdx]?.id || formData.startPeriodId;
+
+    let endDate = currentDate;
+    let endPeriodId = effectiveStartPeriodId;
+    let filledAny = false;
+
+    // Helper to check if a specific period on a date has a conflict
+    const getAbsTime = (dateStr: string, pId: string) => {
+      const pIdx = periods.findIndex(p => p.id === pId);
+      return `${dateStr}-${pIdx.toString().padStart(3, '0')}`;
+    };
+
+    const isConflict = (date: Date, periodId: string) => {
       const dateStr = format(date, 'yyyy-MM-dd');
-      return lessons.some(l => 
-        l.id !== formData.id &&
-        l.courseId === formData.courseId &&
-        l.startDate === dateStr &&
-        l.startPeriodId === periodId
-      );
+      const targetAbs = getAbsTime(dateStr, periodId);
+
+      const checkResources = [
+        formData.roomId,
+        formData.teacherId,
+        ...formData.subTeacherIds
+      ].filter(id => id && id !== '');
+
+      return lessons.some(l => {
+        if (l.id === formData.id) return false;
+
+        const lStartAbs = getAbsTime(l.startDate, l.startPeriodId);
+        const lEndAbs = getAbsTime(l.endDate, l.endPeriodId);
+
+        const timeOverlap = lStartAbs <= targetAbs && targetAbs <= lEndAbs;
+        if (!timeOverlap) return false;
+
+        if (l.courseId === formData.courseId) return true;
+
+        const lResources = [l.roomId, l.teacherId, ...(l.subTeacherIds || [])].filter(id => id && id !== '');
+        return checkResources.some(rid => lResources.includes(rid));
+      });
     };
 
     while (periodsToFill > 0) {
       if (!includeHolidays && isHolidayOrWeekend(currentDate)) {
-        currentDate = addDays(currentDate, 1);
-        startIdx = 0;
-        continue;
+        break; // Stop at holiday or weekend
       }
 
-      // Check collision for current slot
       const currentPeriodId = periods[startIdx].id;
-      if (isOccupied(currentDate, currentPeriodId)) {
-        break; // Stop if occupied
+      if (isConflict(currentDate, currentPeriodId)) {
+        break; // Stop before conflicting slot
       }
 
-      const dailyAvailable = periods.length - startIdx;
-      const nextDate = addDays(currentDate, 1);
+      endDate = currentDate;
+      endPeriodId = currentPeriodId;
+      filledAny = true;
+      periodsToFill--;
 
-      if (!includeHolidays && isHolidayOrWeekend(nextDate)) {
-        const fillable = Math.min(periodsToFill, dailyAvailable);
-        periodsToFill -= fillable;
-        endDate = currentDate;
-        endPeriodId = periods[startIdx + fillable - 1].id;
+      if (periodsToFill === 0) {
         break;
       }
 
-      if (periodsToFill >= dailyAvailable) {
-        periodsToFill -= dailyAvailable;
-        endDate = currentDate;
-        endPeriodId = periods[periods.length - 1].id;
-        
-        currentDate = nextDate;
-        startIdx = 0;
+      if (startIdx + 1 < periods.length) {
+        startIdx++;
       } else {
-        endPeriodId = periods[startIdx + periodsToFill - 1].id;
-        endDate = currentDate;
-        periodsToFill = 0;
+        currentDate = addDays(currentDate, 1);
+        startIdx = 0;
       }
     }
-    
-    setFormData(prev => ({
-      ...prev,
-      endDate: format(endDate, 'yyyy-MM-dd'),
-      endPeriodId: endPeriodId
-    }));
+
+    if (filledAny) {
+      setFormData(prev => ({
+        ...prev,
+        startDate: format(effectiveStartDate, 'yyyy-MM-dd'),
+        startPeriodId: effectiveStartPeriodId,
+        endDate: format(endDate, 'yyyy-MM-dd'),
+        endPeriodId: endPeriodId
+      }));
+    }
   };
 
   const filteredSubjectOptions = useMemo(() => {
