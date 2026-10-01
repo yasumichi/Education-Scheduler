@@ -74,6 +74,11 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
   const hiddenResourceIds = useSignal<Set<string>>(new Set());
   const newFilterName = useSignal("");
 
+  // Virtual Scrolling State (Column windowing for views >= 1 month)
+  const timetableContainerRef = useSignal<HTMLDivElement | null>(null);
+  const visibleColStart = useSignal<number>(2);
+  const visibleColEnd = useSignal<number>(999999);
+
   const getResourceName = (id: string) => {
     const res = resources.find(r => r.id === id);
     return res ? t(res.name) : id;
@@ -471,6 +476,46 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
   const totalCols = displayDates.length * effectivePeriods.length;
   const totalWidth = 150 + totalCols * colWidthNum;
 
+  // Determine whether virtual scrolling (column windowing) is active (viewType >= month and not day/week)
+  const isVirtualScrollActive = !isDayView && viewType !== 'week';
+
+  const updateVisibleColumns = (scrollLeft: number, clientWidth: number) => {
+    if (!isVirtualScrollActive || clientWidth <= 0) {
+      visibleColStart.value = 2;
+      visibleColEnd.value = totalCols + 1;
+      return;
+    }
+    const leftPx = scrollLeft - 150; // Subtract resource label width (150px)
+    const rightPx = leftPx + clientWidth;
+    
+    // Convert px to 1-based column indices (1 is label, 2..totalCols+1 are calendar cols)
+    const rawStart = Math.floor(leftPx / colWidthNum) + 2;
+    const rawEnd = Math.ceil(rightPx / colWidthNum) + 2;
+
+    // Add buffer columns (e.g. 14 days * periods)
+    const bufferCols = Math.max(7, Math.ceil(14 * effectivePeriods.length));
+    const startCol = Math.max(2, rawStart - bufferCols);
+    const endCol = Math.min(totalCols + 1, rawEnd + bufferCols);
+
+    // Keep active drag item visible if dragging
+    let finalStart = startCol;
+    let finalEnd = endCol;
+    if (dragState.value) {
+      finalStart = Math.min(finalStart, dragState.value.startColumn, dragState.value.currentColumn);
+      finalEnd = Math.max(finalEnd, dragState.value.endColumn, dragState.value.currentColumn);
+    }
+
+    if (visibleColStart.value !== finalStart || visibleColEnd.value !== finalEnd) {
+      visibleColStart.value = finalStart;
+      visibleColEnd.value = finalEnd;
+    }
+  };
+
+  const handleScroll = (e: JSX.TargetedEvent<HTMLDivElement, Event>) => {
+    const target = e.currentTarget;
+    updateVisibleColumns(target.scrollLeft, target.clientWidth);
+  };
+
   const eventRowIdx = isCourseTimeline ? (isTimelineReduced ? 2 : 4) : 3;
   const resourceBaseRowIdx = isCourseTimeline ? (isTimelineReduced ? 3 : 5) : 4;
   const headerHeight = isCourseTimeline ? (isTimelineReduced ? 30 : 90) : 70;
@@ -598,6 +643,10 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
             </div>
           ))}
           {!isTimelineReduced && displayDates.map((date, i) => {
+            const col = i + 2;
+            if (isVirtualScrollActive && (col < visibleColStart.value || col > visibleColEnd.value)) {
+              return null;
+            }
             const holiday = getHoliday(date);
             const isWknd = isWeekend(date);
             let baseClass = "date-header";
@@ -629,6 +678,11 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
     }
 
     return displayDates.map((date, dIdx) => {
+      const startCol = dIdx * effectivePeriods.length + 2;
+      const endCol = startCol + effectivePeriods.length - 1;
+      if (isVirtualScrollActive && (endCol < visibleColStart.value || startCol > visibleColEnd.value)) {
+        return null;
+      }
       const holiday = getHoliday(date);
       const isWknd = isWeekend(date);
       const isFirstOfMonth = date.getDate() === 1;
@@ -648,7 +702,7 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
       return (
         <div key={`date-${date.toISOString()}`} 
              className={className} 
-             style={{ ...style, gridColumn: `${dIdx * effectivePeriods.length + 2} / span ${effectivePeriods.length}`, gridRow: 1 }}
+             style={{ ...style, gridColumn: `${startCol} / span ${effectivePeriods.length}`, gridRow: 1 }}
              title={holiday ? holiday.name : undefined}
         >
           {dateFormatter.format(date)}
@@ -659,6 +713,10 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
 
   const periodHeaders = isCourseTimeline ? null : displayDates.flatMap((date, dIdx) => 
     periods.map((p, pIdx) => {
+      const col = dIdx * periods.length + pIdx + 2;
+      if (isVirtualScrollActive && (col < visibleColStart.value || col > visibleColEnd.value)) {
+        return null;
+      }
       const isWknd = isWeekend(date);
       const holiday = getHoliday(date);
       let className = 'period-header';
@@ -675,8 +733,8 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
       return (
         <div key={`period-${date.toISOString()}-${p.id}`} 
              className={className} 
-             style={{ ...style, gridColumn: dIdx * periods.length + pIdx + 2, gridRow: 2 }}
-             data-column={dIdx * periods.length + pIdx + 2}>
+             style={{ ...style, gridColumn: col, gridRow: 2 }}
+             data-column={col}>
           {p.name}
         </div>
       );
@@ -704,12 +762,18 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
       style.backgroundColor = hTheme.background;
     }
 
-    return effectivePeriods.map((p, pIdx) => (
-      <div key={`event-cell-${dIdx}-${pIdx}`} 
-           className={className} 
-           style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: eventRowIdx, top: `${headerHeight}px`, height: isCourseTimeline && isTimelineReduced ? '40px' : '80px' }}
-           onDblClick={() => handleIntentionalClick(() => onEmptyEventClick?.(dateStr, p.id))} />
-    ));
+    return effectivePeriods.map((p, pIdx) => {
+      const col = dIdx * effectivePeriods.length + pIdx + 2;
+      if (isVirtualScrollActive && (col < visibleColStart.value || col > visibleColEnd.value)) {
+        return null;
+      }
+      return (
+        <div key={`event-cell-${dIdx}-${pIdx}`} 
+             className={className} 
+             style={{ ...style, gridColumn: col, gridRow: eventRowIdx, top: `${headerHeight}px`, height: isCourseTimeline && isTimelineReduced ? '40px' : '80px' }}
+             onDblClick={() => handleIntentionalClick(() => onEmptyEventClick?.(dateStr, p.id))} />
+      );
+    });
   });
 
   const calculateLayout = (items: { id: string, start: number, end: number }[]) => {
@@ -779,6 +843,9 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
   const row3Layouts = calculateLayout(row3Items);
 
   const holidayItems = row3Layouts.filter(l => row3Items.find(i => i.id === l.id)?.type === 'holiday').map(layout => {
+    if (isVirtualScrollActive && (layout.end < visibleColStart.value || layout.start > visibleColEnd.value)) {
+      return null;
+    }
     const item = row3Items.find(i => i.id === layout.id)!;
     const h = item.data;
     const unitHeight = (eventRowHeight - 8) / layout.maxLevelInGroup;
@@ -806,6 +873,9 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
   });
 
   const globalEventItems = row3Layouts.filter(l => row3Items.find(i => i.id === l.id)?.type === 'event').map(layout => {
+    if (isVirtualScrollActive && (layout.end < visibleColStart.value || layout.start > visibleColEnd.value)) {
+      return null;
+    }
     const e = row3Items.find(i => i.id === layout.id)!.data as ScheduleEvent;
     const unitHeight = (eventRowHeight - 8) / layout.maxLevelInGroup;
     const itemHeight = unitHeight - 8;
@@ -876,6 +946,9 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
 
       const layouts = calculateLayout(courseItems);
       layouts.forEach(layout => {
+        if (isVirtualScrollActive && (layout.end < visibleColStart.value || layout.start > visibleColEnd.value)) {
+          return;
+        }
         const c = courseItems.find(i => i.id === layout.id)!.data;
         const unitHeight = (isCourseTimeline && isTimelineReduced ? 60 : 120) / layout.maxLevelInGroup;
         const itemHeight = unitHeight - 8;
@@ -980,6 +1053,10 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
       const layouts = calculateLayout(resItems);
       layouts.forEach(layout => {
         const item = resItems.find(i => i.id === layout.id)!;
+        const isDraggingThis = dragState.value && item.type === 'lesson' && dragState.value.lesson.id === (item.data as Lesson).id;
+        if (isVirtualScrollActive && !isDraggingThis && (layout.end < visibleColStart.value || layout.start > visibleColEnd.value)) {
+          return;
+        }
         const unitHeight = (80 - 8) / layout.maxLevelInGroup;
         const itemHeight = unitHeight - 8;
         const top = 4 + (layout.level * unitHeight);
@@ -1255,7 +1332,17 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
   }
 
   return (
-    <div className={`timetable-wrapper holiday-theme-${holidayTheme}`} style={wrapperStyle}>
+    <div 
+      ref={(el) => {
+        timetableContainerRef.value = el;
+        if (el) {
+          updateVisibleColumns(el.scrollLeft, el.clientWidth);
+        }
+      }}
+      className={`timetable-wrapper holiday-theme-${holidayTheme}`} 
+      style={wrapperStyle}
+      onScroll={handleScroll}
+    >
       <div 
         key={`grid-${viewType}-${baseDate.getTime()}-${viewMode}`}
         className={`timetable-container ${isTimelineReduced ? 'is-reduced' : ''}${dragState.value ? ' grid-is-dragging' : ''}`} 
@@ -1277,17 +1364,23 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
               style.backgroundColor = hTheme.background;
             }
 
-            return effectivePeriods.map((p, pIdx) => (
-              <div key={`cell-${res.id}-${dIdx}-${pIdx}`} 
-                   className={cellClass} 
-                   style={{ ...style, gridColumn: dIdx * effectivePeriods.length + pIdx + 2, gridRow: rIdx + resourceBaseRowIdx }}
-                   data-column={dIdx * effectivePeriods.length + pIdx + 2}
-                   onDblClick={(e) => {
-                     e.stopPropagation();
-                     console.log('Empty cell dblclick:', res.id, dateStr, p.id);
-                     if (!isCourseTimeline) handleIntentionalClick(() => onEmptyResourceCellClick?.(res.id, dateStr, p.id));
-                   }} />
-            ));
+            return effectivePeriods.map((p, pIdx) => {
+              const col = dIdx * effectivePeriods.length + pIdx + 2;
+              if (isVirtualScrollActive && (col < visibleColStart.value || col > visibleColEnd.value)) {
+                return null;
+              }
+              return (
+                <div key={`cell-${res.id}-${dIdx}-${pIdx}`} 
+                     className={cellClass} 
+                     style={{ ...style, gridColumn: col, gridRow: rIdx + resourceBaseRowIdx }}
+                     data-column={col}
+                     onDblClick={(e) => {
+                       e.stopPropagation();
+                       console.log('Empty cell dblclick:', res.id, dateStr, p.id);
+                       if (!isCourseTimeline) handleIntentionalClick(() => onEmptyResourceCellClick?.(res.id, dateStr, p.id));
+                     }} />
+              );
+            });
           })
         )}
         {dateHeaders}
@@ -1299,12 +1392,16 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
         {resourceRowItems}
         {resourceLabels}
         {isCourseTimeline && isTimelineReduced && displayDates.map((_, i) => {
+          const col = i + 2;
+          if (isVirtualScrollActive && (col < visibleColStart.value || col > visibleColEnd.value)) {
+            return null;
+          }
           if ((i + 1) % 10 === 0) {
             return (
               <div 
                 key={`dotted-line-${i}`} 
                 className="timeline-dotted-line" 
-                style={{ gridColumn: i + 2, gridRow: `1 / span ${resourceBaseRowIdx + filteredResources.length - 1}` }} 
+                style={{ gridColumn: col, gridRow: `1 / span ${resourceBaseRowIdx + filteredResources.length - 1}` }} 
               />
             );
           }
