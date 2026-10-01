@@ -208,9 +208,9 @@ export type ColorCategory = 'EVENT' | 'LESSON' | 'HOLIDAY';
 - [x] 講座タイムラインビューの縮小表示機能（10日ごとの点線、Sticky固定強化）
 - [x] 全講師の割当統計の表示順序を講師の order 設定（および名前）に基づくように改善
 - [x] ドラッグ＆ドロップによる授業の移動・編集機能 (Course Viewでの移動および時限の伸縮表示)
+- [x] 1ヶ月以上の長期間ビューにおける仮想スクロール (Virtual Horizontal Windowing) の導入および rAF / Passive Listener によるスクロール進行同期の最適化 (Scroll-linked effect / Jank 防止)
 
 ### Upcoming Tasks (Next Steps)
-- [ ] 1ヶ月以上の長期間ビューにおける仮想スクロール (Virtual Horizontal Windowing) の実装（アプローチ A: DOM間引き方式）
 - [ ] 印刷用レイアウトの最適化
 - [ ] AI によるスケジューリング最適化/支援機能の検討
 - [ ] パフォーマンス最適化 (大量リソース表示時のレンダリング抑制)

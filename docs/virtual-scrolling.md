@@ -46,11 +46,13 @@ ScholaTile のタイムテーブル表示（特に 1ヶ月 / 3ヶ月 / 6ヶ月 /
 - **課題**: ドラッグ操作中にスクロール等で対象要素が可視範囲外に出ると、DOM がアンマウントされてドラッグ処理が中断されるリスクがある。
 - **対策**: ドラッグ中 (`dragState.value !== null`) の対象授業カードについては、可視範囲外であっても強制的に DOM を保持・描画する例外フラグを適用する。
 
-### 4.2 パフォーマンス最適化 (`@preact/signals`)
-- **課題**: `onScroll` イベントごとにコンポーネント全体が再レンダリングされると、逆にスクロールが遅くなる。
+### 4.2 パフォーマンス最適化 (`@preact/signals`・rAF・Passive Listener)
+- **課題**: `onScroll` イベントごとにコンポーネント全体が再レンダリングされると、逆にスクロールが遅くなる。また、JSでの同期的なスクロールハンドリングにより、ブラウザ側で `This site appears to use a scroll-linked positioning effect.` 警告やスクロールのカクつき（Jank）が発生する。
 - **対策**:
   - `scrollLeft` から計算される `visibleStartIndex` と `visibleEndIndex` を `@preact/signals` で管理する。
-  - インデックスの値が「日」または「時限」単位で変化したときのみ描画を更新し、無駄な再レンダリングを抑制する。
+  - スクロールイベントリスナーを `{ passive: true }` で登録し、`requestAnimationFrame` (rAF) を用いて1フレームごとにスクロール位置をバッファリング更新することで、ブラウザの非同期パンイング（Compositor Thread）をブロックしないようにする。
+  - スクロール更新の閾値（しきい値）チェックを設け、バッファ範囲（14列等）の変化があった場合のみ Signal を更新する。
+  - CSS に `will-change: scroll-position` や `contain` 属性を適用し、スクロール領域のコンポジットおよびレイアウト計算の分離を行う。
 
 ---
 

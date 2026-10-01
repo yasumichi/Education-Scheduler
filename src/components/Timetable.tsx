@@ -4,6 +4,7 @@ import './Timetable.css';
 import { useTranslation } from 'react-i18next';
 import { JSX, Fragment } from 'preact';
 import { useSignal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
 import { apiFetch } from '../utils/api';
 
 interface DragState {
@@ -511,10 +512,29 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
     }
   };
 
-  const handleScroll = (e: JSX.TargetedEvent<HTMLDivElement, Event>) => {
-    const target = e.currentTarget;
-    updateVisibleColumns(target.scrollLeft, target.clientWidth);
-  };
+  // Passive scroll listener with requestAnimationFrame throttling to prevent jank and scroll-linked positioning warnings
+  useEffect(() => {
+    const el = timetableContainerRef.value;
+    if (!el) return;
+
+    let rafId: number | null = null;
+    const onScrollPassive = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        updateVisibleColumns(el.scrollLeft, el.clientWidth);
+      });
+    };
+
+    // Initial sync
+    updateVisibleColumns(el.scrollLeft, el.clientWidth);
+
+    el.addEventListener('scroll', onScrollPassive, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScrollPassive);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [isVirtualScrollActive, totalCols, colWidthNum, effectivePeriods.length, viewType, baseDate]);
 
   const eventRowIdx = isCourseTimeline ? (isTimelineReduced ? 2 : 4) : 3;
   const resourceBaseRowIdx = isCourseTimeline ? (isTimelineReduced ? 3 : 5) : 4;
@@ -1341,7 +1361,6 @@ onViewWeekly, onViewStats, onViewTeacherStats, onViewRoomEquipment, onBatchCreat
       }}
       className={`timetable-wrapper holiday-theme-${holidayTheme}`} 
       style={wrapperStyle}
-      onScroll={handleScroll}
     >
       <div 
         key={`grid-${viewType}-${baseDate.getTime()}-${viewMode}`}
